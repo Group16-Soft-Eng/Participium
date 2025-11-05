@@ -1,7 +1,11 @@
 import { Box, Button, Container, Grid, Stack, TextField } from "@mui/material";
 import './Forms.css';
 
-export function RegisterForm(props) {
+interface RegisterFormProps {
+  setShowRegister: (show: boolean) => void;
+}
+
+export function RegisterForm({ setShowRegister }: RegisterFormProps) {
     return (
         <Container id="login-form">
                 <Grid container spacing={2} maxWidth="sm">
@@ -27,7 +31,7 @@ export function RegisterForm(props) {
                         <TextField id="confirm-password" label="Confirm Password" variant="outlined" type="password" fullWidth />
                     </Grid>
                     <Grid size={6}>
-                        <Button variant="outlined" onClick={() => props.setShowRegister(false)} fullWidth>Go Back</Button>
+                        <Button variant="outlined" onClick={() => setShowRegister(false)} fullWidth>Go Back</Button>
                     </Grid>
                     <Grid size={6}>
                         <Button variant="contained" fullWidth>Register</Button>
