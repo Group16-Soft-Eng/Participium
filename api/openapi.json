@@ -12,9 +12,6 @@
     },
     "tags": [
         {
-            "name": "Auth"
-        },
-        {
             "name": "Users",
             "description": "Operations about user"
         },
@@ -28,202 +25,6 @@
         }
     ],
     "paths": {
-        "/auth/users": {
-            "post": {
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Logs user into the system.",
-                "description": "Log into the system.",
-                "operationId": "loginUser",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "username": {
-                                        "type": "string",
-                                        "example": "username"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "secure_word"
-                                    }
-                                },
-                                "required": [
-                                    "username",
-                                    "password"
-                                ]
-                            }
-                        },
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "username": {
-                                        "type": "string"
-                                    },
-                                    "password": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "username",
-                                    "password"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "successful operation",
-                        "headers": {
-                            "X-Rate-Limit": {
-                                "description": "calls per hour allowed by the user",
-                                "schema": {
-                                    "type": "integer",
-                                    "format": "int32"
-                                }
-                            },
-                            "X-Expires-After": {
-                                "description": "date in UTC when token expires",
-                                "schema": {
-                                    "type": "string",
-                                    "format": "date-time"
-                                }
-                            }
-                        },
-                        "content": {
-                            "application/xml": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid username/password supplied"
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/officers": {
-            "post": {
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Logs officers into the system.",
-                "description": "Log into the system.",
-                "operationId": "loginOfficer",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "username": {
-                                        "type": "string",
-                                        "example": "username"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "secure_word"
-                                    }
-                                },
-                                "required": [
-                                    "username",
-                                    "password"
-                                ]
-                            }
-                        },
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "username": {
-                                        "type": "string"
-                                    },
-                                    "password": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "username",
-                                    "password"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "successful operation",
-                        "headers": {
-                            "X-Rate-Limit": {
-                                "description": "calls per hour allowed by the user",
-                                "schema": {
-                                    "type": "integer",
-                                    "format": "int32"
-                                }
-                            },
-                            "X-Expires-After": {
-                                "description": "date in UTC when token expires",
-                                "schema": {
-                                    "type": "string",
-                                    "format": "date-time"
-                                }
-                            }
-                        },
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "string",
-                                    "example" : "token"
-                                }
-                            },
-                                "application/xml": {
-                                "schema": {
-                                    "type": "string",
-                                    "example": "token"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid username/password supplied"
-                    },
-                    "default": {
-                        "description": "Unexpected error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/users": {
             "post": {
                 "tags": [
@@ -267,6 +68,82 @@
                                 }
                             }
                         }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/login": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Logs user into the system.",
+                "description": "Log into the system.",
+                "operationId": "loginUser",
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "query",
+                        "description": "The user name for login",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "password",
+                        "in": "query",
+                        "description": "The password for login in clear text",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "headers": {
+                            "X-Rate-Limit": {
+                                "description": "calls per hour allowed by the user",
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "X-Expires-After": {
+                                "description": "date in UTC when token expires",
+                                "schema": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/xml": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid username/password supplied"
                     },
                     "default": {
                         "description": "Unexpected error",
@@ -363,6 +240,82 @@
                 }
             }
         },
+        "/officers/login": {
+            "post": {
+                "tags": [
+                    "Officers"
+                ],
+                "summary": "Logs user into the system.",
+                "description": "Log into the system.",
+                "operationId": "loginOfficer",
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "query",
+                        "description": "The officer's username for login",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "password",
+                        "in": "query",
+                        "description": "The officer's password for login in clear text",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "headers": {
+                            "X-Rate-Limit": {
+                                "description": "calls per hour allowed by the user",
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "X-Expires-After": {
+                                "description": "date in UTC when token expires",
+                                "schema": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/xml": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid username/password supplied"
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/officers/retrievedocs": {
             "get": {
                 "tags": [
@@ -402,8 +355,19 @@
                     "Officers"
                 ],
                 "summary": "Update document assigned to him",
-                "operationId": "retrieveDocs",
-                "parameters": [],
+                "operationId": "reviewDoc",
+                "parameters": [
+                    {
+                        "name": "id_doc",
+                        "in": "path",
+                        "description": "ID of document to review",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "successful operation",
@@ -429,6 +393,40 @@
             }
         },
         "/documents": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Get public documents for map visualization",
+                "description": "Retrieve all approved documents for public map display",
+                "operationId": "getPublicDocuments",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Document"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
                 "tags": [
                     "Documents"
@@ -515,6 +513,14 @@
                         "type": "string",
                         "example": "username"
                     },
+                    "firstName": {
+                        "type": "string",
+                        "example": "John"
+                    },
+                    "lastName": {
+                        "type": "string",
+                        "example": "Doe"
+                    },
                     "password": {
                         "type": "string",
                         "example": "placeholder"
@@ -550,10 +556,10 @@
                         "minLength": 6,
                         "maxLength": 15
                     },
-                    "Role": {
+                    "role": {
                         "$ref": "#/components/schemas/OfficerRole"
                     },
-                    "Office": {
+                    "office": {
                         "$ref": "#/components/schemas/OfficeType"
                     }
                 }
@@ -601,6 +607,12 @@
                     "Category": {
                         "$ref": "#/components/schemas/OfficeType"
                     },
+                    "title": {
+                        "type": "string",
+                        "minLength": 5,
+                        "maxLength": 100,
+                        "example": "Pothole on Main Street"
+                    },
                     "Report": {
                         "type": "object",
                         "properties": {
@@ -614,7 +626,7 @@
                                 "items": {
                                     "type": "string"
                                 },
-                                "minimum": 1,
+                                "minItems": 1,
                                 "maxItems": 3
                             }
                         }
