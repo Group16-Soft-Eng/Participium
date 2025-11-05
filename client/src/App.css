@@ -1,1 +1,38 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+}
 
+body {
+  background-color: #f0f3f5;
+}
+
+.alert {
+  z-index: 9999;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 60px;
+  width: fit-content;
+  height: fit-content;
+  margin: 0;
+  opacity: 0;
+  animation: fadeInOut 3s;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
