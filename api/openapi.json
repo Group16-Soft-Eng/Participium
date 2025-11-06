@@ -23,8 +23,8 @@
             "description": "Office personnel"
         },
         {
-            "name": "Documents",
-            "description": "Documents Operation"
+            "name": "Reports",
+            "description": "Reports Operation"
         }
     ],
     "paths": {
@@ -368,7 +368,7 @@
                 "tags": [
                     "Officers"
                 ],
-                "summary": "Retrieve documents assigned to him",
+                "summary": "Retrieve Reports assigned to him",
                 "description": "Using the session key, the officer is able to retrieve the docs assigned to him.",
                 "operationId": "retrieveDocs",
                 "parameters": [],
@@ -378,7 +378,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Document"
+                                    "$ref": "#/components/schemas/Report"
                                 }
                             }
                         }
@@ -401,7 +401,7 @@
                 "tags": [
                     "Officers"
                 ],
-                "summary": "Update document assigned to him",
+                "summary": "Update Report assigned to him",
                 "operationId": "reviewDoc",
                 "parameters": [
                     {
@@ -419,7 +419,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Document"
+                                    "$ref": "#/components/schemas/Report"
                                 }
                             }
                         }
@@ -437,29 +437,29 @@
                 }
             }
         },
-        "/documents": {
+        "/Reports": {
             "post": {
                 "tags": [
-                    "Documents"
+                    "Reports"
                 ],
-                "summary": "User upload a new Document",
-                "operationId": "uploadDocument",
+                "summary": "User upload a new Report",
+                "operationId": "uploadReport",
                 "requestBody": {
                     "description": "Created user object",
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Document"
+                                "$ref": "#/components/schemas/Report"
                             }
                         },
                         "application/xml": {
                             "schema": {
-                                "$ref": "#/components/schemas/Document"
+                                "$ref": "#/components/schemas/Report"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Document"
+                                "$ref": "#/components/schemas/Report"
                             }
                         }
                     }
@@ -470,12 +470,12 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Document"
+                                    "$ref": "#/components/schemas/Report"
                                 }
                             },
                             "application/xml": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Document"
+                                    "$ref": "#/components/schemas/Report"
                                 }
                             }
                         }
@@ -494,11 +494,11 @@
             },
             "get": {
                 "tags": [
-                    "Documents"
+                    "Reports"
                 ],
-                "summary": "Retrieve all public documents for map visualization",
-                "description": "Get all approved documents to display on the public map",
-                "operationId": "getDocuments",
+                "summary": "Retrieve all public Reports for map visualization",
+                "description": "Get all approved Reports to display on the public map",
+                "operationId": "getReports",
                 "parameters": [],
                 "responses": {
                     "200": {
@@ -508,7 +508,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/Document"
+                                        "$ref": "#/components/schemas/Report"
                                     }
                                 }
                             }
@@ -545,6 +545,10 @@
                     "Role 2",
                     "Role 3"
                 ]
+            },
+            "State" : {
+                "type": "string",
+                "enum": ["PENDING", "APPROVED", "DECLINED"]
             },
             "User": {
                 "type": "object",
@@ -631,7 +635,7 @@
                     }
                 }
             },
-            "Document": {
+            "Report": {
                 "type": "object",
                 "properties": {
                     "id": {
@@ -655,10 +659,10 @@
                     "Category": {
                         "$ref": "#/components/schemas/OfficeType"
                     },
-                    "Report": {
+                    "Document": {
                         "type": "object",
                         "properties": {
-                            "Report": {
+                            "Description": {
                                 "type": "string",
                                 "minLength": 150,
                                 "example": "the water is clear"
@@ -675,19 +679,19 @@
                     }
                 }
             },
-            "DocumentState": {
+            "ReportState": {
                 "type": "object",
                 "properties": {
-                    "Document": {
-                        "$ref": "#/components/schemas/Document"
+                    "Report": {
+                        "$ref": "#/components/schemas/Report"
                     },
                     "Approved": {
-                        "type": "boolean"
+                        "$ref" : "#/components/schemas/State"
                     },
                     "Reason": {
                         "type": "string",
                         "minLength": 30,
-                        "example": "Message for only denied documents."
+                        "example": "Message for only denied Reports."
                     },
                     "Officer": {
                         "$ref": "#/components/schemas/Officer"
