@@ -1,1 +1,0 @@
-// TypeORM database configuration
