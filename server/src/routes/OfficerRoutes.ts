@@ -3,7 +3,7 @@ import {createOfficer,retrieveDocs,reviewDoc} from "@controllers/officerControll
 import { Officer} from "@dto/Officer";
 const router = Router({mergeParams : true});
 
-router.post("/officers", async(req, res, next) =>{
+router.post("", async(req, res, next) =>{
     try{
         const { name, surname, email, password, role, office } = req.body;
         let officer: Officer = {
@@ -23,7 +23,7 @@ router.post("/officers", async(req, res, next) =>{
     }
 });
 
-router.get("/officers/retrievedocs", async(req, res, next) =>{
+router.get("/retrievedocs", async(req, res, next) =>{
     try{
         //placeholder
         const result = await retrieveDocs(req.body["officerId"]);
@@ -35,7 +35,7 @@ router.get("/officers/retrievedocs", async(req, res, next) =>{
     }
 });
 
-router.patch("/officers/reviewdocs/:id", async(req, res, next) =>{
+router.patch("/reviewdocs/:id", async(req, res, next) =>{
     try{
         const result = await reviewDoc(Number(req.params.id), req.body.state, req.body.reason);
         res.status(200).json(result);

@@ -6,8 +6,9 @@ import { User,UserFromJSON } from "@dto/User";
 const router = Router({mergeParams : true});
 
 
-router.get("/users/logout", async(req, res, next) =>{
+router.get("/logout", async(req, res, next) =>{
     try{
+        console.log("Logging out user");
         await logoutUser();
         res.status(200).json()
     }
@@ -16,8 +17,9 @@ router.get("/users/logout", async(req, res, next) =>{
         next(error);
     }
 });
-router.post("/users", async(req, res, next) =>{
+router.post("/", async(req, res, next) =>{
     try{
+        console.log("Creating user");
         let username = req.body["username"];
         let password = req.body["password"];
         let firstName = req.body["firstName"];

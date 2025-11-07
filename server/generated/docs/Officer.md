@@ -7,8 +7,8 @@
 Name | Type
 ------------ | -------------
 `id` | number
-`name` | string
-`surname` | string
+`firstname` | string
+`lastname` | string
 `email` | string
 `password` | string
 `role` | [OfficerRole](OfficerRole.md)
