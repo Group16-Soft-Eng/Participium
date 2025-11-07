@@ -1,20 +1,8 @@
 import {Router} from "express";
-import {loginOfficer} from "@controllers/authController"
 import {createOfficer,retrieveDocs,reviewDoc} from "@controllers/officerController"
 import { Officer} from "@dto/Officer";
 const router = Router({mergeParams : true});
 
-router.post("/auth/officers", async(req, res, next) =>{
-    try{
-        const { username, password } = req.body;
-        const result = await loginOfficer(username, password);
-        res.status(200).json(result);
-    }
-    catch(error)
-    {
-        next(error);
-    }
-});
 router.post("/officers", async(req, res, next) =>{
     try{
         const { name, surname, email, password, role, office } = req.body;

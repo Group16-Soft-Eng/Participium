@@ -5,18 +5,6 @@ import {createUser,logoutUser} from "@controllers/userController"
 import { User,UserFromJSON } from "@dto/User";
 const router = Router({mergeParams : true});
 
-router.post("/auth/users", async(req, res, next) =>{
-    try{
-        let username = req.body["username"];
-        let password = req.body["password"];
-        const result = await loginOfficer(username, password);
-        res.status(200).json(result);
-    }
-    catch(error)
-    {
-        next(error);
-    }
-});
 
 router.get("/users/logout", async(req, res, next) =>{
     try{
