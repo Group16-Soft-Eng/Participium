@@ -8,10 +8,16 @@ export class ReportDAO {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: false })
+  @Column({ type: "text", nullable: false })
   title!: string;
 
-  @Column("simple-json")
+  @Column({ 
+    type: "text",
+    transformer: {
+      to: (value) => JSON.stringify(value),
+      from: (value) => JSON.parse(value)
+    }
+  })
   location!: {
     id?: number;
     name?: string;
@@ -25,24 +31,30 @@ export class ReportDAO {
   @JoinColumn({ name: "author_id" })
   author!: UserDAO | null;
 
-  @Column({ default: false })
+  @Column({ type: "boolean", default: false })
   anonymity!: boolean;
 
-  @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @Column({ type: "datetime", default: () => "CURRENT_TIMESTAMP" })
   date!: Date;
 
-  @Column({ type: "varchar", nullable: false })
+  @Column({ type: "text", nullable: false })
   category!: OfficeType;
 
-  @Column("simple-json")
+  @Column({ 
+    type: "text",
+    transformer: {
+      to: (value) => JSON.stringify(value),
+      from: (value) => JSON.parse(value)
+    }
+  })
   document!: {
     Description?: string;
     Photos?: string[];
   };
 
-  @Column({ type: "varchar", default: ReportState.PENDING })
+  @Column({ type: "text", default: ReportState.PENDING })
   state!: ReportState;
 
-  @Column({ nullable: true })
-  reason!: string | null; // Solo per DECLINED
+  @Column({ type: "text", nullable: true })
+  reason!: string | null;
 }

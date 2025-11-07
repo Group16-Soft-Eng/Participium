@@ -14,12 +14,12 @@ export const TOKEN_LIFESPAN = "24h";
 export const CONFIG = {
   APP_PORT: process.env.PORT || 5000,
 
-  DB_TYPE: process.env.DB_TYPE || "postgres",
+  DB_TYPE: process.env.DB_TYPE || "sqlite",
   DB_HOST: process.env.DB_HOST || "localhost",
   DB_PORT: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
   DB_USERNAME: process.env.DB_USERNAME || "app",
   DB_PASSWORD: process.env.DB_PASSWORD || "app",
-  DB_NAME: process.env.DB_NAME || "participium",
+  DB_NAME: process.env.DB_NAME || "participium.db",
 
   DB_ENTITIES: readdirSync(DB_ENTITIES_PATH)
     .filter((file) => file.endsWith(".ts") || file.endsWith(".js"))
