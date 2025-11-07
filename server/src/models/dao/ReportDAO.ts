@@ -6,13 +6,13 @@ import { ReportState } from "@models/enums/ReportState";
 @Entity("reports")
 export class ReportDAO {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ nullable: false })
-  title: string;
+  title!: string;
 
   @Column("simple-json")
-  location: {
+  location!: {
     id?: number;
     name?: string;
     Coordinates?: {
@@ -23,26 +23,26 @@ export class ReportDAO {
 
   @ManyToOne(() => UserDAO, { nullable: true })
   @JoinColumn({ name: "author_id" })
-  author: UserDAO | null;
+  author!: UserDAO | null;
 
   @Column({ default: false })
-  anonymity: boolean;
+  anonymity!: boolean;
 
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
-  date: Date;
+  date!: Date;
 
   @Column({ type: "varchar", nullable: false })
-  category: OfficeType;
+  category!: OfficeType;
 
   @Column("simple-json")
-  document: {
+  document!: {
     Description?: string;
     Photos?: string[];
   };
 
   @Column({ type: "varchar", default: ReportState.PENDING })
-  state: ReportState;
+  state!: ReportState;
 
   @Column({ nullable: true })
-  reason: string | null; // Solo per DECLINED
+  reason!: string | null; // Solo per DECLINED
 }

@@ -18,7 +18,6 @@ Name | Type
 ```typescript
 import type { User } from ''
 
-// TODO: Update the object below with actual values
 const example = {
   "id": 2,
   "username": username,

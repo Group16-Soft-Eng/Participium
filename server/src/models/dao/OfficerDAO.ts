@@ -5,23 +5,23 @@ import { OfficeType } from "@models/enums/OfficeType";
 @Entity("officers")
 export class OfficerDAO {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ nullable: false })
-  name: string;
+  name!: string;
 
   @Column({ nullable: false })
-  surname: string;
+  surname!: string;
 
   @Column({ unique: true, nullable: false })
-  email: string;
+  email!: string;
 
   @Column({ nullable: false })
-  password: string; // hashed
+  password!: string; // hashed
 
   @Column({ type: "varchar", nullable: false })
-  role: OfficerRole;
+  role!: OfficerRole;
 
   @Column({ type: "varchar", nullable: false })
-  office: OfficeType;
+  office!: OfficeType;
 }

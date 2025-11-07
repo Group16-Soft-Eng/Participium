@@ -3,20 +3,20 @@ import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 @Entity("users")
 export class UserDAO {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ unique: true, nullable: false })
-  username: string;
+  username!: string;
 
   @Column({ nullable: false })
-  firstName: string;
+  firstName!: string;
 
   @Column({ nullable: false })
-  lastName: string;
+  lastName!: string;
 
   @Column({ nullable: false })
-  password: string; // hashed con bcrypt
+  password!: string; // hashed con bcrypt
 
   @Column({ unique: true, nullable: false })
-  email: string;
+  email!: string;
 }
