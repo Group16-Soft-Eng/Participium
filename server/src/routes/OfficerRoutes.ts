@@ -1,20 +1,13 @@
 import {Router} from "express";
 import {createOfficer,retrieveDocs,reviewDoc} from "@controllers/officerController"
-import { Officer} from "@dto/Officer";
+import { Officer,  OfficerFromJSON} from "@dto/Officer";
 const router = Router({mergeParams : true});
 
 router.post("", async(req, res, next) =>{
     try{
-        const { name, surname, email, password, role, office } = req.body;
-        let officer: Officer = {
-            name: name,
-            surname: surname,
-            email: email,
-            password: password,
-            role: role,
-            office: office
-        };
-        const result = await createOfficer(officer);
+        //role e offuce possono non esserci
+        const officerData = OfficerFromJSON(req.body);
+        const result = await createOfficer(officerData);
         res.status(200).json(result);
     }
     catch(error)
@@ -22,6 +15,8 @@ router.post("", async(req, res, next) =>{
         next(error);
     }
 });
+
+
 
 router.get("/retrievedocs", async(req, res, next) =>{
     try{

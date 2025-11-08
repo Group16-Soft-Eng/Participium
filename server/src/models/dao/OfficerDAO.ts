@@ -19,9 +19,9 @@ export class OfficerDAO {
   @Column({ nullable: false })
   password!: string; // hashed
 
-  @Column({ type: "varchar", nullable: false })
+  @Column({ type: "varchar", nullable: true })
   role!: OfficerRole;
 
-  @Column({ type: "varchar", nullable: false })
+  @Column({ type: "varchar", nullable: true })
   office!: OfficeType;
 }
