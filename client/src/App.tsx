@@ -6,12 +6,15 @@ import { Box, Button, Container, Stack, TextField } from '@mui/material';
 import { LoginForm } from './components/LoginForm';
 import { LoginScreen } from './screens/LoginScreen';
 
+import ReportForm from '../Map/MapComponents/ReportForm';
+
 function App() {
     return (
     <>
       <Router>
         <Routes>
           <Route path="/" element={<LoginScreen />} />
+          <Route path="/submitReport" element={<ReportForm />} />
         </Routes>
       </Router>
     </>
