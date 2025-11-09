@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import cors from "cors";
 import { CONFIG } from "@config";
 import { authRouter } from "@routes/AuthRoutes";
@@ -14,5 +15,7 @@ app.use(routes.V1_AUTH, authRouter);
 app.use(routes.V1_USERS, userRouter);
 app.use(routes.V1_REPORTS, reportRouter);
 app.use(routes.V1_OFFICERS, officerRouter);
+// static files
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 export default app;
