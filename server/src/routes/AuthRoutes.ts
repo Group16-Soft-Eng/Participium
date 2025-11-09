@@ -18,9 +18,9 @@ router.post("/users", async(req, res, next) =>{
 });
 router.post("/officers", async(req, res, next) =>{
     try{
-        console.log("Login Officer Endpoint Hit");
-        const { username, password } = req.body;
-        const result = await loginOfficer(username, password);
+        console.log(req.body);
+        const { email, password } = req.body;
+        const result = await loginOfficer(email, password);
         res.status(200).json(result);
     }
     catch(error)

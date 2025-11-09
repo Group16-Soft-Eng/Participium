@@ -3,6 +3,7 @@ import {uploadReport,getReports } from "@controllers/reportController"
 import {ReportFromJSON} from "@dto/Report";
 
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
+import { OfficerRole } from "@models/enums/OfficerRole";
 const router = Router({mergeParams : true});
 
 router.post("/", authenticateToken, requireUserType(["user"]), async(req, res, next) =>{

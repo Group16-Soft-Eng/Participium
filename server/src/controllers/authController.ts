@@ -31,10 +31,9 @@ export async function loginOfficer(email: string, password: string): Promise<str
   if (!isValid) {
     throw new UnauthorizedError("Invalid email or password");
   }
-
   return generateToken({
     id: officer.id,
     username: officer.email, // Use email as username in token
-    type: "officer"
+    type: officer.role
   });
 }

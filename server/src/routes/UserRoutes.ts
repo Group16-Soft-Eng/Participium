@@ -6,7 +6,7 @@ import { UserFromJSON } from "@dto/User";
 const router = Router({mergeParams : true});
 
 
-router.get("/logout", async(req, res, next) =>{
+router.get("/logout",authenticateToken, async(req, res, next) =>{
     try{
         console.log("Logging out user");
         await logoutUser();
