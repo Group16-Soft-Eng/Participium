@@ -25,7 +25,7 @@
       "@routes/*": ["routes/*"],
       "@services/*": ["services/*"],
       "@middlewares/*": ["middlewares/*"],
-      "@utils": ["utils/utils"],
+      "@utils/*": ["utils/*"],
       "@app": ["app"]
     }
   },

@@ -4,7 +4,7 @@ import { ReportDAO } from "@dao/ReportDAO";
 import { UserDAO } from "@dao/UserDAO";
 import { OfficeType } from "@models/enums/OfficeType";
 import { ReportState } from "@models/enums/ReportState";
-import { findOrThrowNotFound } from "@utils";
+import { findOrThrowNotFound } from "@utils/utils";
 
 export class ReportRepository {
   private repo: Repository<ReportDAO>;

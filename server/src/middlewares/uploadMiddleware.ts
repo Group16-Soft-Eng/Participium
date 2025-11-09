@@ -3,7 +3,7 @@
 import multer from "multer";
 import path from "path";
 import { Request } from "express";
-import { BadRequestError } from "@utils";
+import { BadRequestError } from "@utils/utils";
 
 // configure storage (where to save photos)
 const storage = multer.diskStorage({

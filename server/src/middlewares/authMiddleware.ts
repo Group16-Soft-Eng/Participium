@@ -2,7 +2,7 @@
 
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "@services/authService";
-import { UnauthorizedError } from "@utils";
+import { UnauthorizedError } from "@utils/utils";
 
 /**
  * Middleware per autenticare richieste con JWT Bearer token

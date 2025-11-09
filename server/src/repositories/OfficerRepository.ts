@@ -5,7 +5,7 @@ import { Repository } from "typeorm";
 import { OfficerDAO } from "@dao/OfficerDAO";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
-import { findOrThrowNotFound, throwConflictIfFound } from "@utils";
+import { findOrThrowNotFound, throwConflictIfFound } from "@utils/utils";
 import { hashPassword } from "@services/authService";
 
 export class OfficerRepository {

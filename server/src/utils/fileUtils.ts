@@ -1,4 +1,4 @@
-import { BadRequestError } from "@utils";
+import { BadRequestError } from "@utils/utils";
 
 // check min 1 and max 3 photos (story 5)
 export function validatePhotosCount(files?: Express.Multer.File[]): void {

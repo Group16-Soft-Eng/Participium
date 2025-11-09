@@ -7,6 +7,7 @@ import { mapReportDAOToDTO } from "@services/mapperService";
 import { OfficeType } from "@models/enums/OfficeType";
 import { validatePhotosCount, getPhotoPaths } from "@utils/fileUtils";
 
+
 //? qui prendo gli solo gli Approved Reports (probabilmente ci servirà per la mappa pubblica in PT07)
 export async function getReports(): Promise<Report[]> {
   const reportRepo = new ReportRepository();

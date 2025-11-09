@@ -3,7 +3,7 @@
 import { UserRepository } from "@repositories/UserRepository";
 import { OfficerRepository } from "@repositories/OfficerRepository";
 import { verifyPassword, generateToken } from "@services/authService";
-import { UnauthorizedError } from "@utils";
+import { UnauthorizedError } from "@utils/utils";
 
 
 export async function loginUser(username: string, password: string): Promise<string> {

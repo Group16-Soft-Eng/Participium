@@ -6,7 +6,7 @@ import {
   ConflictError,
   UnauthorizedError,
   BadRequestError
-} from "@utils";
+} from "@utils/utils";
 
 
 export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction): void {

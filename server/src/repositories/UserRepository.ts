@@ -3,7 +3,7 @@
 import { AppDataSource } from "@database";
 import { Repository } from "typeorm";
 import { UserDAO } from "@dao/UserDAO";
-import { findOrThrowNotFound, throwConflictIfFound } from "@utils";
+import { findOrThrowNotFound, throwConflictIfFound } from "@utils/utils";
 import { hashPassword } from "@services/authService";
 
 export class UserRepository {
