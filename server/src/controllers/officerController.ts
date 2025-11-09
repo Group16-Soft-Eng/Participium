@@ -50,22 +50,60 @@ export async function updateOfficer(officerDto: Officer): Promise<Officer> {
 
 
 
-export async function retrieveDocs(officerId: number): Promise<Report[]> {
-  const officerRepo = new OfficerRepository();
+export async function assignReportToOfficer(reportId: number, officerId: number): Promise<void> {
   const reportRepo = new ReportRepository();
-
-  // qui ottengo l'Officer mediante il suo ID passato come param
+  const officerRepo = new OfficerRepository();
+  
+  // Verifica che il report sia in stato PENDING
+  const report = await reportRepo.getReportById(reportId);
+  if (report.state !== ReportState.PENDING) {
+    throw new Error("Only PENDING reports can be assigned");
+  }
+  
+  // Verifica che l'officer esista
   const officer = await officerRepo.getOfficerById(officerId);
-  // qui prendo i reports relativi all'ufficio dell'Officer
-  const reports = await reportRepo.getReportsByCategory(officer.office);
+  if (!officer) {
+    throw new Error("Officer not found");
+  }
+  
+  // Assegna il report all'officer
+  await reportRepo.assignReportToOfficer(reportId, officerId);
+}
 
+export async function retrieveDocs(officerId: number): Promise<Report[]> {
+  const reportRepo = new ReportRepository();
+  
+  // Prendi solo i report ASSEGNATI a questo officer
+  const reports = await reportRepo.getReportsByAssignedOfficer(officerId);
+  
   return reports.map(mapReportDAOToDTO);
 }
 
 
-export async function reviewDoc(idDoc: number, state: ReportState, reason?: string): Promise<Report> {
+export async function reviewDoc(officerId: number, idDoc: number, state: ReportState, reason?: string): Promise<Report> {
   const reportRepo = new ReportRepository();
-  const updatedReport = await reportRepo.updateReportState(idDoc, state, reason);
+  const officerRepo = new OfficerRepository();
+  
+  // Verifica che il report sia assegnato a questo officer
+  const report = await reportRepo.getReportById(idDoc);
+  if (report.assignedOfficerId !== officerId) {
+    throw new Error("You can only review reports assigned to you");
+  }
+  
+  // update report state
+  let updatedReport = await reportRepo.updateReportState(idDoc, state, reason);
+  
+  // if approved, assign to an officer
+  if (state === ReportState.APPROVED) {
+    // find an officer in the correct office (based on the report's category)
+    const officers = await officerRepo.getOfficersByOffice(report.category as any);
+    
+    if (officers.length > 0) {
+      // assign to the first available officer
+      updatedReport = await reportRepo.assignReportToOfficer(idDoc, officers[0].id);
+    }
+  }
+  
   return mapReportDAOToDTO(updatedReport);
 }
 

@@ -57,4 +57,7 @@ export class ReportDAO {
 
   @Column({ type: "text", nullable: true })
   reason!: string | null;
+
+  @Column({ type: "integer", nullable: true })
+  assignedOfficerId!: number | null;
 }

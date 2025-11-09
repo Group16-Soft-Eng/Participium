@@ -40,6 +40,16 @@ export class ReportRepository {
     });
   }
 
+  async getReportsByAssignedOfficer(officerId: number): Promise<ReportDAO[]> {
+    return this.repo.find({
+      where: { 
+        assignedOfficerId: officerId,
+        state: ReportState.PENDING
+      },
+      relations: ["author"]
+    });
+  }
+
 
   async createReport(
     title: string,
@@ -86,5 +96,12 @@ export class ReportRepository {
   async deleteReport(id: number): Promise<void> {
     const report = await this.getReportById(id);
     await this.repo.remove(report);
+  }
+
+  async assignReportToOfficer(reportId: number, officerId: number): Promise<ReportDAO> {
+    const report = await this.getReportById(reportId);
+    report.assignedOfficerId = officerId;
+    
+    return this.repo.save(report);
   }
 }

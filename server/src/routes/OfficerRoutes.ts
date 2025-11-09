@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {createOfficer,retrieveDocs,reviewDoc, getAllOfficers, updateOfficer} from "@controllers/officerController"
+import {createOfficer,retrieveDocs,reviewDoc, getAllOfficers, updateOfficer, assignReportToOfficer} from "@controllers/officerController"
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import {OfficerFromJSON,OfficerToJSON} from "@dto/Officer";
 import { OfficerRole } from "@models/enums/OfficerRole";
@@ -56,11 +56,21 @@ router.patch("/", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMI
     }
 });
 
+router.post("/assign-report", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR]), async (req, res, next) => {
+    try {
+        const { reportId, officerId } = req.body;
+        await assignReportToOfficer(reportId, officerId);
+        res.status(200).json({ message: "Report assigned successfully" });
+    } catch (error) {
+        next(error);
+    }
+});
 
 router.get("/retrievedocs", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
     try{
-        //placeholder
-        const result = await retrieveDocs(req.body["officerId"]);
+        // Prendi l'ID dell'officer dal token JWT
+        const officerId = (req as any).user?.id;
+        const result = await retrieveDocs(officerId);
         res.status(200).json(result);
     }
     catch(error)
@@ -71,7 +81,8 @@ router.get("/retrievedocs", authenticateToken, requireUserType([OfficerRole.MUNI
 
 router.patch("/reviewdocs/:id", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
     try{
-        const result = await reviewDoc(Number(req.params.id), req.body.state, req.body.reason);
+        const officerId = (req as any).user?.id;
+        const result = await reviewDoc(officerId, Number(req.params.id), req.body.state, req.body.reason);
         res.status(200).json(result);
     }
     catch(error)

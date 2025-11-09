@@ -35,6 +35,10 @@ export class OfficerRepository {
     );
   }
 
+  async getOfficersByOffice(office: OfficeType): Promise<OfficerDAO[]> {
+    return this.repo.find({ where: { office } });
+  }
+
   async createOfficer(
     name: string,
     surname: string,
