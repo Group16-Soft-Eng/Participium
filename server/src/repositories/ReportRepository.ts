@@ -43,8 +43,7 @@ export class ReportRepository {
   async getReportsByAssignedOfficer(officerId: number): Promise<ReportDAO[]> {
     return this.repo.find({
       where: { 
-        assignedOfficerId: officerId,
-        state: ReportState.PENDING
+        assignedOfficerId: officerId
       },
       relations: ["author"]
     });
