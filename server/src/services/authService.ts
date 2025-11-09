@@ -23,7 +23,7 @@ export async function verifyPassword(
 export function generateToken(payload: {
   id: number;
   username: string;
-  type: "user" | "officer";
+  type: "user" | "officer"| "admin";
 }): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_LIFESPAN });
 }

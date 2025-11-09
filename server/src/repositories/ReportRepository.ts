@@ -1,5 +1,3 @@
-//! REPORT REPOSITORY
-
 import { AppDataSource } from "@database";
 import { Repository } from "typeorm";
 import { ReportDAO } from "@dao/ReportDAO";

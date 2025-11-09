@@ -1,9 +1,11 @@
 import {Router} from "express";
 import {uploadReport,getReports } from "@controllers/reportController"
 import {ReportFromJSON} from "@dto/Report";
+
+import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 const router = Router({mergeParams : true});
 
-router.post("/", async(req, res, next) =>{
+router.post("/", authenticateToken, requireUserType(["user"]), async(req, res, next) =>{
     try{
         const reportData = ReportFromJSON(req.body);
         const result = await uploadReport(reportData);
@@ -15,7 +17,7 @@ router.post("/", async(req, res, next) =>{
     }
 });
 
-router.get("/", async(req, res, next) =>{
+router.get("/", authenticateToken, async(req, res, next) =>{
     try{
         const result = await getReports();
         res.status(200).json(result);

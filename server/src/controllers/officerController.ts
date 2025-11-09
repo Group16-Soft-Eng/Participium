@@ -35,6 +35,22 @@ export async function createOfficer(officerDto: Officer): Promise<Officer> {
 }
 
 
+export async function updateOfficer(officerDto: Officer): Promise<Officer> {
+  const officerRepo = new OfficerRepository();
+  const updatedOfficer = await officerRepo.updateOfficer(
+    officerDto.id!,
+    officerDto.name!,
+    officerDto.surname!,
+    officerDto.email!,
+    officerDto.password!, // come per user, plain password qui, poi hashed
+    officerDto.role as any,
+    officerDto.office as any
+  );
+  return mapOfficerDAOToDTO(updatedOfficer);
+}
+
+
+
 export async function retrieveDocs(officerId: number): Promise<Report[]> {
   const officerRepo = new OfficerRepository();
   const reportRepo = new ReportRepository();

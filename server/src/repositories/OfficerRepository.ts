@@ -62,6 +62,30 @@ export class OfficerRepository {
     });
   }
 
+
+  async updateOfficer(
+    id: number,
+    name: string,
+    surname: string,
+    email: string,
+    plainPassword: string,
+    role: OfficerRole,
+    office: OfficeType
+  ): Promise<OfficerDAO> {
+    const officerToUpdate = await this.getOfficerById(id);
+
+    const hashedPassword = await hashPassword(plainPassword);
+
+    officerToUpdate.name = name;
+    officerToUpdate.surname = surname;
+    officerToUpdate.email = email;
+    officerToUpdate.password = hashedPassword;
+    officerToUpdate.role = role;
+    officerToUpdate.office = office;
+
+    return this.repo.save(officerToUpdate);
+  }
+
   async deleteOfficer(email: string): Promise<void> {
     const officer = await this.getOfficerByEmail(email);
     await this.repo.remove(officer);
