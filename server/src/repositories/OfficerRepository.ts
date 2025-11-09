@@ -68,18 +68,16 @@ export class OfficerRepository {
     name: string,
     surname: string,
     email: string,
-    plainPassword: string,
     role: OfficerRole,
     office: OfficeType
   ): Promise<OfficerDAO> {
     const officerToUpdate = await this.getOfficerById(id);
 
-    const hashedPassword = await hashPassword(plainPassword);
 
     officerToUpdate.name = name;
     officerToUpdate.surname = surname;
     officerToUpdate.email = email;
-    officerToUpdate.password = hashedPassword;
+    officerToUpdate.password = officerToUpdate.password; // keep existing password
     officerToUpdate.role = role;
     officerToUpdate.office = office;
 

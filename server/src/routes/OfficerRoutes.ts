@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {createOfficer,retrieveDocs,reviewDoc, getAllOfficers} from "@controllers/officerController"
+import {createOfficer,retrieveDocs,reviewDoc, getAllOfficers, updateOfficer} from "@controllers/officerController"
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import {OfficerFromJSON,OfficerToJSON} from "@dto/Officer";
 import { OfficerRole } from "@models/enums/OfficerRole";
@@ -47,7 +47,7 @@ router.patch("/", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMI
     try{
         //role e office possono non esserci
         const officerData = OfficerFromJSON(req.body);
-        const result = await createOfficer(officerData);
+        const result = await updateOfficer(officerData);
         res.status(200).json(result);
     }
     catch(error)

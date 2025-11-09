@@ -42,7 +42,6 @@ export async function updateOfficer(officerDto: Officer): Promise<Officer> {
     officerDto.name!,
     officerDto.surname!,
     officerDto.email!,
-    officerDto.password!, // come per user, plain password qui, poi hashed
     officerDto.role as any,
     officerDto.office as any
   );
