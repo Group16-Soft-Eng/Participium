@@ -18,10 +18,6 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    processFiles(files);
-  };
-
-  const processFiles = (files: File[]) => {
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     const remainingSlots = maxPhotos - photos.length;
     const filesToAdd = imageFiles.slice(0, remainingSlots);
@@ -54,7 +50,13 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
     e.preventDefault();
     setIsDragOver(false);
     const files = Array.from(e.dataTransfer.files);
-    processFiles(files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    const remainingSlots = maxPhotos - photos.length;
+    const filesToAdd = imageFiles.slice(0, remainingSlots);
+    
+    if (filesToAdd.length > 0) {
+      onPhotosChange([...photos, ...filesToAdd]);
+    }
   };
 
   const canAddMore = photos.length < maxPhotos;

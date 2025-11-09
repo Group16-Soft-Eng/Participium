@@ -4,38 +4,24 @@ import { LatLng } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import '../CssMap/MapWithPin.css';
+import type { Report } from '../types/report';
 
-// Turin, Italy coordinates
 const TURIN_COORDINATES: [number, number] = [45.0703, 7.6869];
 
-// Custom marker icons using emojis
 const createCustomIcon = (status: 'pending' | 'in-progress' | 'resolved' = 'pending') => {
   const statusEmojis = {
-    'pending': '📍',     // Red pin
-    'in-progress': '📌', // Pushpin
-    'resolved': '✅',    // Check mark
+    'pending': '📍',
+    'in-progress': '📌',
+    'resolved': '✅',
   };
 
   return L.divIcon({
-    html: `<div class="emoji-marker ${status}">${statusEmojis[status]}</div>`,
+    html: `<div class="emoji-marker">${statusEmojis[status]}</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -32],
-    className: `marker-${status}`
   });
 };
-
-interface Report {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  photos: File[];
-  latitude: number;
-  longitude: number;
-  createdAt: Date;
-  status: 'pending' | 'in-progress' | 'resolved';
-}
 
 interface MapWithPinProps {
   onLocationSelect: (lat: number, lng: number) => void;
@@ -76,18 +62,6 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
   reports = [],
   selectedPosition
 }) => {
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      'infrastructure': '#8b5cf6',
-      'environment': '#10b981',
-      'safety': '#ef4444',
-      'sanitation': '#f59e0b',
-      'transport': '#3b82f6',
-      'other': '#6b7280',
-    };
-    return colors[category] || '#6b7280';
-  };
-
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('it-IT', {
       day: '2-digit',
@@ -110,10 +84,8 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        {/* Click handler for selecting new locations */}
         <LocationMarker onLocationSelect={onLocationSelect} />
         
-        {/* Display all submitted reports as pins */}
         {reports.map((report) => (
           <Marker 
             key={report.id} 
@@ -122,30 +94,23 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
           >
             <Popup>
               <div className="report-popup">
-                {/* Report Header */}
                 <div className="report-popup-header">
                   <h3 className="report-popup-title">{report.title}</h3>
-                  <span 
-                    className={`report-popup-category category-${report.category}`}
-                    style={{ backgroundColor: getCategoryColor(report.category) }}
-                  >
+                  <span className={`report-popup-category category-${report.category}`}>
                     {report.category}
                   </span>
                 </div>
 
-                {/* Status */}
                 <div className="report-popup-status-container">
                   <span className={`report-popup-status status-${report.status.replace('-', '')}`}>
                     {report.status.replace('-', ' ')}
                   </span>
                 </div>
 
-                {/* Description */}
                 <div className="report-popup-description">
                   <p>{report.description}</p>
                 </div>
 
-                {/* Photos Preview */}
                 {report.photos.length > 0 && (
                   <div className="report-popup-photos">
                     <strong>Photos:</strong>
@@ -167,7 +132,6 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
                   </div>
                 )}
 
-                {/* Location and Date */}
                 <div className="report-popup-footer">
                   <div className="popup-location">
                     <strong>Location:</strong> {report.latitude.toFixed(4)}, {report.longitude.toFixed(4)}
@@ -181,12 +145,8 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
           </Marker>
         ))}
 
-        {/* Show selected position for new report */}
         {selectedPosition && (
-          <Marker 
-            position={selectedPosition}
-            icon={createCustomIcon('pending')}
-          >
+          <Marker position={selectedPosition} icon={createCustomIcon('pending')}>
             <Popup>
               <div className="location-popup">
                 <strong>📍 New Report Location</strong><br />
@@ -199,7 +159,6 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
         )}
       </MapContainer>
 
-      {/* Reports Summary */}
       <div className="map-overview">
         <strong>🗺️ Map Overview:</strong> 
         <span className="overview-stats">

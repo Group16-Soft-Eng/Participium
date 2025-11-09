@@ -1,38 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MapWithPin from './MapWithPin';
 import PhotoUpload from './PhotoUpload';
+import { createReport, getAllReports } from '../mapApi/mapApi';
+import { CATEGORIES } from '../types/report';
+import type { Report, ReportData } from '../types/report';
 import '../CssMap/ReportForm.css';
-
-interface Report {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  photos: File[];
-  latitude: number;
-  longitude: number;
-  createdAt: Date;
-  status: 'pending' | 'in-progress' | 'resolved';
-}
-
-interface ReportData {
-  title: string;
-  description: string;
-  category: string;
-  photos: File[];
-  latitude: number | null;
-  longitude: number | null;
-}
-
-const CATEGORIES = [
-  { value: 'infrastructure', label: 'Infrastructure Issue' },
-  { value: 'environment', label: 'Environmental Concern' },
-  { value: 'safety', label: 'Safety Hazard' },
-  { value: 'sanitation', label: 'Sanitation Problem' },
-  { value: 'transport', label: 'Transport Issue' },
-  { value: 'other', label: 'Other' },
-] as const;
 
 const ReportForm: React.FC = () => {
   const [report, setReport] = useState<ReportData>({
@@ -53,6 +26,20 @@ const ReportForm: React.FC = () => {
     photos: false,
     location: false,
   });
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  const loadReports = async () => {
+    try {
+      const reportsData = await getAllReports();
+      setReports(reportsData);
+    } catch (error) {
+      console.error('Failed to load reports:', error);
+    }
+  };
 
   const handleLocationSelect = (lat: number, lng: number) => {
     setReport(prev => ({
@@ -95,7 +82,7 @@ const ReportForm: React.FC = () => {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -110,42 +97,35 @@ const ReportForm: React.FC = () => {
       return;
     }
 
-    // Create new report and add to local state (no API calls)
-    const newReport: Report = {
-      id: Date.now().toString(),
-      title: report.title,
-      description: report.description,
-      category: report.category,
-      photos: [...report.photos],
-      latitude: report.latitude!,
-      longitude: report.longitude!,
-      createdAt: new Date(),
-      status: 'pending' // All new reports start as pending
-    };
+    setIsLoading(true);
 
-    // Add to local reports array
-    setReports(prev => [...prev, newReport]);
+    try {
+      const newReport = await createReport(report);
+      setReports(prev => [...prev, newReport]);
+      alert('Report submitted successfully!');
 
-    console.log('Report submitted locally:', newReport);
-    alert(`Report submitted successfully! ${reports.length + 1} total reports on map.`);
-
-    // Reset form
-    setReport({
-      title: '',
-      description: '',
-      category: '',
-      photos: [],
-      latitude: null,
-      longitude: null,
-    });
-    setSelectedLocation(null);
-    setTouched({
-      title: false,
-      description: false,
-      category: false,
-      photos: false,
-      location: false,
-    });
+      setReport({
+        title: '',
+        description: '',
+        category: '',
+        photos: [],
+        latitude: null,
+        longitude: null,
+      });
+      setSelectedLocation(null);
+      setTouched({
+        title: false,
+        description: false,
+        category: false,
+        photos: false,
+        location: false,
+      });
+    } catch (error) {
+      console.error('Failed to submit report:', error);
+      alert('Failed to submit report. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const isFieldValid = (fieldName: keyof typeof touched) => {
@@ -169,7 +149,6 @@ const ReportForm: React.FC = () => {
 
   return (
     <div className="report-form-container">
-      {/* Navigation Header */}
       <div className="navigation-header">
         <Link to="/" className="back-button">
           ← Back to Home
@@ -180,11 +159,10 @@ const ReportForm: React.FC = () => {
             Submit a new report to help improve Turin
           </p>
         </div>
-        <div className="header-spacer"></div> {/* For flexbox spacing */}
+        <div className="header-spacer"></div>
       </div>
       
       <div className="report-layout">
-        {/* Left Column - Map */}
         <div>
           <div className="map-section">
             <h3 className="map-section-title">🗺️ Turin Reports Map</h3>
@@ -197,7 +175,6 @@ const ReportForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column - Form */}
         <div>
           <div className="form-section">
             <h3 className="form-title">📝 Submit New Report</h3>
@@ -213,14 +190,11 @@ const ReportForm: React.FC = () => {
                   name="title"
                   value={report.title}
                   onChange={handleInputChange}
-                  required
                   className={`form-input ${!isFieldValid('title') ? 'form-input-error' : ''}`}
                   placeholder="e.g., Broken sidewalk on Via Roma"
                 />
                 {!isFieldValid('title') && (
-                  <p className="form-error">
-                    Please provide a title for your report
-                  </p>
+                  <p className="form-error">Please provide a title for your report</p>
                 )}
               </div>
 
@@ -233,8 +207,7 @@ const ReportForm: React.FC = () => {
                   name="category"
                   value={report.category}
                   onChange={handleInputChange}
-                  required
-                  className={`form-input form-select ${!isFieldValid('category') ? 'form-input-error' : ''}`}
+                  className={`form-input ${!isFieldValid('category') ? 'form-input-error' : ''}`}
                 >
                   <option value="">Select the issue type</option>
                   {CATEGORIES.map(cat => (
@@ -244,9 +217,7 @@ const ReportForm: React.FC = () => {
                   ))}
                 </select>
                 {!isFieldValid('category') && (
-                  <p className="form-error">
-                    Please select a category
-                  </p>
+                  <p className="form-error">Please select a category</p>
                 )}
               </div>
 
@@ -259,22 +230,16 @@ const ReportForm: React.FC = () => {
                   name="description"
                   value={report.description}
                   onChange={handleInputChange}
-                  required
                   rows={4}
-                  className={`form-input form-textarea ${!isFieldValid('description') ? 'form-input-error' : ''}`}
+                  className={`form-input ${!isFieldValid('description') ? 'form-input-error' : ''}`}
                   placeholder="Please provide detailed information about the issue..."
                 />
                 {!isFieldValid('description') && (
-                  <p className="form-error">
-                    Please provide a detailed description
-                  </p>
+                  <p className="form-error">Please provide a detailed description</p>
                 )}
               </div>
 
               <div className="form-group">
-                <h4 className="form-label">
-                  Photos (1-3 required) *
-                </h4>
                 <PhotoUpload
                   photos={report.photos}
                   onPhotosChange={handlePhotosChange}
@@ -283,38 +248,28 @@ const ReportForm: React.FC = () => {
               </div>
 
               <div className="location-status">
-                <h4 className="location-status-title">
-                  Location *
-                </h4>
+                <h4 className="location-status-title">Location *</h4>
                 {report.latitude && report.longitude ? (
                   <div className="location-selected">
                     <strong>✅ Location Selected</strong><br />
                     Latitude: {report.latitude.toFixed(6)}<br />
                     Longitude: {report.longitude.toFixed(6)}<br />
-                    <small>
-                      Click on the map to change location
-                    </small>
+                    <small>Click on the map to change location</small>
                   </div>
                 ) : (
                   <div className="location-not-selected">
                     <strong>⚠️ No Location Selected</strong><br />
-                    <small>
-                      Click on the map to the left to select a location in Turin
-                    </small>
+                    <small>Click on the map to the left to select a location in Turin</small>
                   </div>
                 )}
               </div>
 
               <button
                 type="submit"
-                disabled={!validateForm()}
+                disabled={!validateForm() || isLoading}
                 className="submit-btn"
-                style={{
-                  backgroundColor: validateForm() ? '#dc2626' : '#9ca3af',
-                  cursor: validateForm() ? 'pointer' : 'not-allowed'
-                }}
               >
-                {validateForm() ? '🚀 Submit New Report' : 'Complete All Fields'}
+                {isLoading ? '⏳ Submitting...' : validateForm() ? '🚀 Submit New Report' : 'Complete All Fields'}
               </button>
             </form>
           </div>

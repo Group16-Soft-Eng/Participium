@@ -6,7 +6,7 @@
   display: block;
   margin-bottom: 10px;
   font-weight: bold;
-  color: #374151;
+  color: #000;
 }
 
 .upload-area {
@@ -16,18 +16,17 @@
   text-align: center;
   cursor: pointer;
   margin-bottom: 15px;
-  background-color: #f9f9f9;
-  transition: all 0.3s ease;
+  background: #f9f9f9;
 }
 
 .upload-area:hover {
   border-color: #007bff;
-  background-color: #f0f8ff;
+  background: #f0f8ff;
 }
 
 .upload-area-dragover {
   border-color: #007bff;
-  background-color: #f0f8ff;
+  background: #f0f8ff;
 }
 
 .upload-icon {
@@ -62,18 +61,12 @@
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #ddd;
-  transition: transform 0.2s ease;
-}
-
-.photo-preview-item:hover {
-  transform: scale(1.05);
 }
 
 .photo-preview-image {
   width: 100%;
   height: 100px;
   object-fit: cover;
-  display: block;
 }
 
 .photo-remove-btn {
@@ -91,11 +84,6 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  transition: background-color 0.2s ease;
-}
-
-.photo-remove-btn:hover {
-  background: rgba(255, 0, 0, 0.9);
 }
 
 .photo-file-info {
