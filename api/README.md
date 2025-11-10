@@ -1,1 +1,0 @@
-## NOTES on Swagger OpenAPI

@@ -1,0 +1,113 @@
+//! OFFICER CONTROLLER
+
+import { Officer } from "@dto/Officer";
+import { Report } from "@dto/Report";
+import { OfficerRepository } from "@repositories/OfficerRepository";
+import { ReportRepository } from "@repositories/ReportRepository";
+import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
+import { ReportState } from "@models/enums/ReportState";
+
+
+export async function getAllOfficers(): Promise<Officer[]> {
+  const officerRepo = new OfficerRepository();
+  const officers = await officerRepo.getAllOfficers();
+  return officers.map(mapOfficerDAOToDTO);
+}
+
+export async function getOfficer(email: string): Promise<Officer> {
+  const officerRepo = new OfficerRepository();
+  const officer = await officerRepo.getOfficerByEmail(email);
+  return mapOfficerDAOToDTO(officer);
+}
+
+
+export async function createOfficer(officerDto: Officer): Promise<Officer> {
+  const officerRepo = new OfficerRepository();
+  const createdOfficer = await officerRepo.createOfficer(
+    officerDto.name!,
+    officerDto.surname!,
+    officerDto.email!,
+    officerDto.password!, // come per user, plain password qui, poi hashed
+    officerDto.role as any,
+    officerDto.office as any
+  );
+  return mapOfficerDAOToDTO(createdOfficer);
+}
+
+
+export async function updateOfficer(officerDto: Officer): Promise<Officer> {
+  const officerRepo = new OfficerRepository();
+  const updatedOfficer = await officerRepo.updateOfficer(
+    officerDto.id!,
+    officerDto.name!,
+    officerDto.surname!,
+    officerDto.email!,
+    officerDto.role as any,
+    officerDto.office as any
+  );
+  return mapOfficerDAOToDTO(updatedOfficer);
+}
+
+
+
+export async function assignReportToOfficer(reportId: number, officerId: number): Promise<void> {
+  const reportRepo = new ReportRepository();
+  const officerRepo = new OfficerRepository();
+  
+  // Verifica che il report sia in stato PENDING
+  const report = await reportRepo.getReportById(reportId);
+  if (report.state !== ReportState.PENDING) {
+    throw new Error("Only PENDING reports can be assigned");
+  }
+  
+  // Verifica che l'officer esista
+  const officer = await officerRepo.getOfficerById(officerId);
+  if (!officer) {
+    throw new Error("Officer not found");
+  }
+  
+  // Assegna il report all'officer
+  await reportRepo.assignReportToOfficer(reportId, officerId);
+}
+
+export async function retrieveDocs(officerId: number): Promise<Report[]> {
+  const reportRepo = new ReportRepository();
+  
+  // Prendi solo i report ASSEGNATI a questo officer
+  const reports = await reportRepo.getReportsByAssignedOfficer(officerId);
+  
+  return reports.map(mapReportDAOToDTO);
+}
+
+
+export async function reviewDoc(officerId: number, idDoc: number, state: ReportState, reason?: string): Promise<Report> {
+  const reportRepo = new ReportRepository();
+  const officerRepo = new OfficerRepository();
+  
+  // Verifica che il report sia assegnato a questo officer
+  const report = await reportRepo.getReportById(idDoc);
+  if (report.assignedOfficerId !== officerId) {
+    throw new Error("You can only review reports assigned to you");
+  }
+  
+  // update report state
+  let updatedReport = await reportRepo.updateReportState(idDoc, state, reason);
+  
+  // if approved, assign to an officer
+  if (state === ReportState.APPROVED) {
+    // find an officer in the correct office (based on the report's category)
+    const officers = await officerRepo.getOfficersByOffice(report.category as any);
+    
+    if (officers.length > 0) {
+      // assign to the first available officer
+      updatedReport = await reportRepo.assignReportToOfficer(idDoc, officers[0].id);
+    }
+  }
+  
+  return mapReportDAOToDTO(updatedReport);
+}
+
+export async function deleteOfficer(email: string): Promise<void> {
+  const officerRepo = new OfficerRepository();
+  await officerRepo.deleteOfficer(email);
+}
