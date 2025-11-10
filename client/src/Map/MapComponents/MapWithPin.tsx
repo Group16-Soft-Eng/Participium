@@ -97,7 +97,7 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
           <Marker 
             key={report.id} 
             position={[report.latitude, report.longitude]}
-            icon={createCustomIcon(report.status)}
+            icon={createCustomIcon(report.category, report.status)}
           >
             <Popup>
               <div className="report-popup">
@@ -153,7 +153,7 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
         ))}
 
         {selectedPosition && (
-          <Marker position={selectedPosition} icon={createCustomIcon('pending')}>
+          <Marker position={selectedPosition} icon={createCustomIcon(undefined, 'pending')}>
             <Popup>
               <div className="location-popup">
                 <strong>📍 New Report Location</strong><br />

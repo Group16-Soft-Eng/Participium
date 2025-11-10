@@ -24,8 +24,11 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  /* Use normal document flow so app containers can expand to full width.
+     Previously `display:flex` + `place-items:center` constrained layout
+     and caused the main app block to be positioned oddly; switching back
+     to block fixes full-bleed pages like the map. */
+  display: block;
   min-width: 320px;
   min-height: 100vh;
 }

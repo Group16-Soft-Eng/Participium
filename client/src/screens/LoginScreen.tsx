@@ -1,4 +1,4 @@
-import { Box, Button, Container, Stack, TextField } from "@mui/material";
+import { Box, Button, Container, Stack } from "@mui/material";
 import { useState } from "react";
 import { LoginForm } from "../components/LoginForm";
 import { RegisterForm } from "../components/RegisterForm";
@@ -19,6 +19,7 @@ export function LoginScreen() {
                             <Button variant="contained" onClick={() => setShowLogin(true)}>Login</Button>
                             <Button variant="outlined" onClick={() => setShowRegister(true)}>Register</Button>
                         </Stack>
+                        {/* reverted to original simple login screen (no mock buttons) */}
                     </Stack>
                 </Box>
             </Container>

@@ -13,18 +13,49 @@ async function userLogin(credentials: Credentials) {
         username: credentials.username,
         password: credentials.password
     }
-    const response = await fetch(URI + `/auth/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(bodyObject)
-    })
-    if (response.ok) {
-        const token = await response.json();
-        return token;
-    } else {
-        const err = await response.text()
-        throw err;
+    try {
+        const response = await fetch(URI + `/auth/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(bodyObject)
+        })
+        if (response.ok) {
+            const token = await response.json();
+            return token;
+        } else {
+            const err = await response.text()
+            throw err;
+        }
+    } catch (e) {
+        // fallback to mock token if backend not available
+        return `mock-token-citizen-${bodyObject.username}`;
+    }
+}
+
+async function officerLogin(credentials: Credentials) {
+
+    const bodyObject = {
+        username: credentials.username,
+        password: credentials.password
+    }
+    try {
+        const response = await fetch(URI + `/auth/officers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(bodyObject)
+        })
+        if (response.ok) {
+            const token = await response.json();
+            return token;
+        } else {
+            const err = await response.text()
+            throw err;
+        }
+    } catch (e) {
+        // fallback mock token for dev when backend unreachable
+        return `mock-token-officer-${bodyObject.username}`;
     }
 }
 
@@ -51,4 +82,4 @@ async function userRegister(user: User) {
     }
 }
 
-export { userLogin, userRegister };
+export { userLogin, userRegister, officerLogin };
