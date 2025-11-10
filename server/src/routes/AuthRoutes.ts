@@ -3,7 +3,7 @@ import {loginOfficer,loginUser} from "@controllers/authController"
 const router = Router({mergeParams : true});
 
 
-
+//login user
 router.post("/users", async(req, res, next) =>{
     try{
         let username = req.body["username"];
@@ -16,6 +16,7 @@ router.post("/users", async(req, res, next) =>{
         next(error);
     }
 });
+//login staff, both officers and admins
 router.post("/officers", async(req, res, next) =>{
     try{
         console.log(req.body);

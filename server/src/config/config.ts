@@ -37,6 +37,7 @@ export const CONFIG = {
     V1_AUTH: APP_V1_BASE_URL + "/auth",
     V1_USERS: APP_V1_BASE_URL + "/users",
     V1_OFFICERS: APP_V1_BASE_URL + "/officers",
-    V1_REPORTS: APP_V1_BASE_URL + "/reports"
+    V1_REPORTS: APP_V1_BASE_URL + "/reports",
+    V1_INFO_TYPES: APP_V1_BASE_URL + "/info-types",
   }
 };

@@ -43,7 +43,7 @@ router.get("/admin",authenticateToken, requireUserType([OfficerRole.MUNICIPAL_AD
     }
 });
 
-router.patch("/", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
+router.patch("/", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR]), async(req, res, next) =>{
     try{
         //role e office possono non esserci
         const officerData = OfficerFromJSON(req.body);
@@ -66,7 +66,7 @@ router.post("/assign-report", authenticateToken, requireUserType([OfficerRole.MU
     }
 });
 
-router.get("/retrievedocs", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
+router.get("/retrievedocs", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
     try{
         // Prendi l'ID dell'officer dal token JWT
         const officerId = (req as any).user?.id;
@@ -79,7 +79,7 @@ router.get("/retrievedocs", authenticateToken, requireUserType([OfficerRole.MUNI
     }
 });
 
-router.patch("/reviewdocs/:id", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
+router.patch("/reviewdocs/:id", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
     try{
         const officerId = (req as any).user?.id;
         const result = await reviewDoc(officerId, Number(req.params.id), req.body.state, req.body.reason);
