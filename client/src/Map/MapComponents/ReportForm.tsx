@@ -163,9 +163,9 @@ const ReportForm: React.FC = () => {
   return (
     <div className="report-form-container">
       <div className="navigation-header">
-          <Link to="/map" className="back-button">
-            ← Back to Map
-          </Link>
+        <Link to="/map" className="back-button">
+          ← Back to Map
+        </Link>
         <div className="header-content">
           <h1 className="report-title">🏛️ Turin Citizen Reports</h1>
           <p className="report-subtitle">

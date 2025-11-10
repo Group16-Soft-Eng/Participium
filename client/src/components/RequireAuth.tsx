@@ -13,7 +13,7 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
 
   // require that a token exists and role is 'employee'
   if (!token || role !== 'employee') {
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
