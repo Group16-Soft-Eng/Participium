@@ -3,7 +3,7 @@ import './Forms.css';
 import { Form, useNavigate } from "react-router-dom";
 import { useActionState, useState } from "react";
 import { userLogin, userRegister } from "../API/API";
-import { setToken } from "../services/auth";
+import { setRole, setToken } from "../services/auth";
 
 interface RegisterFormProps {
     setShowRegister: (show: boolean) => void;
@@ -41,8 +41,9 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
             await userRegister(user);
             const token = await userLogin({ username: user.username, password: user.password });
             setToken(token);
-            console.log('Registration and login successful, token:', token);
-            navigate('/submitReport');
+            setRole('citizen')
+            window.dispatchEvent(new Event('authChange'));
+            navigate('/map');
             return { success: true }
         }
         catch (error) {
