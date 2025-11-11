@@ -10,7 +10,13 @@ import { infoTypeRouter } from "@routes/InfoType";
 export const app = express();
 let routes = CONFIG.ROUTES;
 app.use(express.json());
-app.use(cors());
+// Configure CORS to allow credentials from frontend
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Vite default port
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(routes.V1_AUTH, authRouter);
 app.use(routes.V1_USERS, userRouter);

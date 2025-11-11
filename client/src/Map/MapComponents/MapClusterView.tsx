@@ -41,10 +41,20 @@ const createSimpleIcon = (category?: string) => {
 
 const createPinIcon = () => {
   return L.divIcon({
-    html: `<div class="pin-marker">�</div>`,
+    html: `<div class="pin-marker">📍</div>`,
     className: 'pin-icon',
     iconSize: [30, 30],
     iconAnchor: [15, 30],
+  });
+};
+
+const createHighlightPinIcon = () => {
+  return L.divIcon({
+    html: `<div class="highlight-pin-marker">📍</div>`,
+    className: 'highlight-pin-icon',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
   });
 };
 
@@ -232,16 +242,44 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
   );
 }
 
-const MapClusterView: React.FC<{ reports: Report[]; selectedId?: string | null }> = ({ reports, selectedId }) => {
+interface MapClusterViewProps {
+  reports: Report[];
+  selectedId?: string | null;
+  initialCenter?: [number, number] | null;
+  initialZoom?: number | null;
+  highlightLocation?: [number, number] | null;
+}
+
+function MapController({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [map, center, zoom]);
+  return null;
+}
+
+const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, initialCenter, initialZoom, highlightLocation }) => {
+  const center = initialCenter || TURIN_COORDINATES;
+  const zoom = initialZoom || 13;
+  
   return (
     <div style={{ height: 'calc(100vh - 64px)', width: '100%' }}>
-      <MapContainer center={TURIN_COORDINATES} zoom={13} style={{ height: '100%', width: '100%' }}>
+      <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-
-  <ClusteringLayer reports={reports} selectedId={selectedId} />
+        {initialCenter && initialZoom && <MapController center={initialCenter} zoom={initialZoom} />}
+        <ClusteringLayer reports={reports} selectedId={selectedId} />
+        {highlightLocation && (
+          <Marker position={highlightLocation} icon={createHighlightPinIcon()}>
+            <Popup>
+              <strong>📍 Report Location</strong>
+              <br />
+              Coordinates: {highlightLocation[0].toFixed(4)}, {highlightLocation[1].toFixed(4)}
+            </Popup>
+          </Marker>
+        )}
       </MapContainer>
     </div>
   );

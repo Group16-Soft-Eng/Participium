@@ -10,10 +10,10 @@ import { LoginScreen } from './screens/LoginScreen';
 import ReportForm from './Map/MapComponents/ReportForm';
 import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
-import { RequireOfficer } from './components/RequireAuth';
+import RequireAuth from './components/RequireAuth';
 
 function App() {
-  const [, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
+  const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
 
     useEffect(() => {
       const onAuth = () => setAuth({ token: getToken(), role: getRole() });
@@ -21,7 +21,8 @@ function App() {
       return () => window.removeEventListener('authChange', onAuth);
     }, []);
 
-  const isLoggedIn = Boolean(getToken());
+  const isLoggedIn = Boolean(auth.token);
+  const isOfficer = auth.role === 'employee';
 
     return (
     <>
@@ -49,23 +50,45 @@ function App() {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button component={Link} to="/map" color="inherit">Map</Button>
-              <Button
-                component={Link}
-                to="/submitReport"
-                variant="contained"
-                color="secondary"
-                sx={{
-                  px: 2.2,
-                  py: 0.7,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 700,
-                  boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
-                  background: 'linear-gradient(90deg,#ff6b35,#ff3d00)'
-                }}
-              >
-                Write a report
-              </Button>
+              
+              {/* Show different button based on user role */}
+              {isOfficer ? (
+                <Button
+                  component={Link}
+                  to="/officer"
+                  variant="contained"
+                  color="primary"
+                  sx={{
+                    px: 2.2,
+                    py: 0.7,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
+                  }}
+                >
+                  Review Reports
+                </Button>
+              ) : (
+                <Button
+                  component={Link}
+                  to="/submitReport"
+                  variant="contained"
+                  color="secondary"
+                  sx={{
+                    px: 2.2,
+                    py: 0.7,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
+                    background: 'linear-gradient(90deg,#ff6b35,#ff3d00)'
+                  }}
+                >
+                  Write a report
+                </Button>
+              )}
+              
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
               {isLoggedIn ? <UserMenu /> : (
                 <Button variant="contained" color="primary" component={Link} to="/login">Login / Register</Button>
@@ -80,7 +103,7 @@ function App() {
             <Route path="/login" element={<LoginScreen />} />
             <Route path="/submitReport" element={<ReportForm />} />
             <Route path="/map" element={<MapPage />} />
-            <Route path="/officer" element={<RequireOfficer><OfficerPage /></RequireOfficer>} />
+            <Route path="/officer" element={<RequireAuth><OfficerPage /></RequireAuth>} />
           </Routes>
         </Box>
       </Router>

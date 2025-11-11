@@ -1,10 +1,11 @@
 import {Router} from "express";
-import {uploadReport,getReports } from "@controllers/reportController"
+import {uploadReport, getReports, getReportsByOffice } from "@controllers/reportController"
 import {ReportFromJSON} from "@dto/Report";
 
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import { uploadPhotos } from "@middlewares/uploadMiddleware";
 import { OfficerRole } from "@models/enums/OfficerRole";
+import { OfficerRepository } from "@repositories/OfficerRepository";
 
 const router = Router({mergeParams : true});
 
@@ -23,9 +24,38 @@ router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, asy
     }
 });
 
-router.get("/", authenticateToken, async(req, res, next) =>{
+router.get("/", async(req, res, next) =>{
     try{
-        const result = await getReports();
+        // Check if user is authenticated
+        const authHeader = req.headers.authorization;
+        let result;
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            // User is authenticated - check if it's an officer
+            try {
+                const token = authHeader.substring(7);
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+                
+                // Check if user type is an officer role
+                if (decoded.type && decoded.type !== 'user') {
+                    // It's an officer - get their office and filter reports
+                    const officerRepo = new OfficerRepository();
+                    const officer = await officerRepo.getOfficerById(decoded.id);
+                    result = await getReportsByOffice(officer.office);
+                } else {
+                    // Regular user - show all approved reports
+                    result = await getReports();
+                }
+            } catch (e) {
+                // Invalid token - show all approved reports (public)
+                result = await getReports();
+            }
+        } else {
+            // No authentication - show all approved reports (public)
+            result = await getReports();
+        }
+        
         res.status(200).json(result);
     }
     catch(error)

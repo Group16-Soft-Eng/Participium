@@ -1,5 +1,5 @@
 // Minimal auth helpers for dev: login stores token and role in localStorage
-export type Role = 'citizen' | 'officer' | 'administrator' | null;
+export type Role = 'citizen' | 'employee' | null;
 
 export function setToken(token: string) {
   localStorage.setItem('token', token);
@@ -51,12 +51,19 @@ export function decodeJwt(token: string | null): any | null {
 export function getRoleFromToken(token: string | null): Role {
   const data = decodeJwt(token);
   if (!data) return null;
-  // common claim names: role, roles, scope
-  if (data.type) return data.type as Role;
-  if (data.type && Array.isArray(data.type) && data.type.length > 0) return (data.type[0] as Role);
-  if (typeof data.scope === 'string' && data.scope.includes('officer')) return 'officer';
-  if (typeof data.scope === 'string' && data.scope.includes('administrator')) return 'administrator';
-
+  
+  // Check 'type' field first (our backend uses this)
+  if (data.type) {
+    // If type is 'user', return 'citizen'
+    if (data.type === 'user') return 'citizen';
+    // If type is any officer role (TECHNICAL_OFFICE_STAFF, etc.), return 'employee'
+    if (data.type !== 'user') return 'employee';
+  }
+  
+  // Fallback to common claim names: role, roles, scope
+  if (data.role) return data.role as Role;
+  if (data.roles && Array.isArray(data.roles) && data.roles.length > 0) return (data.roles[0] as Role);
+  if (typeof data.scope === 'string' && data.scope.includes('employee')) return 'employee';
   return null;
 }
 

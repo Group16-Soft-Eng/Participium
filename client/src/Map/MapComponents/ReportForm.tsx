@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import MapWithPin from './MapWithPin';
 import PhotoUpload from './PhotoUpload';
-import { createReport, getAllReports } from '../mapApi/mapApi';
+import { createReport } from '../mapApi/mapApi';
 import { CATEGORIES } from '../types/report';
-import type { Report, ReportData } from '../types/report';
+import type { ReportData } from '../types/report';
 import '../CssMap/ReportForm.css';
 
 const ReportForm: React.FC = () => {
@@ -17,7 +17,6 @@ const ReportForm: React.FC = () => {
     longitude: null,
   });
 
-  const [reports, setReports] = useState<Report[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
   const [touched, setTouched] = useState({
     title: false,
@@ -27,10 +26,6 @@ const ReportForm: React.FC = () => {
     location: false,
   });
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    loadReports();
-  }, []);
 
   // If navigation brought a position via location.state, prefill the location
   const location = useLocation();
@@ -44,15 +39,6 @@ const ReportForm: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
-
-  const loadReports = async () => {
-    try {
-      const reportsData = await getAllReports();
-      setReports(reportsData);
-    } catch (error) {
-      console.error('Failed to load reports:', error);
-    }
-  };
 
   const handleLocationSelect = (lat: number, lng: number) => {
     setReport(prev => ({
@@ -113,8 +99,7 @@ const ReportForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const newReport = await createReport(report);
-      setReports(prev => [...prev, newReport]);
+      await createReport(report);
       alert('Report submitted successfully!');
 
       setReport({
@@ -178,11 +163,11 @@ const ReportForm: React.FC = () => {
       <div className="report-layout">
         <div>
           <div className="map-section">
-            <h3 className="map-section-title">🗺️ Turin Reports Map</h3>
+            <h3 className="map-section-title">🗺️ Select Report Location</h3>
             <MapWithPin 
               onLocationSelect={handleLocationSelect}
               initialPosition={selectedLocation || undefined}
-              reports={reports}
+              reports={[]}
               selectedPosition={selectedLocation}
             />
           </div>

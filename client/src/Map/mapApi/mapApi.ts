@@ -1,4 +1,3 @@
-import { getToken } from '../../services/auth';
 import type { Report, ReportData } from '../types/report';
 
 const URI = 'http://localhost:5000/api/v1';
@@ -24,16 +23,9 @@ async function createReport(reportData: ReportData): Promise<Report> {
         formData.append('photos', photo);
     });
 
-    const token = getToken();
-
-    const headers: HeadersInit = {};
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const response = await fetch(URI + `/reports`, {
         method: 'POST',
-        headers: headers,
+        credentials: 'include',
         body: formData
     });
 
@@ -48,26 +40,42 @@ async function createReport(reportData: ReportData): Promise<Report> {
 
 // GET ALL REPORTS
 async function getAllReports(): Promise<Report[]> {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
     
-    const token = getToken();
-
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+    };
     
-    const headers: HeadersInit = {};
+    // Add Authorization header if token exists
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
     
     const response = await fetch(URI + `/reports`, {
         method: 'GET',
-        headers: headers,
+        headers,
+        credentials: 'include',
     });
 
     if (response.ok) {
-        const reports = await response.json();
-        return reports;
+        const backendReports = await response.json();
+        
+        // Map backend format to frontend format
+        return backendReports.map((br: any) => ({
+            id: br.id?.toString() || '',
+            title: br.title || 'Untitled Report',
+            description: br.document?.Description || '',
+            category: br.category || 'other',
+            photos: [], // Photos are URLs in backend, convert if needed
+            latitude: br.location?.Coordinates?.latitude || 0,
+            longitude: br.location?.Coordinates?.longitude || 0,
+            createdAt: br.date ? new Date(br.date) : new Date(),
+            status: 'resolved' as const, // Approved reports are considered resolved
+        }));
     } else {
         const err = await response.text();
-        throw err;
+        throw new Error(err || 'Failed to fetch reports');
     }
 }
 
