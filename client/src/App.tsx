@@ -1,7 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import './App.css'
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import UserMenu from './components/UserMenu';
 import { useEffect, useState } from 'react';
 import { getToken, getRole } from './services/auth';
@@ -14,6 +14,7 @@ import RequireAuth from './components/RequireAuth';
 
 function App() {
   const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
 
     useEffect(() => {
       const onAuth = () => setAuth({ token: getToken(), role: getRole() });
@@ -71,8 +72,9 @@ function App() {
                 </Button>
               ) : (
                 <Button
-                  component={Link}
-                  to="/submitReport"
+                  component={isLoggedIn ? Link : undefined}
+                  to={isLoggedIn ? "/submitReport" : undefined}
+                  onClick={!isLoggedIn ? () => setShowLoginDialog(true) : undefined}
                   variant="contained"
                   color="secondary"
                   sx={{
@@ -106,9 +108,33 @@ function App() {
             <Route path="/officer" element={<RequireAuth><OfficerPage /></RequireAuth>} />
           </Routes>
         </Box>
+
+        {/* Login Dialog */}
+        <Dialog open={showLoginDialog} onClose={() => setShowLoginDialog(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>Login Required</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              You need to be logged in to submit a report. Please login or register to continue.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowLoginDialog(false)} color="inherit">
+              Cancel
+            </Button>
+            <Button 
+              component={Link} 
+              to="/login" 
+              variant="contained" 
+              color="primary"
+              onClick={() => setShowLoginDialog(false)}
+            >
+              Login / Register
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Router>
     </>
-    )
+  );
 }
 
 
