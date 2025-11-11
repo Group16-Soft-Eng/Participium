@@ -103,7 +103,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/map" replace />} />
             <Route path="/login" element={<LoginScreen />} />
-            <Route path="/submitReport" element={<ReportForm />} />
+            <Route path="/submitReport" element={<RequireAuth><ReportForm /></RequireAuth>} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/officer" element={<RequireAuth><OfficerPage /></RequireAuth>} />
           </Routes>
