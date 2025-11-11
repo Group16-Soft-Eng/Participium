@@ -8,9 +8,19 @@ export interface OfficerReport {
   description?: string;
   category?: string;
   anonymity?: boolean;
-  authorName?: string;
+  author?: {
+    id?: number;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
   date?: string;
   location?: { Coordinates: { latitude: number; longitude: number } };
+  document?: {
+    description?: string;
+    photos?: string[];
+  };
 }
 
 export async function getAssignedReports(): Promise<OfficerReport[]> {

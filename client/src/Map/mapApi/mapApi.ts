@@ -65,13 +65,21 @@ async function getAllReports(): Promise<Report[]> {
         return backendReports.map((br: any) => ({
             id: br.id?.toString() || '',
             title: br.title || 'Untitled Report',
-            description: br.document?.Description || '',
+            description: br.document?.description || br.document?.Description || '',
             category: br.category || 'other',
             photos: [], // Photos are URLs in backend, convert if needed
             latitude: br.location?.Coordinates?.latitude || 0,
             longitude: br.location?.Coordinates?.longitude || 0,
             createdAt: br.date ? new Date(br.date) : new Date(),
             status: 'resolved' as const, // Approved reports are considered resolved
+            anonymity: br.anonymity,
+            author: br.author ? {
+                id: br.author.id?.toString(),
+                username: br.author.username,
+                firstName: br.author.firstName,
+                lastName: br.author.lastName,
+                email: br.author.email
+            } : undefined
         }));
     } else {
         const err = await response.text();

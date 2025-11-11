@@ -137,11 +137,20 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
           }
 
           const props = c.properties || {};
+          const report = reports.find(r => r.id === props.reportId);
+          const reporterName = report?.anonymity 
+            ? 'Anonymous' 
+            : (report?.author ? `${report.author.firstName || ''} ${report.author.lastName || ''}`.trim() : 'Unknown');
+          
           return (
             <Marker key={`rep-${props.reportId || i}`} position={[lat, lng]} icon={createSimpleIcon(props.category)}>
               <Popup>
-                <strong>{props.title}</strong>
-                <div>{props.description}</div>
+                <div style={{ minWidth: 200 }}>
+                  <strong>{props.title}</strong>
+                  <div style={{ fontSize: '0.85em', color: '#666', marginTop: 4 }}>
+                    Reported by: {reporterName}
+                  </div>
+                </div>
               </Popup>
             </Marker>
           );
@@ -198,23 +207,39 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
       {clusters.map((c, i) => {
         // At high zoom levels (17+), always show individual markers
         if (zoom >= 17) {
-          return c.items.map((r) => (
-            <Marker key={`rep-${r.id}`} position={[r.latitude, r.longitude]} icon={createSimpleIcon(r.category)}>
-              <Popup>
-                <strong>{r.title}</strong>
-                <div>{r.description}</div>
-              </Popup>
-            </Marker>
-          ));
+          return c.items.map((r) => {
+            const reporterName = r.anonymity 
+              ? 'Anonymous' 
+              : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown');
+            return (
+              <Marker key={`rep-${r.id}`} position={[r.latitude, r.longitude]} icon={createSimpleIcon(r.category)}>
+                <Popup>
+                  <div style={{ minWidth: 200 }}>
+                    <strong>{r.title}</strong>
+                    <div style={{ fontSize: '0.85em', color: '#666', marginTop: 4 }}>
+                      Reported by: {reporterName}
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          });
         }
         
         if (c.items.length === 1) {
           const r = c.items[0];
+          const reporterName = r.anonymity 
+            ? 'Anonymous' 
+            : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown');
           return (
             <Marker key={`rep-${r.id}`} position={[r.latitude, r.longitude]} icon={createSimpleIcon(r.category)}>
               <Popup>
-                <strong>{r.title}</strong>
-                <div>{r.description}</div>
+                <div style={{ minWidth: 200 }}>
+                  <strong>{r.title}</strong>
+                  <div style={{ fontSize: '0.85em', color: '#666', marginTop: 4 }}>
+                    Reported by: {reporterName}
+                  </div>
+                </div>
               </Popup>
             </Marker>
           );

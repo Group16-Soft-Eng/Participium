@@ -88,7 +88,6 @@ const OfficerReview: React.FC = () => {
                   <TableCell sx={{ width: 60, fontWeight: 'bold' }}>{r.id}</TableCell>
                   <TableCell>
                     <Typography variant="subtitle2">{r.title}</Typography>
-                    <Typography variant="caption" color="text.secondary">{r.description?.slice(0, 120) || 'No description'}</Typography>
                   </TableCell>
                   <TableCell sx={{ width: 160 }}>
                     <Chip 
@@ -103,7 +102,11 @@ const OfficerReview: React.FC = () => {
                       }}
                     />
                   </TableCell>
-                  <TableCell sx={{ width: 160 }}>{r.anonymity ? 'anonymous' : r.authorName ?? '—'}</TableCell>
+                  <TableCell sx={{ width: 160 }}>
+                    {r.anonymity 
+                      ? 'Anonymous' 
+                      : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : '—')}
+                  </TableCell>
                   <TableCell sx={{ width: 180 }}>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                   <TableCell align="right">
                     <Button variant="contained" color="primary" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
@@ -152,7 +155,13 @@ const OfficerReview: React.FC = () => {
               <strong>Category:</strong> {selected?.category}
             </Box>
             <Box>
-              <strong>Description:</strong> {selected?.description}
+              <strong>Reported by:</strong> {' '}
+              {selected?.anonymity 
+                ? 'Anonymous' 
+                : (selected?.author ? `${selected.author.firstName || ''} ${selected.author.lastName || ''}`.trim() : 'Unknown')}
+            </Box>
+            <Box>
+              <strong>Description:</strong> {selected?.document?.description || selected?.description || 'No description'}
             </Box>
             <Box>
               <strong>Location:</strong> {selected?.location?.Coordinates?.latitude}, {selected?.location?.Coordinates?.longitude}
