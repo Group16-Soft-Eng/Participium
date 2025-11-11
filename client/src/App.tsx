@@ -11,6 +11,7 @@ import ReportForm from './Map/MapComponents/ReportForm';
 import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
 import RequireAuth from './components/RequireAuth';
+import RequireLogin from './components/RequireLogin';
 
 function App() {
   const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
@@ -103,7 +104,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/map" replace />} />
             <Route path="/login" element={<LoginScreen />} />
-            <Route path="/submitReport" element={<RequireAuth><ReportForm /></RequireAuth>} />
+            <Route path="/submitReport" element={<RequireLogin><ReportForm /></RequireLogin>} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/officer" element={<RequireAuth><OfficerPage /></RequireAuth>} />
           </Routes>
