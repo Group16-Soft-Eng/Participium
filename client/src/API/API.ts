@@ -1,9 +1,15 @@
-const URI = 'http://localhost:5000/api/v1'
+import { getToken } from "../services/auth";
 
-const static_ip_address = "http://localhost:5000/";
+const URI = 'http://localhost:5000/api/v1'
 
 type Credentials = {
     username: string;
+    password: string;
+};
+
+
+type OfficerCredentials = {
+    email: string;
     password: string;
 };
 
@@ -29,14 +35,14 @@ async function userLogin(credentials: Credentials) {
         }
     } catch (e) {
         // fallback to mock token if backend not available
-        return `mock-token-citizen-${bodyObject.username}`;
+        // return `mock-token-citizen-${bodyObject.username}`;
     }
 }
 
-async function officerLogin(credentials: Credentials) {
+async function officerLogin(credentials: OfficerCredentials) {
 
     const bodyObject = {
-        username: credentials.username,
+        email: credentials.email,
         password: credentials.password
     }
     try {
@@ -55,13 +61,16 @@ async function officerLogin(credentials: Credentials) {
         }
     } catch (e) {
         // fallback mock token for dev when backend unreachable
-        return `mock-token-officer-${bodyObject.username}`;
+        // return `mock-token-officer-${bodyObject.username}`;
     }
 }
 
 type User = {
-    email: string;
+    username: string;
+    firstName: string;
+    lastName: string;
     password: string;
+    email: string;
 }
 
 
@@ -82,4 +91,27 @@ async function userRegister(user: User) {
     }
 }
 
-export { userLogin, userRegister, officerLogin };
+async function getAssignedReports() {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/officers/retrievedocs`, {
+        method: 'GET',
+        headers: headers,
+    });
+    if (response.ok) {
+        const reports = await response.json();
+        return reports;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+export { userLogin, userRegister, officerLogin, getAssignedReports };

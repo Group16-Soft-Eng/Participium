@@ -10,7 +10,7 @@ import { LoginScreen } from './screens/LoginScreen';
 import ReportForm from './Map/MapComponents/ReportForm';
 import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
-import RequireAuth from './components/RequireAuth';
+import { RequireOfficer } from './components/RequireAuth';
 
 function App() {
   const [, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
@@ -80,7 +80,7 @@ function App() {
             <Route path="/login" element={<LoginScreen />} />
             <Route path="/submitReport" element={<ReportForm />} />
             <Route path="/map" element={<MapPage />} />
-            <Route path="/officer" element={<RequireAuth><OfficerPage /></RequireAuth>} />
+            <Route path="/officer" element={<RequireOfficer><OfficerPage /></RequireOfficer>} />
           </Routes>
         </Box>
       </Router>

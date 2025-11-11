@@ -1,8 +1,9 @@
 import { Box, Button, Container, Grid, Stack, TextField } from "@mui/material";
 import './Forms.css';
-import { Form } from "react-router-dom";
+import { Form, useNavigate } from "react-router-dom";
 import { useActionState, useState } from "react";
-import { userRegister } from "../API/API";
+import { userLogin, userRegister } from "../API/API";
+import { setToken } from "../services/auth";
 
 interface RegisterFormProps {
     setShowRegister: (show: boolean) => void;
@@ -14,6 +15,7 @@ type RegisterState = {
 };
 
 export function RegisterForm({ setShowRegister }: RegisterFormProps) {
+    const navigate = useNavigate();
 
     const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
     const [error, setError] = useState<string | null>(null);
@@ -21,8 +23,8 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
     async function register(prevData: RegisterState, formData: FormData) {
 
         const user = {
-            name: formData.get('name') as string,
-            surname: formData.get('surname') as string,
+            firstName: formData.get('name') as string,
+            lastName: formData.get('surname') as string,
             username: formData.get('username') as string,
             email: formData.get('email') as string,
             password: formData.get('password') as string
@@ -37,11 +39,15 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
         }
         try {
             await userRegister(user);
+            const token = await userLogin({ username: user.username, password: user.password });
+            setToken(token);
+            console.log('Registration and login successful, token:', token);
+            navigate('/submitReport');
             return { success: true }
         }
         catch (error) {
-            setError('Undefined error');
-            return { error: 'Undefined error' };
+            setError('Registration failed');
+            return { error: error instanceof Error ? error.message : String(error) };
         }
     }
 
