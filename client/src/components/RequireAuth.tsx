@@ -9,9 +9,10 @@ interface RequireAuthProps {
 const RequireLogin: React.FC<RequireAuthProps> = ({ children }) => {
   const token = getToken();
   const location = useLocation();
+  const role = getRole();
 
   // require that a token exists and role is 'employee'
-  if (!token) {
+  if (!token || role === 'officer' || role === 'municipal_administrator') {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

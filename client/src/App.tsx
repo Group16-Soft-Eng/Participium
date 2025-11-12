@@ -25,6 +25,7 @@ function App() {
 
   const isLoggedIn = Boolean(auth.token);
   const isOfficer = auth.role === 'officer';
+  const isAdmin = auth.role === 'municipal_administrator';
 
     return (
     <>
@@ -71,6 +72,25 @@ function App() {
                 >
                   Review Reports
                 </Button>
+              ) : isAdmin ? (
+                <Button
+                  component={isLoggedIn ? Link : undefined}
+                  to={isLoggedIn ? "/admin" : undefined}
+                  onClick={!isLoggedIn ? () => setShowLoginDialog(true) : undefined}
+                  variant="contained"
+                  color="secondary"
+                  sx={{
+                    px: 2.2,
+                    py: 0.7,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
+                    background: 'linear-gradient(90deg, #00c20aff, #008f15ff)'
+                  }}
+                >
+                  Admin Dashboard
+                </Button>
               ) : (
                 <Button
                   component={isLoggedIn ? Link : undefined}
@@ -89,8 +109,7 @@ function App() {
                   }}
                 >
                   Write a report
-                </Button>
-              )}
+                </Button>)}
               
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
               {isLoggedIn ? <UserMenu /> : (
