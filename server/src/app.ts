@@ -11,7 +11,6 @@ import { infoTypeRouter } from "@routes/InfoType";
 export const app = express();
 let routes = CONFIG.ROUTES;
 
-// ✅ CORS deve essere PRIMA di tutto
 app.use(cors({
     origin: "http://localhost:5173",
     credentials: true,
@@ -20,7 +19,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(routes.V1_AUTH, authRouter);
