@@ -6,17 +6,44 @@ interface RequireAuthProps {
   children: React.ReactElement;
 }
 
-const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
-  const role = getRole();
+const RequireLogin: React.FC<RequireAuthProps> = ({ children }) => {
   const token = getToken();
   const location = useLocation();
 
   // require that a token exists and role is 'employee'
-  if (!token || role !== 'employee') {
+  if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
 };
 
-export default RequireAuth;
+
+const RequireOfficer: React.FC<RequireAuthProps> = ({ children }) => {
+  const role = getRole();
+  const token = getToken();
+  const location = useLocation();
+
+  // require that a token exists and role is 'employee'
+  if (!token || role !== 'officer' && role !== 'administrator') {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+
+
+const RequireAdmin: React.FC<RequireAuthProps> = ({ children }) => {
+  const role = getRole();
+  const token = getToken();
+  const location = useLocation();
+
+  // require that a token exists and role is 'employee'
+  if (!token || role !== 'administrator') {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+
+export { RequireLogin, RequireOfficer, RequireAdmin };

@@ -20,38 +20,56 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
 
     async function register(prevData: LoginState, formData: FormData) {
 
+        const officer = {
+            email: formData.get('username') as string,
+            password: formData.get('password') as string
+        }
+
         const user = {
             username: formData.get('username') as string,
             password: formData.get('password') as string
         }
+
         try {
             // first try officer login
-            const token = await officerLogin(user);
-            setToken(token);
-            // try to read role from token if available
-            const detected = getRoleFromToken(token);
-            if (detected === 'employee') setRole('employee');
-            else setRole('employee');
-            window.dispatchEvent(new Event('authChange'));
-            navigate('/officer');
-            return { success: true };
-        } catch (e) {
-            // if officer login failed, try user login
-            try {
-                const token = await userLogin(user);
+            const token = await officerLogin(officer);
+            if (token !== undefined) {
                 setToken(token);
-                const detected = getRoleFromToken(token);
-                if (detected === 'employee') setRole('employee');
-                else setRole('citizen');
-                window.dispatchEvent(new Event('authChange'));
-                navigate('/submitReport');
+                const role = getRoleFromToken(token);
+                if (role?.includes('office')) {
+                    setRole('officer');
+                    window.dispatchEvent(new Event('authChange'));
+                    navigate('/officer');
+                } else if (role?.includes('administrator')) {
+                    setRole('administrator');
+                    window.dispatchEvent(new Event('authChange'));
+                    navigate('/admin');
+                }
                 return { success: true };
-            } catch (err) {
-                setError('Login failed');
-                return { error: 'Login failed' };
+            } else {
+                try {
+                    const token = await userLogin(user);
+                    if (token !== undefined) {
+                        setToken(token);
+                        setRole('citizen');
+                        window.dispatchEvent(new Event('authChange'));
+                        navigate('/submitReport');
+                        return { success: true };
+                    } else {
+                        setError('Unknown username or password, please try again');
+                        return { error: 'Login failed' };
+                    }
+                } catch (err) {
+                    setError('Login failed');
+                    return { error: 'Login failed' };
+                }
             }
+        } catch (e) {
+            setError('Login failed');
+            return { error: 'Login failed' };
         }
     }
+
     return (
         <Container id="login-form">
             <form action={formAction}>

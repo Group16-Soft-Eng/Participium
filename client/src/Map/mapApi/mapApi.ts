@@ -1,3 +1,4 @@
+import { getToken } from '../../services/auth';
 import type { Report, ReportData } from '../types/report';
 
 const URI = 'http://localhost:5000/api/v1';
@@ -23,9 +24,16 @@ async function createReport(reportData: ReportData): Promise<Report> {
         formData.append('photos', photo);
     });
 
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(URI + `/reports`, {
         method: 'POST',
-        credentials: 'include',
+        headers: headers,
         body: formData
     });
 
@@ -40,9 +48,18 @@ async function createReport(reportData: ReportData): Promise<Report> {
 
 // GET ALL REPORTS
 async function getAllReports(): Promise<Report[]> {
+    
+    const token = getToken();
+
+    
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch(URI + `/reports`, {
         method: 'GET',
-        credentials: 'include',
+        headers: headers,
     });
 
     if (response.ok) {

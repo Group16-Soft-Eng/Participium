@@ -1,4 +1,5 @@
 import api from './api';
+import { getToken } from './auth';
 
 export type ReportState = 'PENDING' | 'APPROVED' | 'DECLINED';
 
@@ -39,7 +40,15 @@ let MOCK_REPORTS: OfficerReport[] = [
 
 export async function getAssignedReports(): Promise<OfficerReport[]> {
   try {
-  const res = await api.get<OfficerReport[]>('/officers/retrievedocs');
+
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const res = await api.get<OfficerReport[]>('/officers/retrievedocs', { headers });
     return res.data;
   } catch (e) {
     // return mock
@@ -61,7 +70,15 @@ export async function reviewReport(id: number, approved: ReportState, reason?: s
       payload.Office = assignedOffice;
     }
 
-    await api.patch(`/officers/reviewdocs/${id}`, payload);
+
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    await api.patch(`/officers/reviewdocs/${id}`, payload, { headers });
     return true;
   } catch (e) {
     // update mock data in-memory
