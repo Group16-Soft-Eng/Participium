@@ -3,3 +3,4 @@
 **/.env
 **/.vite/
 **/uploads/
+/server/participium.db

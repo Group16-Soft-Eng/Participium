@@ -8,9 +8,7 @@ const router = Router({mergeParams : true});
 router.post("", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR]), async(req, res, next) =>{
     try{
         // debug incoming body and parsed DTO to find undefined fields
-        console.log("POST /officers body:", req.body);
         const officerData = OfficerFromJSON(req.body);
-        console.log("Parsed officerData:", officerData);
         if(!officerData.email) return res.status(400).json({error: "email is required"});
         const result = await createOfficer(officerData);
         res.status(200).json(result);

@@ -1,14 +1,18 @@
 import {Router} from "express";
-import {loginOfficer,loginUser} from "@controllers/authController"
+import {loginOfficer, loginUser} from "@controllers/authController"
 const router = Router({mergeParams : true});
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 //login user
 router.post("/users", async(req, res, next) =>{
     try{
-        let username = req.body["username"];
+        let identifier = req.body["username"];
         let password = req.body["password"];
-        const result = await loginUser(username, password);
+        
+        const isEmail = emailRegex.test(identifier);
+        const result = await loginUser(identifier, password, isEmail);
+            
         res.status(200).json(result);
     }
     catch(error)
@@ -16,12 +20,15 @@ router.post("/users", async(req, res, next) =>{
         next(error);
     }
 });
+
 //login staff, both officers and admins
 router.post("/officers", async(req, res, next) =>{
     try{
-        console.log(req.body);
         const { email, password } = req.body;
-        const result = await loginOfficer(email, password);
+        
+        const isEmail = emailRegex.test(email);
+        const result = await loginOfficer(email, password, isEmail);
+            
         res.status(200).json(result);
     }
     catch(error)
@@ -29,4 +36,5 @@ router.post("/officers", async(req, res, next) =>{
         next(error);
     }
 });
+
 export {router as authRouter};

@@ -6,6 +6,7 @@ import { OfficerDAO } from "@dao/OfficerDAO";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
 import { findOrThrowNotFound, throwConflictIfFound } from "@utils/utils";
+import { UserRepository } from "./UserRepository";
 import { hashPassword } from "@services/authService";
 
 export class OfficerRepository {
@@ -54,6 +55,11 @@ export class OfficerRepository {
       `Officer with email '${email}' already exists`
     );
 
+    const userRepo = new UserRepository();
+    const existingUser = await userRepo.getUserByEmail(email).catch(() => null);
+    if (existingUser) {
+      throw new Error(`Email '${email}' is already used.`);
+    }
     const hashedPassword = await hashPassword(plainPassword);
 
     return this.repo.save({

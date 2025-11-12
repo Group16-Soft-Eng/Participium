@@ -7,6 +7,7 @@
 Name | Type
 ------------ | -------------
 `id` | number
+`username` | string
 `firstname` | string
 `lastname` | string
 `email` | string
@@ -22,6 +23,7 @@ import type { Officer } from ''
 // TODO: Update the object below with actual values
 const example = {
   "id": null,
+  "username": null,
   "name": null,
   "surname": null,
   "email": null,

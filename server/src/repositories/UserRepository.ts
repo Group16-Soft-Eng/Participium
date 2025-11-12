@@ -2,6 +2,7 @@
 
 import { AppDataSource } from "@database";
 import { Repository } from "typeorm";
+import { OfficerRepository } from "./OfficerRepository";
 import { UserDAO } from "@dao/UserDAO";
 import { findOrThrowNotFound, throwConflictIfFound } from "@utils/utils";
 import { hashPassword } from "@services/authService";
@@ -25,6 +26,13 @@ export class UserRepository {
     );
   }
 
+  async getUserByEmail(email: string): Promise<UserDAO> {
+    return findOrThrowNotFound(
+      await this.repo.find({ where: { email } }),
+      () => true,
+      `User with email '${email}' not found`
+    );
+  }
 
   async getUserById(id: number): Promise<UserDAO> {
     return findOrThrowNotFound(
@@ -48,14 +56,17 @@ export class UserRepository {
       () => true,
       `User with username '${username}' already exists`
     );
-
+    const officerRepo = new OfficerRepository();
+    const existingOfficer = await officerRepo.getOfficerByEmail(email).catch(() => null);
+    if (existingOfficer) {
+      throw new Error(`Email '${email}' is already used.`);
+    }
     // Check if email already exists
     throwConflictIfFound(
       await this.repo.find({ where: { email } }),
       () => true,
       `User with email '${email}' already exists`
     );
-
     // Hash password
     const hashedPassword = await hashPassword(plainPassword);
 

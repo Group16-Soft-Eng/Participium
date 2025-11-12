@@ -6,7 +6,7 @@ import { OfficeType } from "@models/enums/OfficeType";
 export class OfficerDAO {
   @PrimaryGeneratedColumn()
   id!: number;
-
+  
   @Column({ nullable: false })
   name!: string;
 

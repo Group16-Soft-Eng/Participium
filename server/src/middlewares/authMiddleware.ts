@@ -51,3 +51,8 @@ export function requireUserType(allowedTypes: string[]) {
         }
     };
 }
+
+export function regexMail(email: string): boolean {
+    const mailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return mailRegex.test(email);
+}
