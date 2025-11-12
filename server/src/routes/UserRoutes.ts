@@ -19,6 +19,7 @@ router.get("/logout",authenticateToken, async(req, res, next) =>{
 });
 router.post("/", async(req, res, next) =>{
     try{
+        console.log("POST /users body:", req.body);
         const userData = UserFromJSON(req.body);
         const result = await createUser(userData);
         res.status(200).json(result);
