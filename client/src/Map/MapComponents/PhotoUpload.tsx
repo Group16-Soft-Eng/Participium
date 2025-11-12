@@ -16,9 +16,17 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
+  // allowed mime types (match server-side acceptance)
+  const ALLOWED_MIME = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    // filter only image files and allowed mime types
+    const imageFiles = files.filter(file => file.type.startsWith('image/') && ALLOWED_MIME.includes(file.type));
+    const rejected = files.filter(file => file.type.startsWith('image/') && !ALLOWED_MIME.includes(file.type));
+    if (rejected.length > 0) {
+      alert('Some files were ignored because only JPG, PNG and WebP formats are allowed.');
+    }
     const remainingSlots = maxPhotos - photos.length;
     const filesToAdd = imageFiles.slice(0, remainingSlots);
     
@@ -88,7 +96,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
             ref={fileInputRef}
             type="file"
             multiple
-            accept="image/*"
+            accept="image/png,image/jpeg,image/webp"
             onChange={handleFileSelect}
             className="upload-input"
           />

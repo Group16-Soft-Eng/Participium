@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getAssignedReports, reviewReport } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
-import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton } from '@mui/material';
 
 interface RejectState {
   open: boolean;
@@ -28,6 +28,7 @@ const OfficerReview: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [reject, setReject] = useState<RejectState>({ open: false, reportId: null, reason: '' });
   const [selected, setSelected] = useState<OfficerReport | null>(null);
+  const [openImageIndex, setOpenImageIndex] = useState<number | null>(null);
 
   useEffect(() => {
     fetchReports();
@@ -163,6 +164,28 @@ const OfficerReview: React.FC = () => {
             <Box>
               <strong>Description:</strong> {selected?.document?.description || selected?.description || 'No description'}
             </Box>
+            {/* Photos (if any) */}
+            {selected?.document?.photos && selected.document.photos.length > 0 && (
+              <Box>
+                <strong>Photos:</strong>
+                <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                  {selected.document.photos.map((p, idx) => {
+                    // backend returns paths like "/uploads/reports/xxxx.jpg" - convert to absolute server URL
+                    const apiBase = (import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api/v1').replace(/\/api\/v1\/?$/i, '');
+                    const src = p.startsWith('http') ? p : `${apiBase}${p}`;
+                    return (
+                      <img
+                        key={idx}
+                        src={src}
+                        alt={`report-photo-${idx}`}
+                        style={{ width: 120, height: 90, objectFit: 'cover', borderRadius: 6, border: '1px solid #ddd', cursor: 'pointer' }}
+                        onClick={() => setOpenImageIndex(idx)}
+                      />
+                    );
+                  })}
+                </Box>
+              </Box>
+            )}
             <Box>
               <strong>Location:</strong> {selected?.location?.Coordinates?.latitude}, {selected?.location?.Coordinates?.longitude}
             </Box>
@@ -182,6 +205,40 @@ const OfficerReview: React.FC = () => {
             View on Map
           </Button>
           <Button onClick={() => setSelected(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Lightbox dialog for viewing photos */}
+      <Dialog open={openImageIndex !== null} onClose={() => setOpenImageIndex(null)} maxWidth="md" fullWidth>
+        <DialogContent sx={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', p: 0, bgcolor: 'black' }}>
+          {selected && selected.document?.photos && openImageIndex !== null && (
+            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: '60vh' }}>
+              <IconButton
+                onClick={() => setOpenImageIndex(i => (i !== null ? (i - 1 + selected.document!.photos!.length) % selected.document!.photos!.length : null))}
+                sx={{ color: 'white', position: 'absolute', left: 8, bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }, fontSize: '2rem' }}
+              >
+                ‹
+              </IconButton>
+
+              <img
+                src={(import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api/v1').replace(/\/api\/v1\/?$/i, '') + selected.document.photos[openImageIndex]}
+                alt={`full-${openImageIndex}`}
+                style={{ maxWidth: '100%', maxHeight: '80vh', margin: '0 auto', display: 'block' }}
+              />
+
+              <IconButton
+                onClick={() => setOpenImageIndex(i => (i !== null ? (i + 1) % selected.document!.photos!.length : null))}
+                sx={{ color: 'white', position: 'absolute', right: 8, bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }, fontSize: '2rem' }}
+              >
+                ›
+              </IconButton>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ bgcolor: 'black' }}>
+          <Button onClick={() => setOpenImageIndex(null)} variant="contained" color="primary">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

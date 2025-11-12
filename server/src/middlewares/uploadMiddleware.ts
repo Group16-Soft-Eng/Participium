@@ -20,16 +20,18 @@ const storage = multer.diskStorage({
   }
 });
 
-// filter (opzionale per accettare solo jpg e png)
+// filter (opzionale per accettare solo jpg, png e webp)
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedTypes = /jpeg|jpg|png/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+  // allow jpg, jpeg, png, webp
+  const allowedExt = /jpeg|jpg|png|webp/;
+  const allowedMime = /image\/(jpeg|jpg|png|webp)/;
+  const extname = allowedExt.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedMime.test(file.mimetype.toLowerCase());
 
   if (extname && mimetype) {
     cb(null, true);
   } else {
-    cb(new BadRequestError("Only JPG, JPEG, PNG images are allowed! Not allowed format."));
+    cb(new BadRequestError("Only JPG, JPEG, PNG and WebP images are allowed! Not allowed format."));
   }
 };
 
