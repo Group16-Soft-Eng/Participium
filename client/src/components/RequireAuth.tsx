@@ -25,7 +25,7 @@ const RequireOfficer: React.FC<RequireAuthProps> = ({ children }) => {
   const location = useLocation();
 
   // require that a token exists and role is 'employee'
-  if (!token || role !== 'officer' && role !== 'administrator') {
+  if (!token || role !== 'officer' && role !== 'municipal_administrator') {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -39,7 +39,7 @@ const RequireAdmin: React.FC<RequireAuthProps> = ({ children }) => {
   const location = useLocation();
 
   // require that a token exists and role is 'employee'
-  if (!token || role !== 'administrator') {
+  if (!token || role !== 'municipal_administrator') {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

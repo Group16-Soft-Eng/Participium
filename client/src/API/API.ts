@@ -73,6 +73,15 @@ type User = {
     email: string;
 }
 
+type Officer = {
+    email: string;
+    name: string;
+    surname: string;
+    password: string;
+    office: string;
+    role: string;
+}
+
 
 async function userRegister(user: User) {
 
@@ -81,6 +90,29 @@ async function userRegister(user: User) {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(user)
+    });
+    if (response.ok) {
+        return true;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+async function officerRegister(officer: Officer) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/officers`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(officer)
     });
     if (response.ok) {
         return true;
@@ -114,4 +146,4 @@ async function getAssignedReports() {
     }
 }
 
-export { userLogin, userRegister, officerLogin, getAssignedReports };
+export { userLogin, userRegister, officerLogin, officerRegister, getAssignedReports };

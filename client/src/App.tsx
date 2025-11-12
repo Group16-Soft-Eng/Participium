@@ -5,12 +5,13 @@ import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import UserMenu from './components/UserMenu';
 import { useEffect, useState } from 'react';
 import { getToken, getRole } from './services/auth';
-import { LoginScreen } from './screens/LoginScreen';
+import { LoginScreen } from './pages/LoginScreen';
 
 import ReportForm from './Map/MapComponents/ReportForm';
 import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
 import { RequireOfficer } from './components/RequireAuth';
+import { AdminScreen } from './pages/AdminPage';
 
 function App() {
   const [, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
@@ -80,6 +81,7 @@ function App() {
             <Route path="/login" element={<LoginScreen />} />
             <Route path="/submitReport" element={<ReportForm />} />
             <Route path="/map" element={<MapPage />} />
+            <Route path="/admin" element={<AdminScreen />} />
             <Route path="/officer" element={<RequireOfficer><OfficerPage /></RequireOfficer>} />
           </Routes>
         </Box>

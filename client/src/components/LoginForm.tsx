@@ -41,7 +41,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                     window.dispatchEvent(new Event('authChange'));
                     navigate('/officer');
                 } else if (role?.includes('administrator')) {
-                    setRole('administrator');
+                    setRole('municipal_administrator');
                     window.dispatchEvent(new Event('authChange'));
                     navigate('/admin');
                 }
