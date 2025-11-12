@@ -41,10 +41,20 @@ const createSimpleIcon = (category?: string) => {
 
 const createPinIcon = () => {
   return L.divIcon({
-    html: `<div class="pin-marker">�</div>`,
+    html: `<div class="pin-marker">📍</div>`,
     className: 'pin-icon',
     iconSize: [30, 30],
     iconAnchor: [15, 30],
+  });
+};
+
+const createHighlightPinIcon = () => {
+  return L.divIcon({
+    html: `<div class="highlight-pin-marker">📍</div>`,
+    className: 'highlight-pin-icon',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
   });
 };
 
@@ -127,11 +137,20 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
           }
 
           const props = c.properties || {};
+          const report = reports.find(r => r.id === props.reportId);
+          const reporterName = report?.anonymity 
+            ? 'Anonymous' 
+            : (report?.author ? `${report.author.firstName || ''} ${report.author.lastName || ''}`.trim() : 'Unknown');
+          
           return (
             <Marker key={`rep-${props.reportId || i}`} position={[lat, lng]} icon={createSimpleIcon(props.category)}>
               <Popup>
-                <strong>{props.title}</strong>
-                <div>{props.description}</div>
+                <div style={{ minWidth: 200 }}>
+                  <strong>{props.title}</strong>
+                  <div style={{ fontSize: '0.85em', color: '#666', marginTop: 4 }}>
+                    Reported by: {reporterName}
+                  </div>
+                </div>
               </Popup>
             </Marker>
           );
@@ -188,23 +207,39 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
       {clusters.map((c, i) => {
         // At high zoom levels (17+), always show individual markers
         if (zoom >= 17) {
-          return c.items.map((r) => (
-            <Marker key={`rep-${r.id}`} position={[r.latitude, r.longitude]} icon={createSimpleIcon(r.category)}>
-              <Popup>
-                <strong>{r.title}</strong>
-                <div>{r.description}</div>
-              </Popup>
-            </Marker>
-          ));
+          return c.items.map((r) => {
+            const reporterName = r.anonymity 
+              ? 'Anonymous' 
+              : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown');
+            return (
+              <Marker key={`rep-${r.id}`} position={[r.latitude, r.longitude]} icon={createSimpleIcon(r.category)}>
+                <Popup>
+                  <div style={{ minWidth: 200 }}>
+                    <strong>{r.title}</strong>
+                    <div style={{ fontSize: '0.85em', color: '#666', marginTop: 4 }}>
+                      Reported by: {reporterName}
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          });
         }
         
         if (c.items.length === 1) {
           const r = c.items[0];
+          const reporterName = r.anonymity 
+            ? 'Anonymous' 
+            : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown');
           return (
             <Marker key={`rep-${r.id}`} position={[r.latitude, r.longitude]} icon={createSimpleIcon(r.category)}>
               <Popup>
-                <strong>{r.title}</strong>
-                <div>{r.description}</div>
+                <div style={{ minWidth: 200 }}>
+                  <strong>{r.title}</strong>
+                  <div style={{ fontSize: '0.85em', color: '#666', marginTop: 4 }}>
+                    Reported by: {reporterName}
+                  </div>
+                </div>
               </Popup>
             </Marker>
           );
@@ -232,16 +267,44 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
   );
 }
 
-const MapClusterView: React.FC<{ reports: Report[]; selectedId?: string | null }> = ({ reports, selectedId }) => {
+interface MapClusterViewProps {
+  reports: Report[];
+  selectedId?: string | null;
+  initialCenter?: [number, number] | null;
+  initialZoom?: number | null;
+  highlightLocation?: [number, number] | null;
+}
+
+function MapController({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [map, center, zoom]);
+  return null;
+}
+
+const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, initialCenter, initialZoom, highlightLocation }) => {
+  const center = initialCenter || TURIN_COORDINATES;
+  const zoom = initialZoom || 13;
+  
   return (
     <div style={{ height: 'calc(100vh - 64px)', width: '100%' }}>
-      <MapContainer center={TURIN_COORDINATES} zoom={13} style={{ height: '100%', width: '100%' }}>
+      <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-
-  <ClusteringLayer reports={reports} selectedId={selectedId} />
+        {initialCenter && initialZoom && <MapController center={initialCenter} zoom={initialZoom} />}
+        <ClusteringLayer reports={reports} selectedId={selectedId} />
+        {highlightLocation && (
+          <Marker position={highlightLocation} icon={createHighlightPinIcon()}>
+            <Popup>
+              <strong>📍 Report Location</strong>
+              <br />
+              Coordinates: {highlightLocation[0].toFixed(4)}, {highlightLocation[1].toFixed(4)}
+            </Popup>
+          </Marker>
+        )}
       </MapContainer>
     </div>
   );

@@ -2,14 +2,10 @@ import { getToken } from "../services/auth";
 
 const URI = 'http://localhost:5000/api/v1'
 
+const static_ip_address = "http://localhost:5000/";
+
 type Credentials = {
     username: string;
-    password: string;
-};
-
-
-type OfficerCredentials = {
-    email: string;
     password: string;
 };
 
@@ -19,6 +15,9 @@ async function userLogin(credentials: Credentials) {
         username: credentials.username,
         password: credentials.password
     }
+    console.log('userLogin - Sending request to:', URI + `/auth/users`);
+    console.log('userLogin - Body:', bodyObject);
+    
     try {
         const response = await fetch(URI + `/auth/users`, {
             method: 'POST',
@@ -26,25 +25,33 @@ async function userLogin(credentials: Credentials) {
             credentials: 'include',
             body: JSON.stringify(bodyObject)
         })
+        
+        console.log('userLogin - Response status:', response.status);
+        
         if (response.ok) {
             const token = await response.json();
+            console.log('userLogin - Token received:', token);
             return token;
         } else {
             const err = await response.text()
-            throw err;
+            console.error('userLogin - Error response:', err);
+            throw new Error(err || 'Login failed');
         }
-    } catch (e) {
-        // fallback to mock token if backend not available
-        // return `mock-token-citizen-${bodyObject.username}`;
+    } catch (error) {
+        console.error('userLogin - Network or parse error:', error);
+        throw error;
     }
 }
 
-async function officerLogin(credentials: OfficerCredentials) {
+async function officerLogin(credentials: Credentials) {
 
     const bodyObject = {
-        email: credentials.email,
+        email: credentials.username, // Backend expects 'email' field for officers
         password: credentials.password
     }
+    console.log('officerLogin - Sending request to:', URI + `/auth/officers`);
+    console.log('officerLogin - Body:', bodyObject);
+    
     try {
         const response = await fetch(URI + `/auth/officers`, {
             method: 'POST',
@@ -52,16 +59,21 @@ async function officerLogin(credentials: OfficerCredentials) {
             credentials: 'include',
             body: JSON.stringify(bodyObject)
         })
+        
+        console.log('officerLogin - Response status:', response.status);
+        
         if (response.ok) {
             const token = await response.json();
+            console.log('officerLogin - Token received:', token);
             return token;
         } else {
             const err = await response.text()
-            throw err;
+            console.error('officerLogin - Error response:', err);
+            throw new Error(err || 'Officer login failed');
         }
-    } catch (e) {
-        // fallback mock token for dev when backend unreachable
-        // return `mock-token-officer-${bodyObject.username}`;
+    } catch (error) {
+        console.error('officerLogin - Network or parse error:', error);
+        throw error;
     }
 }
 
@@ -69,8 +81,8 @@ type User = {
     username: string;
     firstName: string;
     lastName: string;
-    password: string;
     email: string;
+    password: string;
 }
 
 type Officer = {

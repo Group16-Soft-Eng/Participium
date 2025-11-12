@@ -1,5 +1,4 @@
 import api from './api';
-import { getToken } from './auth';
 
 export type ReportState = 'PENDING' | 'APPROVED' | 'DECLINED';
 
@@ -9,85 +8,43 @@ export interface OfficerReport {
   description?: string;
   category?: string;
   anonymity?: boolean;
-  authorName?: string;
+  author?: {
+    id?: number;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
   date?: string;
   location?: { Coordinates: { latitude: number; longitude: number } };
+  document?: {
+    description?: string;
+    photos?: string[];
+  };
 }
-
-// fallback mock data used when backend is not available
-let MOCK_REPORTS: OfficerReport[] = [
-  {
-    id: 1,
-    title: 'Pothole in Via Roma',
-    description: 'Large pothole near crosswalk',
-    category: 'Roads and Urban Furnishings',
-    anonymity: false,
-    authorName: 'Giulia Bianchi',
-    date: new Date().toISOString(),
-    location: { Coordinates: { latitude: 45.0705, longitude: 7.6860 } },
-  },
-  {
-    id: 2,
-    title: 'Streetlight not working',
-    description: 'Lamppost off since last week',
-    category: 'Public Lighting',
-    anonymity: true,
-    authorName: 'anonymous',
-    date: new Date().toISOString(),
-    location: { Coordinates: { latitude: 45.0710, longitude: 7.6870 } },
-  },
-];
 
 export async function getAssignedReports(): Promise<OfficerReport[]> {
   try {
-
-    const token = getToken();
-
-    const headers: HeadersInit = {};
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    const res = await api.get<OfficerReport[]>('/officers/retrievedocs', { headers });
+    const res = await api.get<OfficerReport[]>('/officers/retrievedocs');
     return res.data;
   } catch (e) {
-    // return mock
-    return MOCK_REPORTS;
+    console.error('Error fetching assigned reports:', e);
+    return [];
   }
 }
 
-export async function reviewReport(id: number, approved: ReportState, reason?: string, assignedOffice?: string): Promise<boolean> {
+export async function reviewReport(id: number, approved: ReportState, reason?: string): Promise<boolean> {
   try {
-    // Align payload to OpenAPI `ReportState` schema.
-    // The spec expects an object like: { Report: { ... }, Approved: 'APPROVED'|'DECLINED'|'PENDING', Reason: string, Officer?: {...} }
-    const payload: any = {
-      Report: { id },
-      Approved: approved,
-      Reason: reason ?? '',
+    // Backend expects: { state: 'APPROVED' | 'DECLINED', reason?: string }
+    const payload = {
+      state: approved,
+      reason: reason ?? undefined
     };
-    if (assignedOffice) {
-      // Some backends expect Office/Officer information; include as Office field if provided.
-      payload.Office = assignedOffice;
-    }
 
-
-    const token = getToken();
-
-    const headers: HeadersInit = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    await api.patch(`/officers/reviewdocs/${id}`, payload, { headers });
+    await api.patch(`/officers/reviewdocs/${id}`, payload);
     return true;
   } catch (e) {
-    // update mock data in-memory
-    const idx = MOCK_REPORTS.findIndex((r) => r.id === id);
-    if (idx >= 0) {
-      // remove from mock list to simulate it being processed
-      MOCK_REPORTS.splice(idx, 1);
-      return true;
-    }
+    console.error('Error reviewing report:', e);
     return false;
   }
 }

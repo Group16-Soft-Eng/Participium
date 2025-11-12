@@ -54,7 +54,7 @@ export function getRoleFromToken(token: string | null): Role {
   // common claim names: role, roles, scope
   if (data.type) return data.type as Role;
   if (data.type && Array.isArray(data.type) && data.type.length > 0) return (data.type[0] as Role);
-  if (typeof data.scope === 'string' && data.scope.includes('officer')) return 'officer';
+  if (typeof data.scope === 'string' && data.scope.includes('office')) return 'officer';
   if (typeof data.scope === 'string' && data.scope.includes('municipal_administrator')) return 'municipal_administrator';
 
   return null;

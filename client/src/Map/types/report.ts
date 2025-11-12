@@ -8,6 +8,14 @@ export interface Report {
   longitude: number;
   createdAt: Date;
   status: 'pending' | 'in-progress' | 'resolved';
+  anonymity?: boolean;
+  author?: {
+    id?: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
 }
 
 export interface ReportData {

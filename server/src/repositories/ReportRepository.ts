@@ -21,6 +21,16 @@ export class ReportRepository {
   async getApprovedReports(): Promise<ReportDAO[]> {
     return this.repo.find({
       where: { state: ReportState.APPROVED },
+      relations: ["author"],
+      order: {
+        date: "DESC" // Most recent first
+      }
+    });
+  }
+
+  async getReportsByState(state: ReportState): Promise<ReportDAO[]> {
+    return this.repo.find({
+      where: { state },
       relations: ["author"]
     });
   }
@@ -65,12 +75,14 @@ export class ReportRepository {
       Photos?: string[];
     }
   ): Promise<ReportDAO> {
+    // Ensure category is not null (DB constraint). Default to OTHER when missing.
+    const safeCategory = category || (OfficeType as any).OTHER || 'other';
     return this.repo.save({
       title,
       location,
       author,
       anonymity,
-      category,
+      category: safeCategory,
       document,
       state: ReportState.PENDING,
       date: new Date()
