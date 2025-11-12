@@ -24,7 +24,7 @@ function App() {
     }, []);
 
   const isLoggedIn = Boolean(auth.token);
-  const isOfficer = auth.role === 'employee';
+  const isOfficer = auth.role === 'officer';
 
     return (
     <>
