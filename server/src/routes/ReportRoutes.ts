@@ -10,7 +10,9 @@ const router = Router({mergeParams : true});
 
 router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, async(req, res, next) =>{
     try{
+        console.log(req.body);
         const reportData = ReportFromJSON(req.body);
+        console.log(reportData);
 
         const files = req.files as Express.Multer.File[]; // uploaded files
         const userId = (req as any).user?.id;

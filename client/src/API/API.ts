@@ -78,8 +78,8 @@ type Officer = {
     name: string;
     surname: string;
     password: string;
-    office: string;
-    role: string;
+    Office: string;
+    Role: string;
 }
 
 
@@ -146,4 +146,27 @@ async function getAssignedReports() {
     }
 }
 
-export { userLogin, userRegister, officerLogin, officerRegister, getAssignedReports };
+async function getAvailableOfficerTypes() {
+    const token = getToken();
+    
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/info-types`, {
+        method: 'GET',
+        headers: headers,
+    });
+    if (response.ok) {
+        const types = await response.json();
+        return types;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+export { userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes };

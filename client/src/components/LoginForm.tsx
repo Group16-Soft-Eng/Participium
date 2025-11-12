@@ -74,8 +74,8 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
         <Container id="login-form">
             <form action={formAction}>
                 <Stack spacing={2}>
-                    <TextField fullWidth id="username" name="username" label="Username" variant="outlined" />
-                    <TextField fullWidth id="password" name="password" label="Password" variant="outlined" type="password" />
+                    <TextField fullWidth id="username" name="username" label="Username" variant="outlined" required/>
+                    <TextField fullWidth id="password" name="password" label="Password" variant="outlined" type="password" required/>
 
                     {/* role auto-detection: officer login attempted first, then citizen */}
 
