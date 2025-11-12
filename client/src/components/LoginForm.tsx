@@ -31,6 +31,10 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
         }
 
         try {
+            if(officer.email == undefined || user.username == undefined || officer.password == undefined || user.password == undefined) {
+                setError('Please enter a username/email');
+                return { error: 'Login failed' };
+            }
             // first try officer login
             const token = await officerLogin(officer);
             if (token !== undefined) {
