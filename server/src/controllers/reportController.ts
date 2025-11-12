@@ -8,11 +8,20 @@ import { OfficeType } from "@models/enums/OfficeType";
 import { validatePhotosCount, getPhotoPaths } from "@utils/fileUtils";
 
 
-//? qui prendo gli solo gli Approved Reports (probabilmente ci servirà per la mappa pubblica in PT07)
+//? qui prendo gli solo gli Approved Reports (per la mappa pubblica)
 export async function getReports(): Promise<Report[]> {
   const reportRepo = new ReportRepository();
   const reports = await reportRepo.getApprovedReports();
   return reports.map(mapReportDAOToDTO);
+}
+
+//? Get approved reports filtered by office (for officers)
+export async function getReportsByOffice(office: OfficeType): Promise<Report[]> {
+  const reportRepo = new ReportRepository();
+  const reports = await reportRepo.getApprovedReports();
+  // Filter by office/category
+  const filtered = reports.filter(r => r.category === office);
+  return filtered.map(mapReportDAOToDTO);
 }
 
 

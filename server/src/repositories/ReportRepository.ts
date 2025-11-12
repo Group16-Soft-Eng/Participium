@@ -21,6 +21,16 @@ export class ReportRepository {
   async getApprovedReports(): Promise<ReportDAO[]> {
     return this.repo.find({
       where: { state: ReportState.APPROVED },
+      relations: ["author"],
+      order: {
+        date: "DESC" // Most recent first
+      }
+    });
+  }
+
+  async getReportsByState(state: ReportState): Promise<ReportDAO[]> {
+    return this.repo.find({
+      where: { state },
       relations: ["author"]
     });
   }

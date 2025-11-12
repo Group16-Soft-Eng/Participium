@@ -73,8 +73,8 @@ export async function assignReportToOfficer(reportId: number, officerId: number)
 export async function retrieveDocs(officerId: number): Promise<Report[]> {
   const reportRepo = new ReportRepository();
   
-  // Prendi solo i report ASSEGNATI a questo officer
-  const reports = await reportRepo.getReportsByAssignedOfficer(officerId);
+  // Get all PENDING reports that need review (not yet assigned or assigned to this officer)
+  const reports = await reportRepo.getReportsByState(ReportState.PENDING);
   
   return reports.map(mapReportDAOToDTO);
 }
@@ -84,9 +84,12 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
   
-  // Verifica che il report sia assegnato a questo officer
+  // Get the report
   const report = await reportRepo.getReportById(idDoc);
-  if (report.assignedOfficerId !== officerId) {
+  
+  // Only check assignment if the report is already assigned
+  // PENDING reports that are not assigned can be reviewed by any officer
+  if (report.assignedOfficerId !== null && report.assignedOfficerId !== officerId) {
     throw new Error("You can only review reports assigned to you");
   }
   

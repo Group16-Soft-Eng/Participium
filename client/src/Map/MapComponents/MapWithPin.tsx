@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { LatLng } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -37,8 +37,21 @@ interface MapWithPinProps {
   selectedPosition?: [number, number] | null;
 }
 
-function LocationMarker({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
+function LocationMarker({ 
+  onLocationSelect, 
+  selectedPosition 
+}: { 
+  onLocationSelect: (lat: number, lng: number) => void;
+  selectedPosition?: [number, number] | null;
+}) {
   const [position, setPosition] = useState<LatLng | null>(null);
+
+  // Sync with external selectedPosition
+  useEffect(() => {
+    if (selectedPosition) {
+      setPosition({ lat: selectedPosition[0], lng: selectedPosition[1] } as LatLng);
+    }
+  }, [selectedPosition]);
 
   const map = useMapEvents({
     click: (e) => {
@@ -91,7 +104,7 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <LocationMarker onLocationSelect={onLocationSelect} />
+        <LocationMarker onLocationSelect={onLocationSelect} selectedPosition={selectedPosition} />
         
         {reports.map((report) => (
           <Marker 
@@ -151,19 +164,6 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
             </Popup>
           </Marker>
         ))}
-
-        {selectedPosition && (
-          <Marker position={selectedPosition} icon={createCustomIcon(undefined, 'pending')}>
-            <Popup>
-              <div className="location-popup">
-                <strong>📍 New Report Location</strong><br />
-                Latitude: {selectedPosition[0].toFixed(6)}<br />
-                Longitude: {selectedPosition[1].toFixed(6)}<br />
-                <em>Complete the form to submit this report</em>
-              </div>
-            </Popup>
-          </Marker>
-        )}
       </MapContainer>
 
       <div className="map-overview">

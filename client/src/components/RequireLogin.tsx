@@ -1,31 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { getRole, getToken } from '../services/auth';
+import { getToken, getRole } from '../services/auth';
 
-interface RequireAuthProps {
+interface RequireLoginProps {
   children: React.ReactElement;
 }
 
-const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
-  const [authState, setAuthState] = useState({ role: getRole(), token: getToken() });
+const RequireLogin: React.FC<RequireLoginProps> = ({ children }) => {
+  const [authState, setAuthState] = useState({ token: getToken(), role: getRole() });
   const location = useLocation();
 
   useEffect(() => {
     // Update auth state when authChange event is fired
     const handleAuthChange = () => {
-      setAuthState({ role: getRole(), token: getToken() });
+      setAuthState({ token: getToken(), role: getRole() });
     };
 
     window.addEventListener('authChange', handleAuthChange);
     return () => window.removeEventListener('authChange', handleAuthChange);
   }, []);
 
-  // require that a token exists and role is 'employee'
-  if (!authState.token || authState.role !== 'employee') {
+  // Require that a token exists and user is NOT an officer
+  if (!authState.token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Redirect officers to their dashboard
+  if (authState.role === 'employee') {
+    return <Navigate to="/officer" replace />;
   }
 
   return children;
 };
 
-export default RequireAuth;
+export default RequireLogin;

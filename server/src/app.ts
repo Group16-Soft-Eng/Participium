@@ -20,6 +20,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(routes.V1_AUTH, authRouter);
