@@ -24,9 +24,9 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             username: (formData.get('username') as string).trim(),
             password: formData.get('password') as string
         }
-        
+
         console.log('Attempting login for:', user.username);
-        
+
         try {
             // first try officer login
             console.log('Trying officer login...');
@@ -35,11 +35,18 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             setToken(token);
             // try to read role from token if available
             const detected = getRoleFromToken(token);
-            if (detected === 'employee') setRole('employee');
-            else setRole('employee');
-            window.dispatchEvent(new Event('authChange'));
-            setLoading(false);
-            navigate('/officer');
+            if (detected === 'municipal_administrator') {
+                setRole('municipal_administrator');
+                window.dispatchEvent(new Event('authChange'));
+                setLoading(false);
+                navigate('/admin');
+            }
+            else {
+                setRole('officer');
+                window.dispatchEvent(new Event('authChange'));
+                setLoading(false);
+                navigate('/officer');
+            }
         } catch (e) {
             // if officer login failed, try user login
             console.log('Officer login failed, trying user login...');
@@ -49,8 +56,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 setToken(token);
                 const detected = getRoleFromToken(token);
                 console.log('Detected role:', detected);
-                if (detected === 'employee') setRole('employee');
-                else setRole('citizen');
+                setRole('citizen');
                 window.dispatchEvent(new Event('authChange'));
                 console.log('Navigating to /map');
                 setLoading(false);
@@ -62,13 +68,13 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             }
         }
     }
-    
+
     return (
         <Container id="login-form">
             <form onSubmit={handleLogin}>
                 <Stack spacing={2}>
-                    <TextField fullWidth id="username" name="username" label="Username" variant="outlined" />
-                    <TextField fullWidth id="password" name="password" label="Password" variant="outlined" type="password" />
+                    <TextField fullWidth id="username" name="username" label="Username" variant="outlined" required />
+                    <TextField fullWidth id="password" name="password" label="Password" variant="outlined" type="password" required />
 
                     {/* role auto-detection: officer login attempted first, then citizen */}
 

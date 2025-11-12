@@ -75,12 +75,14 @@ export class ReportRepository {
       Photos?: string[];
     }
   ): Promise<ReportDAO> {
+    // Ensure category is not null (DB constraint). Default to OTHER when missing.
+    const safeCategory = category || (OfficeType as any).OTHER || 'other';
     return this.repo.save({
       title,
       location,
       author,
       anonymity,
-      category,
+      category: safeCategory,
       document,
       state: ReportState.PENDING,
       date: new Date()

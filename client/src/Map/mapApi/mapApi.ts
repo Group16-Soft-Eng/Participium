@@ -26,6 +26,11 @@ async function createReport(reportData: ReportData): Promise<Report> {
     const response = await fetch(URI + `/reports`, {
         method: 'POST',
         credentials: 'include',
+        // Include Authorization header from localStorage token for authenticated requests
+        headers: (() => {
+            const token = localStorage.getItem('token');
+            return token ? { Authorization: `Bearer ${token}` } : undefined;
+        })(),
         body: formData
     });
 

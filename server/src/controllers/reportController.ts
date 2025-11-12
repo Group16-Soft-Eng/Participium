@@ -6,6 +6,7 @@ import { UserRepository } from "@repositories/UserRepository";
 import { mapReportDAOToDTO } from "@services/mapperService";
 import { OfficeType } from "@models/enums/OfficeType";
 import { validatePhotosCount, getPhotoPaths } from "@utils/fileUtils";
+import { BadRequestError } from "@utils/utils";
 
 
 //? qui prendo gli solo gli Approved Reports (per la mappa pubblica)
@@ -35,7 +36,35 @@ export async function getReport(id: number): Promise<Report> {
 export async function uploadReport(reportDto: Report, files: Express.Multer.File[], userId?: number): Promise<Report> {
   const reportRepo = new ReportRepository();
   const userRepo = new UserRepository();
-  
+  // Validate required fields early to return clear errors
+  if (!reportDto) {
+    throw new BadRequestError('Missing report data');
+  }
+
+  if (!reportDto.title) {
+    throw new BadRequestError('Missing required field: title');
+  }
+
+  if (!reportDto.category) {
+    throw new BadRequestError('Missing required field: category');
+  }
+
+  // Validate category is one of the allowed OfficeType values
+  const allowedCategories = Object.values(OfficeType);
+  if (!allowedCategories.includes(reportDto.category as any)) {
+    throw new BadRequestError(`Invalid category value: ${reportDto.category}`);
+  }
+
+  // Accept either `Coordinates` or `coordinates` (some clients may use different casing)
+  const rawLocation: any = (reportDto as any).location;
+  const coords = rawLocation?.Coordinates || rawLocation?.coordinates;
+  if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
+    throw new BadRequestError('Missing or invalid location coordinates');
+  }
+
+  // Normalize to the DAO expected shape: { Coordinates: { latitude, longitude } }
+  const normalizedLocation = { Coordinates: { latitude: Number(coords.latitude), longitude: Number(coords.longitude) } };
+
   // check min 1 max 3 photos
   validatePhotosCount(files);
   // get paths of uploaded photos
@@ -49,7 +78,7 @@ export async function uploadReport(reportDto: Report, files: Express.Multer.File
   
   const createdReport = await reportRepo.createReport(
     reportDto.title!,
-    reportDto.location!,
+    normalizedLocation,
     author,
     reportDto.anonymity || false,
     reportDto.category as any as OfficeType,

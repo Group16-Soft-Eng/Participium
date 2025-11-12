@@ -72,7 +72,8 @@ const ReportForm: React.FC = () => {
   const validateForm = (): boolean => {
     return (
       report.title.trim() !== '' &&
-      report.description.trim() !== '' &&
+  report.description.trim() !== '' &&
+  report.description.trim().length >= 30 &&
       report.category !== '' &&
       report.photos.length >= 1 &&
       report.photos.length <= 3 &&
@@ -230,10 +231,10 @@ const ReportForm: React.FC = () => {
                   onChange={handleInputChange}
                   rows={4}
                   className={`form-input ${!isFieldValid('description') ? 'form-input-error' : ''}`}
-                  placeholder="Please provide detailed information about the issue..."
+                  placeholder="Please provide detailed information about the issue (min 30 characters)..."
                 />
                 {!isFieldValid('description') && (
-                  <p className="form-error">Please provide a detailed description</p>
+                  <p className="form-error">Please provide a detailed description (minimum 30 characters)</p>
                 )}
               </div>
 
@@ -243,6 +244,10 @@ const ReportForm: React.FC = () => {
                   onPhotosChange={handlePhotosChange}
                   maxPhotos={3}
                 />
+                <p className="form-hint">Allowed file types: JPG, JPEG, PNG, WebP. Minimum 1 and maximum 3 photos.</p>
+                {!isFieldValid('photos') && (
+                  <p className="form-error">Please upload between 1 and 3 photos (JPG/PNG/WebP).</p>
+                )}
               </div>
 
               <div className="location-status">
@@ -267,7 +272,7 @@ const ReportForm: React.FC = () => {
                 disabled={!validateForm() || isLoading}
                 className="submit-btn"
               >
-                {isLoading ? '⏳ Submitting...' : validateForm() ? '🚀 Submit New Report' : 'Complete All Fields'}
+                {isLoading ? '⏳ Submitting...' : validateForm() ? ' Submit New Report' : 'Complete All Fields'}
               </button>
             </form>
           </div>

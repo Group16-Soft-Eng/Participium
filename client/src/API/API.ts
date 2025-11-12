@@ -1,3 +1,5 @@
+import { getToken } from "../services/auth";
+
 const URI = 'http://localhost:5000/api/v1'
 
 const static_ip_address = "http://localhost:5000/";
@@ -83,6 +85,15 @@ type User = {
     password: string;
 }
 
+type Officer = {
+    email: string;
+    name: string;
+    surname: string;
+    password: string;
+    Office: string;
+    Role: string;
+}
+
 
 async function userRegister(user: User) {
 
@@ -97,8 +108,77 @@ async function userRegister(user: User) {
     }
     else {
         const err = await response.text()
-        throw new Error(err);
+        throw err;
     }
 }
 
-export { userLogin, userRegister, officerLogin };
+async function officerRegister(officer: Officer) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/officers`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(officer)
+    });
+    if (response.ok) {
+        return true;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+async function getAssignedReports() {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/officers/retrievedocs`, {
+        method: 'GET',
+        headers: headers,
+    });
+    if (response.ok) {
+        const reports = await response.json();
+        return reports;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+async function getAvailableOfficerTypes() {
+    const token = getToken();
+    
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/info-types`, {
+        method: 'GET',
+        headers: headers,
+    });
+    if (response.ok) {
+        const types = await response.json();
+        return types;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+export { userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes };

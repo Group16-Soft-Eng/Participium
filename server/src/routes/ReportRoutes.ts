@@ -11,11 +11,24 @@ const router = Router({mergeParams : true});
 
 router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, async(req, res, next) =>{
     try{
-        const reportData = ReportFromJSON(req.body);
+        // Build DTO from multipart/form-data fields directly to avoid mismatches
+        const lat = req.body.latitude ? parseFloat(req.body.latitude as string) : undefined;
+        const lng = req.body.longitude ? parseFloat(req.body.longitude as string) : undefined;
 
-        const files = req.files as Express.Multer.File[]; // uploaded files
-        const userId = (req as any).user?.id;
-        const result = await uploadReport(reportData, files, userId);
+        const reportData: any = {
+            title: req.body.title || undefined,
+            anonymity: req.body.anonymity === '1' || req.body.anonymity === 'true' || req.body.anonymity === true,
+            category: req.body.category || undefined,
+            document: {
+                description: req.body.description || undefined
+            },
+            location: (lat !== undefined && lng !== undefined) ? { Coordinates: { latitude: lat, longitude: lng } } : undefined
+        };
+
+                const files = req.files as Express.Multer.File[];
+                const userId = (req as any).user?.id;
+                        // debug logging removed: debug file writing was temporary for troubleshooting
+                const result = await uploadReport(reportData, files, userId);
 
         res.status(200).json(result);
     }
