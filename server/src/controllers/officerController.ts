@@ -75,11 +75,16 @@ export async function assignReportToOfficer(reportId: number, officerId: number)
 
 export async function retrieveDocs(officerId: number): Promise<Report[]> {
   const reportRepo = new ReportRepository();
+  const officerRepo = new OfficerRepository();
   
   // Get all PENDING reports that need review (not yet assigned or assigned to this officer)
   const reports = await reportRepo.getReportsByState(ReportState.PENDING);
-  
-  return reports.map(mapReportDAOToDTO);
+  const category = await officerRepo.getOfficerById(officerId);
+  const office = category.office;
+  const reportsCategory = await reportRepo.getReportsByCategory(office)
+  const filteredReports = reports.filter(r => reportsCategory.some(rc => rc.id === r.id));
+
+  return filteredReports.map(mapReportDAOToDTO);
 }
 
 
