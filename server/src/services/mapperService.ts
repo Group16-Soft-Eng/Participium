@@ -28,6 +28,7 @@ export function mapUserDAOToDTO(dao: UserDAO): User {
 export function mapOfficerDAOToDTO(dao: OfficerDAO): Officer {
   return {
     id: dao.id,
+    username: dao.username,
     name: dao.name,
     surname: dao.surname,
     email: dao.email,

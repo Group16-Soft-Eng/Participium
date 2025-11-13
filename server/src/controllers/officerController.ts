@@ -24,6 +24,7 @@ export async function getOfficer(email: string): Promise<Officer> {
 export async function createOfficer(officerDto: Officer): Promise<Officer> {
   const officerRepo = new OfficerRepository();
   const createdOfficer = await officerRepo.createOfficer(
+    officerDto.username!,
     officerDto.name!,
     officerDto.surname!,
     officerDto.email!,
@@ -38,7 +39,9 @@ export async function createOfficer(officerDto: Officer): Promise<Officer> {
 export async function updateOfficer(officerDto: Officer): Promise<Officer> {
   const officerRepo = new OfficerRepository();
   const updatedOfficer = await officerRepo.updateOfficer(
+    
     officerDto.id!,
+    officerDto.username!,
     officerDto.name!,
     officerDto.surname!,
     officerDto.email!,

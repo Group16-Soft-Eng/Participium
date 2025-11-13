@@ -36,11 +36,18 @@ export class OfficerRepository {
     );
   }
 
+  async getOfficersByUsername(username: string): Promise<OfficerDAO[]> { 
+    return this.repo.find({ where: { username } });
+  }
+  
+
+
   async getOfficersByOffice(office: OfficeType): Promise<OfficerDAO[]> {
     return this.repo.find({ where: { office } });
   }
 
   async createOfficer(
+    username: string,
     name: string,
     surname: string,
     email: string,
@@ -63,6 +70,7 @@ export class OfficerRepository {
     const hashedPassword = await hashPassword(plainPassword);
 
     return this.repo.save({
+      username,
       name,
       surname,
       email,
@@ -75,6 +83,7 @@ export class OfficerRepository {
 
   async updateOfficer(
     id: number,
+    username: string,
     name: string,
     surname: string,
     email: string,
@@ -84,6 +93,7 @@ export class OfficerRepository {
     const officerToUpdate = await this.getOfficerById(id);
 
 
+    officerToUpdate.username = username;
     officerToUpdate.name = name;
     officerToUpdate.surname = surname;
     officerToUpdate.email = email;

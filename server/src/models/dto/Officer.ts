@@ -40,6 +40,13 @@ export interface Officer {
      * @memberof Officer
      */
     id?: number;
+
+    /**
+     * 
+     * @type {string}
+     * @memberof Officer
+     */
+    username?: string;
     /**
      * 
      * @type {string}
@@ -96,7 +103,7 @@ export function OfficerFromJSONTyped(json: any, ignoreDiscriminator: boolean): O
         return json;
     }
     return {
-        
+        'username': json['username'] == null ? undefined : json['username'],
         'id': json['id'] == null ? undefined : json['id'],
         'name': json['name'] == null ? undefined : json['name'],
         'surname': json['surname'] == null ? undefined : json['surname'],

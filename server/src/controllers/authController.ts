@@ -54,7 +54,11 @@ export async function loginOfficerByMail(email: string, password: string): Promi
 export async function loginOfficerByUsername(username: string, password: string): Promise<string> {
   const officerRepo = new OfficerRepository();
 
-  const officer = await officerRepo.getOfficerByEmail(username);
+  const officers = await officerRepo.getOfficersByUsername(username);
+  if (officers.length === 0) {
+    throw new UnauthorizedError("Invalid username or password");
+  }
+  const officer = officers[0];
   const isValid = await verifyPassword(password, officer.password);
   if (!isValid) {
     throw new UnauthorizedError("Invalid username or password");
