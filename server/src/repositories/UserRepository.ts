@@ -61,6 +61,10 @@ export class UserRepository {
     if (existingOfficer) {
       throw new Error(`Email '${email}' is already used.`);
     }
+    const usernameOfficer = await officerRepo.getOfficersByUsername(username);
+    if (usernameOfficer.length > 0) {
+      throw new Error(`Username '${username}' is already used.`);
+    }
     // Check if email already exists
     throwConflictIfFound(
       await this.repo.find({ where: { email } }),
