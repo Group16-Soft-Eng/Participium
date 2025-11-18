@@ -16,6 +16,7 @@ tags:
     description: Office personnel
   - name: Reports
     description: Reports Operation
+  - name: Telegram
 paths:
   /auth/users:
     post:
@@ -463,6 +464,42 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Report"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /auth/telegram:
+    post:
+      tags:
+        - Auth
+      summary: Retrieve user account associated with Telegram username
+      description: Given a Telegram username, retrieve the corresponding user account from the system.
+      operationId: retrieveTelegramAccount
+      requestBody:
+        description: Telegram username
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: telegram_user
+              required:
+                - username
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: user_token
         default:
           description: Unexpected error
           content:

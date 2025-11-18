@@ -89,6 +89,14 @@ export class UserRepository {
     await this.repo.remove(user);
   }
 
+  async getUseryTelegramUsername(telegramUsername: string): Promise<UserDAO> {
+    return findOrThrowNotFound(
+      await this.repo.find({ where: { telegramUsername } }),
+      () => true,
+      `User with telegram username '${telegramUsername}' not found`
+    );
+  }
+
   //? update profile (story 9 -> telegram username, email notifications, avatar)
   async updateProfile(userId: number, data: {
       telegramUsername?: string | null;

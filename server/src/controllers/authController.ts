@@ -81,3 +81,17 @@ export async function loginOfficer(identifier: string, password: string, isEmail
     ? loginOfficerByMail(identifier, password)
     : loginOfficerByUsername(identifier, password);
 }
+
+
+export async function getUserByTelegramUsername(telegramUsername: string) {
+  const userRepo = new UserRepository();
+  const user = await userRepo.getUseryTelegramUsername(telegramUsername);
+  if (!user) {
+    throw new UnauthorizedError("No user associated with this Telegram username");
+  }
+  return generateToken({
+    id: user.id,
+    username: user.username,
+    type: "user"
+  });
+}

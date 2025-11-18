@@ -1,9 +1,8 @@
 //! AUTH MIDDLEWARE
-
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "@services/authService";
 import { UnauthorizedError } from "@utils/utils";
-
+import { UserRepository } from "@repositories/UserRepository";
 /**
  * Middleware per autenticare richieste con JWT Bearer token
  * Aggiunge req.user con i dati del token decodificato
@@ -51,7 +50,6 @@ export function requireUserType(allowedTypes: string[]) {
         }
     };
 }
-
 export function regexMail(email: string): boolean {
     const mailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return mailRegex.test(email);

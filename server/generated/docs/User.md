@@ -12,7 +12,9 @@ Name | Type
 `lastName` | string
 `password` | string
 `email` | string
-
+`avatar` | string 
+`telegramUsername` | string
+`emailNotifications` | boolean
 ## Example
 
 ```typescript
@@ -25,6 +27,9 @@ const example = {
   "lastName": Rossi,
   "password": placeholder,
   "email": mail@domain.com,
+  "avatar": https://example.com/avatar.jpg,
+  "telegramUsername": mario_rossi,
+  "emailNotifications": true
 } satisfies User
 
 console.log(example)

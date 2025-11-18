@@ -20,10 +20,10 @@ export class UserDAO {
   @Column({ unique: true, nullable: false })
   email!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: "text", nullable: true })
   avatar!: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: "text", nullable: true })
   telegramUsername!: string | null;
 
   @Column({ default: true })

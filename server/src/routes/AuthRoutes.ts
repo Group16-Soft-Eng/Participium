@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {loginOfficer, loginUser} from "@controllers/authController"
+import {loginOfficer, loginUser, getUserByTelegramUsername} from "@controllers/authController"
 const router = Router({mergeParams : true});
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,6 +30,18 @@ router.post("/officers", async(req, res, next) =>{
         const result = await loginOfficer(email, password, isEmail);
             
         res.status(200).json(result);
+    }
+    catch(error)
+    {
+        next(error);
+    }
+});
+
+router.post("/telegram", async(req, res, next) =>{
+    try{
+        let identifier = req.body["username"];
+        const user = await getUserByTelegramUsername(identifier);
+        res.status(200).json(user);
     }
     catch(error)
     {
