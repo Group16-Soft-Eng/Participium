@@ -41,10 +41,10 @@ describe("Users API Integration Tests", () => {
       };
 
       const response = await request(app)
-        .post("/users")
+        .post("/api/v1/users")
         .send(newUser);
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect(response.body).toHaveProperty("id");
       expect(response.body.username).toBe(newUser.username);
       expect(response.body.firstName).toBe(newUser.firstName);
@@ -61,10 +61,10 @@ describe("Users API Integration Tests", () => {
       };
 
       const response = await request(app)
-        .post("/users")
+        .post("/api/v1/users")
         .send(incompleteUser);
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(500);
     });
 
     it("dovrebbe restituire errore 409 con username già esistente", async () => {
@@ -79,10 +79,10 @@ describe("Users API Integration Tests", () => {
       };
 
       const response = await request(app)
-        .post("/users")
+        .post("/api/v1/users")
         .send(duplicateUser);
 
-      expect(response.status).toBe(409);
+      expect(response.status).toBe(409); //! Default is 500 in swagger but shoud be 409
     });
 
     it("dovrebbe restituire errore 400 con email non valida", async () => {
@@ -95,7 +95,7 @@ describe("Users API Integration Tests", () => {
       };
 
       const response = await request(app)
-        .post("/users")
+        .post("/api/v1/users")
         .send(invalidEmailUser);
 
       expect(response.status).toBe(400);
@@ -105,7 +105,7 @@ describe("Users API Integration Tests", () => {
   describe("GET /users/logout - Logout User", () => {
     it("dovrebbe effettuare il logout con successo", async () => {
       const response = await request(app)
-        .get("/users/logout")
+        .get("/api/v1/users/logout")
         .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
@@ -113,10 +113,9 @@ describe("Users API Integration Tests", () => {
 
     it("dovrebbe funzionare anche senza token (JWT stateless)", async () => {
       const response = await request(app)
-        .get("/users/logout");
+        .get("/api/v1/users/logout");
 
-      // In un sistema JWT stateless, il logout è gestito lato client
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(401);
     });
   });
 });

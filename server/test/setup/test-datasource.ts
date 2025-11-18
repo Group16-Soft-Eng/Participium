@@ -1,15 +1,17 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import path from "path";
+import { UserDAO } from "../../src/models/dao/UserDAO";
+import { OfficerDAO } from "../../src/models/dao/OfficerDAO";
+import { ReportDAO } from "../../src/models/dao/ReportDAO";
 
 // Database in memoria SQLite per i test
 export const TestDataSource = new DataSource({
   type: "sqlite",
   database: ":memory:",
   dropSchema: true,
-  entities: [path.join(__dirname, "../../src/models/dao/*.ts")],
+  entities: [UserDAO, OfficerDAO, ReportDAO],
   synchronize: true,
-  logging: false
+  logging: true // Abilito per vedere cosa succede
 });
 
 export async function initializeTestDatabase() {
