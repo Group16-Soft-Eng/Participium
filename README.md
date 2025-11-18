@@ -61,6 +61,11 @@ npm run dev
 ```
 Client will run on `http://localhost:5173`
 
+### Starting the Telegram Bot
+```bash
+cd telegram
+python3 bot_config.py
+```
 ## Database Management
 
 ### Creating Test Users
