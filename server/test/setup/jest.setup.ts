@@ -26,15 +26,3 @@ afterAll(async () => {
     await TestDataSource.destroy();
   }
 });
-
-// Reset del database dopo ogni test
-afterEach(async () => {
-  if (TestDataSource.isInitialized) {
-    const entities = TestDataSource.entityMetadatas;
-    
-    for (const entity of entities) {
-      const repository = TestDataSource.getRepository(entity.name);
-      await repository.query(`DELETE FROM ${entity.tableName};`);
-    }
-  }
-});

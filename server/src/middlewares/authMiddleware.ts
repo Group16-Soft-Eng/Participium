@@ -2,7 +2,7 @@
 
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "@services/authService";
-import { UnauthorizedError } from "@utils/utils";
+import { UnauthorizedError, ForbiddenError } from "@utils/utils";
 
 /**
  * Middleware per autenticare richieste con JWT Bearer token
@@ -40,7 +40,7 @@ export function requireUserType(allowedTypes: string[]) {
         }
 
         if (!allowedTypes.includes(user.type)) {
-            throw new UnauthorizedError(
+            throw new ForbiddenError(
             `Insufficient permissions. Required: ${allowedTypes.join(" or ")}`
             );
         }
