@@ -260,7 +260,7 @@ paths:
     get:
       tags:
         - Officers
-      summary: Retrieve Reports assigned to him
+      summary: Retrieve Reports assigned to him, only the pending ones
       description: Using the session key, the officer is able to retrieve the docs assigned to him.
       operationId: retrieveDocs
       parameters: []
@@ -271,6 +271,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Report"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /officers/assigned:
+    get:
+      tags:
+        - Officers
+      summary: Retrieve reports assigned to the authenticated officer
+      description: Returns all reports whose `assignedOfficerId` equals the authenticated officer id.
+      operationId: getAssignedReports
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
         default:
           description: Unexpected error
           content:
