@@ -88,4 +88,17 @@ export class UserRepository {
     const user = await this.getUserByUsername(username);
     await this.repo.remove(user);
   }
+
+  //? update profile (story 9 -> telegram username, email notifications, avatar)
+  async updateProfile(userId: number, data: {
+      telegramUsername?: string | null;
+      emailNotifications?: boolean;
+      avatarPath?: string | null
+  }): Promise<UserDAO> {
+    const user = await this.getUserById(userId);
+    if (data.telegramUsername !== undefined) user.telegramUsername = data.telegramUsername;
+    if (data.emailNotifications !== undefined) user.emailNotifications = data.emailNotifications;
+    if (data.avatarPath !== undefined) user.avatar = data.avatarPath;
+    return this.repo.save(user);
+  }
 }

@@ -205,6 +205,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Retrieve authenticated user's profile
+      description: Returns the profile of the authenticated user (avatar, telegramUsername, emailNotifications included).
+      operationId: getMyProfile
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    patch:
+      tags:
+        - Users
+      summary: Update authenticated user's profile
+      description: Update telegram username, email notification preference and optionally upload an avatar image.
+      operationId: updateMyProfile
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                telegramUsername:
+                  type: string
+                emailNotifications:
+                  type: boolean
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /users/logout:
     get:
       tags:
@@ -458,6 +511,15 @@ components:
         email:
           type: string
           example: mail@domain.com
+        avatar:
+          type: string
+          example: /uploads/avatars/167123123-avatar.jpg
+        telegramUsername:
+          type: string
+          example: my_telegram
+        emailNotifications:
+          type: boolean
+          example: true
       xml:
         name: user
     Officer:

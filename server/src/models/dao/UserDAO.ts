@@ -19,4 +19,13 @@ export class UserDAO {
 
   @Column({ unique: true, nullable: false })
   email!: string;
+
+  @Column({ nullable: true })
+  avatar!: string | null;
+
+  @Column({ nullable: true })
+  telegramUsername!: string | null;
+
+  @Column({ default: true })
+  emailNotifications!: boolean;
 }
