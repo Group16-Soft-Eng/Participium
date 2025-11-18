@@ -1,27 +1,16 @@
 import "reflect-metadata";
-import { loginUser, loginOfficer } from "../../../../src/controllers/authController";
-import { UserRepository } from "../../../../src/repositories/UserRepository";
-import { OfficerRepository } from "../../../../src/repositories/OfficerRepository";
-import { verifyPassword, generateToken } from "../../../../src/services/authService";
-import { UnauthorizedError } from "../../../../src/utils/utils";
+import { loginUser, loginOfficer } from "../../../src/controllers/authController";
+import { UserRepository } from "../../../src/repositories/UserRepository";
+import { OfficerRepository } from "../../../src/repositories/OfficerRepository";
+import { verifyPassword, generateToken } from "../../../src/services/authService";
+import { UnauthorizedError } from "../../../src/utils/utils";
 
 // Mock dei moduli
-jest.mock("../../../../src/repositories/UserRepository");
-jest.mock("../../../../src/repositories/OfficerRepository");
-jest.mock("../../../../src/services/authService");
+jest.mock("../../../src/services/authService");
 
 describe("AuthController Unit Tests", () => {
-  let mockUserRepo: jest.Mocked<UserRepository>;
-  let mockOfficerRepo: jest.Mocked<OfficerRepository>;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    mockUserRepo = new UserRepository() as jest.Mocked<UserRepository>;
-    mockOfficerRepo = new OfficerRepository() as jest.Mocked<OfficerRepository>;
-    
-    (UserRepository as jest.MockedClass<typeof UserRepository>).mockImplementation(() => mockUserRepo);
-    (OfficerRepository as jest.MockedClass<typeof OfficerRepository>).mockImplementation(() => mockOfficerRepo);
   });
 
   describe("loginUser", () => {
@@ -35,14 +24,15 @@ describe("AuthController Unit Tests", () => {
         password: "hashedpassword"
       };
 
-      mockUserRepo.getUserByUsername = jest.fn().mockResolvedValue(mockUser);
+      // Spy sui metodi del repository
+      jest.spyOn(UserRepository.prototype, 'getUserByUsername').mockResolvedValue(mockUser as any);
       (verifyPassword as jest.Mock).mockResolvedValue(true);
       (generateToken as jest.Mock).mockReturnValue("mock-token");
 
       const result = await loginUser("testuser", "password123", false);
 
       expect(result).toBe("mock-token");
-      expect(mockUserRepo.getUserByUsername).toHaveBeenCalledWith("testuser");
+      expect(UserRepository.prototype.getUserByUsername).toHaveBeenCalledWith("testuser");
       expect(verifyPassword).toHaveBeenCalledWith("password123", "hashedpassword");
       expect(generateToken).toHaveBeenCalledWith({
         id: 1,
@@ -61,14 +51,14 @@ describe("AuthController Unit Tests", () => {
         password: "hashedpassword"
       };
 
-      mockUserRepo.getUserByEmail = jest.fn().mockResolvedValue(mockUser);
+      jest.spyOn(UserRepository.prototype, 'getUserByEmail').mockResolvedValue(mockUser as any);
       (verifyPassword as jest.Mock).mockResolvedValue(true);
       (generateToken as jest.Mock).mockReturnValue("mock-token");
 
       const result = await loginUser("test@example.com", "password123", true);
 
       expect(result).toBe("mock-token");
-      expect(mockUserRepo.getUserByEmail).toHaveBeenCalledWith("test@example.com");
+      expect(UserRepository.prototype.getUserByEmail).toHaveBeenCalledWith("test@example.com");
     });
 
     it("dovrebbe lanciare UnauthorizedError con password errata", async () => {
@@ -78,7 +68,7 @@ describe("AuthController Unit Tests", () => {
         password: "hashedpassword"
       };
 
-      mockUserRepo.getUserByUsername = jest.fn().mockResolvedValue(mockUser);
+      jest.spyOn(UserRepository.prototype, 'getUserByUsername').mockResolvedValue(mockUser as any);
       (verifyPassword as jest.Mock).mockResolvedValue(false);
 
       await expect(loginUser("testuser", "wrongpassword", false))
@@ -97,14 +87,14 @@ describe("AuthController Unit Tests", () => {
         role: "ROLE_1"
       };
 
-      mockOfficerRepo.getOfficerByEmail = jest.fn().mockResolvedValue(mockOfficer);
+      jest.spyOn(OfficerRepository.prototype, 'getOfficerByEmail').mockResolvedValue(mockOfficer as any);
       (verifyPassword as jest.Mock).mockResolvedValue(true);
       (generateToken as jest.Mock).mockReturnValue("mock-officer-token");
 
       const result = await loginOfficer("officer@example.com", "password123", true);
 
       expect(result).toBe("mock-officer-token");
-      expect(mockOfficerRepo.getOfficerByEmail).toHaveBeenCalledWith("officer@example.com");
+      expect(OfficerRepository.prototype.getOfficerByEmail).toHaveBeenCalledWith("officer@example.com");
       expect(generateToken).toHaveBeenCalledWith({
         id: 1,
         username: "officer@example.com",
@@ -121,14 +111,14 @@ describe("AuthController Unit Tests", () => {
         role: "ROLE_1"
       };
 
-      mockOfficerRepo.getOfficersByUsername = jest.fn().mockResolvedValue([mockOfficer]);
+      jest.spyOn(OfficerRepository.prototype, 'getOfficersByUsername').mockResolvedValue([mockOfficer] as any);
       (verifyPassword as jest.Mock).mockResolvedValue(true);
       (generateToken as jest.Mock).mockReturnValue("mock-officer-token");
 
       const result = await loginOfficer("officer1", "password123", false);
 
       expect(result).toBe("mock-officer-token");
-      expect(mockOfficerRepo.getOfficersByUsername).toHaveBeenCalledWith("officer1");
+      expect(OfficerRepository.prototype.getOfficersByUsername).toHaveBeenCalledWith("officer1");
     });
 
     it("dovrebbe lanciare UnauthorizedError con password errata", async () => {
@@ -139,7 +129,7 @@ describe("AuthController Unit Tests", () => {
         role: "ROLE_1"
       };
 
-      mockOfficerRepo.getOfficerByEmail = jest.fn().mockResolvedValue(mockOfficer);
+      jest.spyOn(OfficerRepository.prototype, 'getOfficerByEmail').mockResolvedValue(mockOfficer as any);
       (verifyPassword as jest.Mock).mockResolvedValue(false);
 
       await expect(loginOfficer("officer@example.com", "wrongpassword", true))
@@ -148,7 +138,7 @@ describe("AuthController Unit Tests", () => {
     });
 
     it("dovrebbe lanciare UnauthorizedError quando username non esiste", async () => {
-      mockOfficerRepo.getOfficersByUsername = jest.fn().mockResolvedValue([]);
+      jest.spyOn(OfficerRepository.prototype, 'getOfficersByUsername').mockResolvedValue([] as any);
 
       await expect(loginOfficer("nonexistent", "password123", false))
         .rejects

@@ -1,11 +1,11 @@
 import "reflect-metadata";
-import { createUser, getUser, getAllUsers, deleteUser } from "../../../../src/controllers/userController";
-import { UserRepository } from "../../../../src/repositories/UserRepository";
-import { mapUserDAOToDTO } from "../../../../src/services/mapperService";
+import { createUser, getUser, getAllUsers, deleteUser } from "../../../src/controllers/userController";
+import { UserRepository } from "../../../src/repositories/UserRepository";
+import { mapUserDAOToDTO } from "../../../src/services/mapperService";
 
 // Mock dei moduli
-jest.mock("../../../../src/repositories/UserRepository");
-jest.mock("../../../../src/services/mapperService");
+jest.mock("../../../src/repositories/UserRepository");
+jest.mock("../../../src/services/mapperService");
 
 describe("UserController Unit Tests", () => {
   let mockUserRepo: jest.Mocked<UserRepository>;

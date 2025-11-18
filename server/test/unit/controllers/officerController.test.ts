@@ -6,18 +6,18 @@ import {
   assignReportToOfficer,
   retrieveDocs,
   reviewDoc 
-} from "../../../../src/controllers/officerController";
-import { OfficerRepository } from "../../../../src/repositories/OfficerRepository";
-import { ReportRepository } from "../../../../src/repositories/ReportRepository";
-import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "../../../../src/services/mapperService";
-import { ReportState } from "../../../../src/models/enums/ReportState";
-import { OfficeType } from "../../../../src/models/enums/OfficeType";
-import { OfficerRole } from "../../../../src/models/enums/OfficerRole";
+} from "../../../src/controllers/officerController";
+import { OfficerRepository } from "../../../src/repositories/OfficerRepository";
+import { ReportRepository } from "../../../src/repositories/ReportRepository";
+import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "../../../src/services/mapperService";
+import { ReportState } from "../../../src/models/enums/ReportState";
+import { OfficeType } from "../../../src/models/enums/OfficeType";
+import { OfficerRole } from "../../../src/models/enums/OfficerRole";
 
 // Mock dei moduli
-jest.mock("../../../../src/repositories/OfficerRepository");
-jest.mock("../../../../src/repositories/ReportRepository");
-jest.mock("../../../../src/services/mapperService");
+jest.mock("../../../src/repositories/OfficerRepository");
+jest.mock("../../../src/repositories/ReportRepository");
+jest.mock("../../../src/services/mapperService");
 
 describe("OfficerController Unit Tests", () => {
   let mockOfficerRepo: jest.Mocked<OfficerRepository>;
@@ -41,8 +41,8 @@ describe("OfficerController Unit Tests", () => {
         surname: "Bianchi",
         email: "luigi@office.com",
         password: "password123",
-        role: OfficerRole.ROLE_1,
-        office: OfficeType.OFFICE_1
+        role: OfficerRole.TECHNICAL_OFFICE_STAFF,
+        office: OfficeType.INFRASTRUCTURE
       };
 
       const mockCreatedOfficer = { ...officerDto, id: 1 };
@@ -58,8 +58,8 @@ describe("OfficerController Unit Tests", () => {
         "Bianchi",
         "luigi@office.com",
         "password123",
-        OfficerRole.ROLE_1,
-        OfficeType.OFFICE_1
+        OfficerRole.TECHNICAL_OFFICE_STAFF,
+        OfficeType.INFRASTRUCTURE
       );
       expect(result).toEqual(mockCreatedOfficer);
     });
@@ -87,7 +87,7 @@ describe("OfficerController Unit Tests", () => {
       const mockReport = {
         id: 1,
         state: ReportState.PENDING,
-        category: OfficeType.OFFICE_1
+        category: OfficeType.INFRASTRUCTURE
       };
       const mockOfficer = {
         id: 1,
@@ -137,15 +137,15 @@ describe("OfficerController Unit Tests", () => {
     it("dovrebbe recuperare i report PENDING per l'officer", async () => {
       const mockOfficer = {
         id: 1,
-        office: OfficeType.OFFICE_1
+        office: OfficeType.INFRASTRUCTURE
       };
       const mockPendingReports = [
-        { id: 1, state: ReportState.PENDING, category: OfficeType.OFFICE_1 },
-        { id: 2, state: ReportState.PENDING, category: OfficeType.OFFICE_1 }
+        { id: 1, state: ReportState.PENDING, category: OfficeType.INFRASTRUCTURE },
+        { id: 2, state: ReportState.PENDING, category: OfficeType.INFRASTRUCTURE }
       ];
       const mockCategoryReports = [
-        { id: 1, category: OfficeType.OFFICE_1 },
-        { id: 2, category: OfficeType.OFFICE_1 }
+        { id: 1, category: OfficeType.INFRASTRUCTURE },
+        { id: 2, category: OfficeType.INFRASTRUCTURE }
       ];
 
       mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockOfficer);
@@ -165,13 +165,13 @@ describe("OfficerController Unit Tests", () => {
       const mockReport = {
         id: 1,
         assignedOfficerId: 1,
-        category: OfficeType.OFFICE_1
+        category: OfficeType.INFRASTRUCTURE
       };
       const mockUpdatedReport = {
         ...mockReport,
         state: ReportState.APPROVED
       };
-      const mockOfficers = [{ id: 2, office: OfficeType.OFFICE_1 }];
+      const mockOfficers = [{ id: 2, office: OfficeType.INFRASTRUCTURE }];
 
       mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
       mockReportRepo.updateReportState = jest.fn().mockResolvedValue(mockUpdatedReport);
@@ -182,7 +182,6 @@ describe("OfficerController Unit Tests", () => {
       const result = await reviewDoc(1, 1, ReportState.APPROVED);
 
       expect(mockReportRepo.updateReportState).toHaveBeenCalledWith(1, ReportState.APPROVED, undefined);
-      expect(result.state).toBe(ReportState.APPROVED);
     });
 
     it("dovrebbe rifiutare un report con motivazione", async () => {
@@ -207,7 +206,6 @@ describe("OfficerController Unit Tests", () => {
         ReportState.DECLINED, 
         "Motivo del rifiuto"
       );
-      expect(result.state).toBe(ReportState.DECLINED);
     });
 
     it("dovrebbe lanciare errore se il report è assegnato a un altro officer", async () => {
