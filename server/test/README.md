@@ -27,6 +27,10 @@ test/
     └── services/               # Test dei servizi
         ├── authService.test.ts
         └── mapperService.test.ts
+    └── repositories/            # Test dei repository
+        ├── user.repository.test.ts
+        ├── officer.repository.test.ts
+        └── report.repository.test.ts
 ```
 
 ## 🚀 Esecuzione dei Test
@@ -132,3 +136,13 @@ Gli unit test verificano la logica dei singoli moduli.
 - [Jest Documentation](https://jestjs.io/docs/getting-started)
 - [Supertest Documentation](https://github.com/visionmedia/supertest)
 - [TypeORM Testing](https://typeorm.io/#/testing)
+
+## 📊 Coverage Report
+
+- **Target coverage**: 90%
+- **Comandi per visualizzare il report**:
+  - `npm run test:coverage --coverage-report=html`
+  - `npm run test:coverage --coverage-report=lcov`
+- **Come visualizzare il report**:
+  - HTML: apri il file `coverage/lcov-report/index.html`
+  - LCov: apri il file `coverage/lcov-report/index.html`
