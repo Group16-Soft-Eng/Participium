@@ -6,7 +6,8 @@
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "test:coverage": "jest --runInBand --coverage"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

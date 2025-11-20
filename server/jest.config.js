@@ -11,6 +11,7 @@ module.exports = {
     '!src/generated/**'
   ],
   coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
   verbose: true,
   setupFilesAfterEnv: ['<rootDir>/test/setup/jest.setup.ts'],
   moduleNameMapper: {
