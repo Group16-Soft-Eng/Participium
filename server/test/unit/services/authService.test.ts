@@ -6,7 +6,7 @@ import {
   verifyPassword, 
   generateToken, 
   verifyToken 
-} from "../../../../src/services/authService";
+} from "../../../src/services/authService";
 
 // Mock delle librerie esterne
 jest.mock("bcrypt");

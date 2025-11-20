@@ -3,12 +3,12 @@ import {
   mapUserDAOToDTO, 
   mapOfficerDAOToDTO, 
   mapReportDAOToDTO 
-} from "../../../../src/services/mapperService";
-import { UserDAO } from "../../../../src/models/dao/UserDAO";
-import { OfficerDAO } from "../../../../src/models/dao/OfficerDAO";
-import { ReportDAO } from "../../../../src/models/dao/ReportDAO";
-import { OfficeType } from "../../../../src/models/enums/OfficeType";
-import { OfficerRole } from "../../../../src/models/enums/OfficerRole";
+} from "../../../src/services/mapperService";
+import { UserDAO } from "../../../src/models/dao/UserDAO";
+import { OfficerDAO } from "../../../src/models/dao/OfficerDAO";
+import { ReportDAO } from "../../../src/models/dao/ReportDAO";
+import { OfficeType } from "../../../src/models/enums/OfficeType";
+import { OfficerRole } from "../../../src/models/enums/OfficerRole";
 
 describe("MapperService Unit Tests", () => {
   describe("mapUserDAOToDTO", () => {
@@ -60,8 +60,8 @@ describe("MapperService Unit Tests", () => {
         surname: "Bianchi",
         email: "luigi@office.com",
         password: "hashedPassword456",
-        role: OfficerRole.ROLE_1,
-        office: OfficeType.OFFICE_1
+        role: OfficerRole.TECHNICAL_OFFICE_STAFF,
+        office: OfficeType.SAFETY
       };
 
       const result = mapOfficerDAOToDTO(officerDAO as OfficerDAO);
@@ -72,8 +72,8 @@ describe("MapperService Unit Tests", () => {
         name: "Luigi",
         surname: "Bianchi",
         email: "luigi@office.com",
-        role: OfficerRole.ROLE_1,
-        office: OfficeType.OFFICE_1,
+        role: OfficerRole.TECHNICAL_OFFICE_STAFF,
+        office: OfficeType.SAFETY,
         password: undefined // La password non deve mai essere esposta nel DTO
       });
     });
@@ -86,8 +86,8 @@ describe("MapperService Unit Tests", () => {
         surname: "Officer",
         email: "test@office.com",
         password: "secretHashedPassword",
-        role: OfficerRole.ADMIN,
-        office: OfficeType.OFFICE_2
+        role: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER,
+        office: OfficeType.SAFETY
       };
 
       const result = mapOfficerDAOToDTO(officerDAO as OfficerDAO);
@@ -119,7 +119,7 @@ describe("MapperService Unit Tests", () => {
         } as UserDAO,
         anonymity: false,
         date: mockDate,
-        category: OfficeType.OFFICE_1,
+        category: OfficeType.SAFETY,
         document: {
           Description: "Descrizione dettagliata della buca",
           Photos: ["photo1.jpg", "photo2.jpg"]
@@ -147,7 +147,7 @@ describe("MapperService Unit Tests", () => {
         },
         anonymity: false,
         date: mockDate.toISOString(),
-        category: OfficeType.OFFICE_1,
+        category: OfficeType.SAFETY,
         document: {
           description: "Descrizione dettagliata della buca",
           photos: ["photo1.jpg", "photo2.jpg"]
@@ -170,7 +170,7 @@ describe("MapperService Unit Tests", () => {
         author: null,
         anonymity: true,
         date: mockDate,
-        category: OfficeType.OFFICE_2,
+        category: OfficeType.INFRASTRUCTURE,
         document: {
           Description: "Descrizione report anonimo",
           Photos: ["photo.jpg"]
@@ -193,7 +193,7 @@ describe("MapperService Unit Tests", () => {
         author: null,
         anonymity: true,
         date: mockDate,
-        category: OfficeType.OFFICE_1,
+        category: OfficeType.SANITATION,
         document: {
           Description: "Test",
           Photos: ["test.jpg"]
