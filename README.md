@@ -139,5 +139,23 @@ npx ts-node src/utils/clearReports.ts
 - Multer for file uploads
 - JWT for authentication
 
+## Docker (Development)
+
+Quick instructions to run the backend and Redis via Docker Compose (creates persistent folders `server/uploads` and `server/data`):
+
+```powershell
+# from project root
+docker-compose up --build
+
+# stop
+docker-compose down
+```
+
+Notes:
+- The compose file defines a `redis` service and a `server` service built from `./server`
+- The server uses SQLite by default; the DB file is mounted to `./server/participium.db`.
+- Uploaded files are stored under `./server/uploads` on the host
+- Environment variables (JWT secret, DB type/name, Redis host) can be overridden in your shell or by adapting `docker-compose.yml`
+
 ## License
 See LICENSE file for details

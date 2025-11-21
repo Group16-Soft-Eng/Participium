@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+
+# Create uploads and data directories if missing
+mkdir -p /usr/src/app/uploads/reports
+mkdir -p /usr/src/app/uploads/avatars
+
+# Ensure sqlite DB file exists if using sqlite (path from docker-compose env)
+if [ -z "$DB_NAME" ]; then
+	DB_PATH="/usr/src/app/participium.db"
+else
+	DB_PATH="$DB_NAME"
+fi
+
+mkdir -p "$(dirname "$DB_PATH")"
+if [ ! -f "$DB_PATH" ]; then
+	touch "$DB_PATH" || true
+fi
+
+# Ensure permissions (best-effort)
+chown -R node:node /usr/src/app/uploads || true
+chown -R node:node "$DB_PATH" || true
+
+echo "Starting Participium server (entrypoint)..."
+
+# If command passed, execute it (CMD provided in Dockerfile)
+exec "$@"
