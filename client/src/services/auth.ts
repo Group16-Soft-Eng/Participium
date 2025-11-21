@@ -81,3 +81,13 @@ export function getUserFromToken(token: string | null): DecodedUser | null {
   if (data.email) user.email = data.email;
   return user;
 }
+
+export function getUserIdFromToken(token: string | null): number | null {
+  const data = decodeJwt(token);
+  if (!data) return null;
+  // Try common claim names for user ID
+  if (data.userId) return Number(data.userId);
+  if (data.id) return Number(data.id);
+  if (data.sub && !isNaN(Number(data.sub))) return Number(data.sub);
+  return null;
+}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { userLogin, officerLogin } from "../API/API";
 import { setToken, setRole, getRoleFromToken } from '../services/auth';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface LoginFormProps {
     setShowLogin: (show: boolean) => void;
@@ -13,6 +14,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const navigate = useNavigate();
+    const { checkPendingNotifications } = useNotification();
 
     async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -38,12 +40,14 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             if (detected === 'municipal_administrator') {
                 setRole('municipal_administrator');
                 window.dispatchEvent(new Event('authChange'));
+                checkPendingNotifications();
                 setLoading(false);
                 navigate('/admin');
             }
             else {
                 setRole('officer');
                 window.dispatchEvent(new Event('authChange'));
+                checkPendingNotifications();
                 setLoading(false);
                 navigate('/officer');
             }
@@ -58,6 +62,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 console.log('Detected role:', detected);
                 setRole('citizen');
                 window.dispatchEvent(new Event('authChange'));
+                checkPendingNotifications();
                 console.log('Navigating to /map');
                 setLoading(false);
                 navigate('/map');

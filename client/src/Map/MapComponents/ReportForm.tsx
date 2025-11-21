@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import MapWithPin from './MapWithPin';
 import PhotoUpload from './PhotoUpload';
 import { createReport } from '../mapApi/mapApi';
 import { CATEGORIES } from '../types/report';
 import type { ReportData } from '../types/report';
+import { Snackbar, Alert } from '@mui/material';
 import '../CssMap/ReportForm.css';
 
 const ReportForm: React.FC = () => {
@@ -26,8 +27,11 @@ const ReportForm: React.FC = () => {
     location: false,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // If navigation brought a position via location.state, prefill the location
+  const navigate = useNavigate();
   const location = useLocation();
   useEffect(() => {
     // expect state.position = [lat, lng]
@@ -101,27 +105,36 @@ const ReportForm: React.FC = () => {
 
     try {
       await createReport(report);
-      alert('Report submitted successfully!');
-
-      setReport({
-        title: '',
-        description: '',
-        category: '',
-        photos: [],
-        latitude: null,
-        longitude: null,
-      });
-      setSelectedLocation(null);
-      setTouched({
-        title: false,
-        description: false,
-        category: false,
-        photos: false,
-        location: false,
-      });
+      setShowSuccess(true);
+      
+      // Reset form after short delay to show success message
+      setTimeout(() => {
+        setReport({
+          title: '',
+          description: '',
+          category: '',
+          photos: [],
+          latitude: null,
+          longitude: null,
+        });
+        setSelectedLocation(null);
+        setTouched({
+          title: false,
+          description: false,
+          category: false,
+          photos: false,
+          location: false,
+        });
+        
+        // Navigate to map page after 2 seconds
+        setTimeout(() => {
+          navigate('/map');
+        }, 2000);
+      }, 500);
     } catch (error) {
       console.error('Failed to submit report:', error);
-      alert('Failed to submit report. Please try again.');
+      setErrorMessage('Failed to submit report. Please try again.');
+      setShowError(true);
     } finally {
       setIsLoading(false);
     }
@@ -272,12 +285,42 @@ const ReportForm: React.FC = () => {
                 disabled={!validateForm() || isLoading}
                 className="submit-btn"
               >
-                {isLoading ? '⏳ Submitting...' : validateForm() ? ' Submit New Report' : 'Complete All Fields'}
+                {isLoading ? '⏳ Submitting...' : validateForm() ? '✅ Submit New Report' : '⚠️ Complete All Fields'}
               </button>
             </form>
           </div>
         </div>
       </div>
+
+      <Snackbar 
+        open={showSuccess} 
+        autoHideDuration={6000} 
+        onClose={() => setShowSuccess(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setShowSuccess(false)} 
+          severity="success" 
+          sx={{ width: '100%', fontSize: '1.1rem' }}
+        >
+          🎉 Report submitted successfully! Redirecting to map...
+        </Alert>
+      </Snackbar>
+
+      <Snackbar 
+        open={showError} 
+        autoHideDuration={6000} 
+        onClose={() => setShowError(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setShowError(false)} 
+          severity="error" 
+          sx={{ width: '100%', fontSize: '1.1rem' }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

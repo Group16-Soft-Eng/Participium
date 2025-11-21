@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } f
 import './App.css'
 import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import UserMenu from './components/UserMenu';
+import NotificationBell from './components/NotificationBell';
 import { useEffect, useState } from 'react';
 import { getToken, getRole, getRoleFromToken } from './services/auth';
 import { LoginScreen } from './pages/LoginScreen';
@@ -10,8 +11,11 @@ import { LoginScreen } from './pages/LoginScreen';
 import ReportForm from './Map/MapComponents/ReportForm';
 import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
+import OfficerMessagesPage from './pages/OfficerMessagesPage';
+import MessagesPage from './pages/MessagesPage';
 import { RequireAdmin, RequireLogin, RequireOfficer } from './components/RequireAuth';
 import { AdminScreen } from './pages/AdminPage';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 function App() {
   const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
@@ -28,7 +32,7 @@ function App() {
   const isAdmin = auth.role === 'municipal_administrator';
 
     return (
-    <>
+    <NotificationProvider>
       <Router>
         <AppBar position="fixed" color="default" elevation={1} className="app-bar">
           <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -53,6 +57,12 @@ function App() {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button component={Link} to="/map" color="inherit">Map</Button>
+              {isLoggedIn && !isOfficer && !isAdmin && (
+                <Button component={Link} to="/messages" color="inherit">Messages</Button>
+              )}
+              {isOfficer && (
+                <Button component={Link} to="/officer/messages" color="inherit">Messages</Button>
+              )}
               
               {/* Show different button based on user role */}
               {isOfficer ? (
@@ -112,7 +122,12 @@ function App() {
                 </Button>)}
               
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
-              {isLoggedIn ? <UserMenu /> : (
+              {isLoggedIn ? (
+                <>
+                  <NotificationBell />
+                  <UserMenu />
+                </>
+              ) : (
                 <Button variant="contained" color="primary" component={Link} to="/login">Login / Register</Button>
               )}
             </Box>
@@ -125,8 +140,10 @@ function App() {
             <Route path="/login" element={<LoginScreen />} />
             <Route path="/submitReport" element={<RequireLogin><ReportForm /></RequireLogin>} />
             <Route path="/map" element={<MapPage />} />
+            <Route path="/messages" element={<RequireLogin><MessagesPage /></RequireLogin>} />
             <Route path="/admin" element={<RequireAdmin><AdminScreen /></RequireAdmin>} />
             <Route path="/officer" element={<RequireOfficer><OfficerPage /></RequireOfficer>} />
+            <Route path="/officer/messages" element={<RequireOfficer><OfficerMessagesPage /></RequireOfficer>} />
           </Routes>
         </Box>
 
@@ -154,7 +171,7 @@ function App() {
           </DialogActions>
         </Dialog>
       </Router>
-    </>
+    </NotificationProvider>
   );
 }
 

@@ -9,6 +9,12 @@ interface RejectState {
   reason: string;
 }
 
+interface ApproveState {
+  open: boolean;
+  reportId: number | null;
+  message: string;
+}
+
 // Category colors matching the map
 const CATEGORY_COLORS: Record<string, string> = {
   infrastructure: '#8b5cf6',
@@ -27,6 +33,7 @@ const OfficerReview: React.FC = () => {
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [reject, setReject] = useState<RejectState>({ open: false, reportId: null, reason: '' });
+  const [approve, setApprove] = useState<ApproveState>({ open: false, reportId: null, message: '' });
   const [selected, setSelected] = useState<OfficerReport | null>(null);
   const [openImageIndex, setOpenImageIndex] = useState<number | null>(null);
 
@@ -41,9 +48,18 @@ const OfficerReview: React.FC = () => {
     setLoading(false);
   };
 
-  const handleApprove = async (id: number) => {
-    const ok = await reviewReport(id, 'APPROVED');
-    if (ok) setReports((r) => r.filter((x) => x.id !== id));
+  const openApproveDialog = (id: number) => setApprove({ open: true, reportId: id, message: '' });
+
+  const handleConfirmApprove = async () => {
+    if (!approve.reportId) return;
+    const report = reports.find(r => r.id === approve.reportId);
+    const ok = await reviewReport(approve.reportId, 'APPROVED', undefined, {
+      title: report?.title || 'Your report',
+      authorId: report?.author?.id,
+      authorUsername: report?.author?.username
+    }, approve.message.trim() || undefined);
+    if (ok) setReports((r) => r.filter((x) => x.id !== approve.reportId));
+    setApprove({ open: false, reportId: null, message: '' });
   };
 
   const openRejectDialog = (id: number) => setReject({ open: true, reportId: id, reason: '' });
@@ -54,7 +70,12 @@ const OfficerReview: React.FC = () => {
       alert('The rejection reason must be at least 30 characters long.');
       return;
     }
-    const ok = await reviewReport(reject.reportId, 'DECLINED', reject.reason.trim());
+    const report = reports.find(r => r.id === reject.reportId);
+    const ok = await reviewReport(reject.reportId, 'DECLINED', reject.reason.trim(), {
+      title: report?.title || 'Your report',
+      authorId: report?.author?.id,
+      authorUsername: report?.author?.username
+    });
     if (ok) setReports((r) => r.filter((x) => x.id !== reject.reportId));
     setReject({ open: false, reportId: null, reason: '' });
   };
@@ -111,7 +132,7 @@ const OfficerReview: React.FC = () => {
                   <TableCell sx={{ width: 180 }}>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                   <TableCell align="right">
                     <Button variant="contained" color="primary" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                    <Button variant="contained" color="success" size="small" onClick={() => handleApprove(r.id)} sx={{ mr: 1 }}>Approve</Button>
+                    <Button variant="contained" color="success" size="small" onClick={() => openApproveDialog(r.id)} sx={{ mr: 1 }}>Approve</Button>
                     <Button variant="outlined" color="error" size="small" onClick={() => openRejectDialog(r.id)}>Reject</Button>
                   </TableCell>
                 </TableRow>
@@ -121,6 +142,32 @@ const OfficerReview: React.FC = () => {
           </TableContainer>
         </Paper>
       )}
+
+      <Dialog open={approve.open} onClose={() => setApprove({ open: false, reportId: null, message: '' })} fullWidth maxWidth="sm">
+        <DialogTitle>Approve Report</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You can optionally send a message to the user about this approval.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="normal"
+            id="message"
+            label="Message to User (Optional)"
+            type="text"
+            fullWidth
+            multiline
+            minRows={4}
+            value={approve.message}
+            onChange={(e) => setApprove((s) => ({ ...s, message: e.target.value }))}
+            placeholder="e.g., Your report has been approved. Our team will address this issue within 5 business days..."
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setApprove({ open: false, reportId: null, message: '' })}>Cancel</Button>
+          <Button color="success" variant="contained" onClick={handleConfirmApprove}>Confirm Approve</Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={reject.open} onClose={() => setReject({ open: false, reportId: null, reason: '' })} fullWidth maxWidth="sm">
         <DialogTitle>Reject Report</DialogTitle>
