@@ -57,9 +57,15 @@ Server will run on `http://localhost:5000`
 #### Start the Frontend Client
 ```bash
 cd client
-npm run dev
+sudo systemctl start redis-server && sudo systemctl enable redis-server && sudo systemctl status redis-server
 ```
 Client will run on `http://localhost:5173`
+
+### Starting the Redis Server
+```bash
+cd server
+npm run redis
+```
 
 ### Starting the Telegram Bot
 ```bash

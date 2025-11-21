@@ -1,6 +1,6 @@
 import {app}  from "@app";
 import { CONFIG } from "@config";
-import { initializeDatabase } from "@database";
+import { initializeDatabase, initializeRedis } from "@database";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -23,6 +23,7 @@ async function startServer() {
     }
 
     await initializeDatabase();
+    await initializeRedis();
     app.listen(CONFIG.APP_PORT);
     console.log("Server Started on port", CONFIG.APP_PORT);
   } catch (error) {

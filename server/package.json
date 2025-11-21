@@ -4,6 +4,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
+    "redis" : "sudo systemctl start redis-server && sudo systemctl enable redis-server && sudo systemctl status redis-server",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest --runInBand",

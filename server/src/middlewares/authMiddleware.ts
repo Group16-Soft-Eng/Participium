@@ -1,13 +1,12 @@
 //! AUTH MIDDLEWARE
 import { Request, Response, NextFunction } from "express";
-import { verifyToken } from "@services/authService";
+import { verifyToken, validateSession } from "@services/authService";
 import { UnauthorizedError, ForbiddenError } from "@utils/utils";
-import { UserRepository } from "@repositories/UserRepository";
 /**
  * Middleware per autenticare richieste con JWT Bearer token
  * Aggiunge req.user con i dati del token decodificato
  */
-export function authenticateToken(req: Request, res: Response, next: NextFunction): void {
+export async function authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -16,6 +15,15 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
 
         const token = authHeader.substring(7);
         const decoded = verifyToken(token);
+        
+        // Get sessionType from token, default to "web" if not present
+        const sessionType = decoded.sessionType || "web";
+        
+        // Validate session in Redis
+        const isValidSession = await validateSession(decoded.id, token, sessionType);
+        if (!isValidSession) {
+            throw new UnauthorizedError("Session expired or invalid");
+        }
 
         (req as any).user = decoded;
         
