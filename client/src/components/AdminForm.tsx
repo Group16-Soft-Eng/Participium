@@ -1,4 +1,4 @@
-import { Box, Button, Container, Grid, MenuItem, Select, Stack, TextField } from "@mui/material";
+import { Box, Button, Container, FormControl, Grid, InputLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { Form, useNavigate } from "react-router-dom";
 import { useActionState, useEffect, useState } from "react";
@@ -18,6 +18,8 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
     const navigate = useNavigate();
     const [officeTypes, setOfficeTypes] = useState<string[]>([]);
     const [officerTypes, setOfficerTypes] = useState<string[]>([]);
+
+    const [role, setRole] = useState("");
 
     useEffect(() => {
         const fetchOfficerTypes = async () => {
@@ -48,6 +50,10 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
             Office: formData.get('office') as string,
             Role: formData.get('role') as string
         }
+
+        if (officer.Role === 'technical_office_staff' || officer.Role === 'municipal_administrator') {
+            officer.Office = 'organization';
+        }
         if (formData.get('email') !== formData.get('cemail')) {
             setError('Emails do not match');
             return { error: 'Emails do not match' };
@@ -72,40 +78,49 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
             <form action={formAction}>
                 <Grid container spacing={2} maxWidth="sm">
                     <Grid size={6}>
-                        <TextField id="name" name="name" label="Name" variant="outlined" fullWidth required/>
+                        <TextField id="name" name="name" label="Name" variant="outlined" fullWidth required />
                     </Grid>
                     <Grid size={6}>
-                        <TextField id="surname" name="surname" label="Surname" variant="outlined" fullWidth required/>
+                        <TextField id="surname" name="surname" label="Surname" variant="outlined" fullWidth required />
                     </Grid>
                     <Grid size={12}>
-                        <TextField id="username" name="username" label="Username" variant="outlined" fullWidth required/>
+                        <TextField id="username" name="username" label="Username" variant="outlined" fullWidth required />
                     </Grid>
                     <Grid size={12}>
-                        <TextField id="email" name="email" label="Email" variant="outlined" fullWidth required/>
+                        <TextField id="email" name="email" label="Email" variant="outlined" fullWidth required />
                     </Grid>
                     <Grid size={12}>
-                        <TextField id="cemail" name="cemail" label="Confirm Email" variant="outlined" fullWidth required/>
+                        <TextField id="cemail" name="cemail" label="Confirm Email" variant="outlined" fullWidth required />
                     </Grid>
                     <Grid size={6}>
-                        <TextField id="password" name="password" label="Password" variant="outlined" type="password" fullWidth required/>
+                        <TextField id="password" name="password" label="Password" variant="outlined" type="password" fullWidth required />
                     </Grid>
                     <Grid size={6}>
-                        <TextField id="confirm-password" name="confirm-password" label="Confirm Password" variant="outlined" type="password" fullWidth required/>
+                        <TextField id="confirm-password" name="confirm-password" label="Confirm Password" variant="outlined" type="password" fullWidth required />
                     </Grid>
-                    <Grid size={12}>
-                        <Select id="office" name="office" label="Office" variant="outlined" fullWidth defaultValue={''} required> {
-                            officeTypes.map((type) => (<MenuItem key={type} value={type}>{type}</MenuItem>
-                            ))
-                        }
-                        </Select>
-                    </Grid>
-                    <Grid size={12}>
-                        <Select id="role" name="role" label="Role" variant="outlined" fullWidth defaultValue={''} required> {
-                            officerTypes.map((type) => (<MenuItem key={type} value={type}>{type.replaceAll('_', ' ')}</MenuItem>
-                            ))
-                        }
-                        </Select>
-                    </Grid>
+                    <FormControl fullWidth>
+                        <InputLabel id="role-select-label">Officer Role</InputLabel>
+                        <Grid size={12}>
+                            <Select id="role" name="role" label="Officer Role" variant="outlined" fullWidth defaultValue={''} required
+                            onChange={(e) => setRole(e.target.value)}> {
+                                officerTypes.map((type) => (<MenuItem key={type} value={type}>{type.replaceAll('_', ' ')}</MenuItem>
+                                ))
+                            }
+                            </Select>
+                        </Grid>
+                    </FormControl>
+                    {role === 'technical_office_staff' && (
+                    <FormControl fullWidth>
+                        <InputLabel id="office-select-label">Office</InputLabel>
+                        <Grid size={12}>
+                            <Select id="office" name="office" label="Office" variant="outlined" fullWidth defaultValue={''} required> {
+                                officeTypes.map((type) => (<MenuItem key={type} value={type}>{type}</MenuItem>
+                                ))
+                            }
+                            </Select>
+                        </Grid>
+                    </FormControl>
+                    )}
                     {error && <Grid size={12}><p className="error">{error}</p></Grid>}
                     <Grid size={6}>
                         <Button variant="outlined" onClick={() => setShowForm(false)} fullWidth>Go Back</Button>
