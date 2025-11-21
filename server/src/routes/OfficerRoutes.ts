@@ -11,7 +11,7 @@ router.post("", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINI
         const officerData = OfficerFromJSON(req.body);
         if(!officerData.email) return res.status(400).json({error: "email is required"});
         const result = await createOfficer(officerData);
-        res.status(200).json(result);
+        res.status(200).json(OfficerToJSON(result));
     }
     catch(error)
     {
