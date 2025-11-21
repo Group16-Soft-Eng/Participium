@@ -19,6 +19,8 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
     const [officeTypes, setOfficeTypes] = useState<string[]>([]);
     const [officerTypes, setOfficerTypes] = useState<string[]>([]);
 
+    const [role, setRole] = useState("");
+
     useEffect(() => {
         const fetchOfficerTypes = async () => {
             try {
@@ -47,6 +49,10 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
             password: formData.get('password') as string,
             Office: formData.get('office') as string,
             Role: formData.get('role') as string
+        }
+
+        if (officer.Role === 'technical_office_staff' || officer.Role === 'municipal_administrator') {
+            officer.Office = 'organization';
         }
         if (formData.get('email') !== formData.get('cemail')) {
             setError('Emails do not match');
@@ -95,13 +101,15 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                     <FormControl fullWidth>
                         <InputLabel id="role-select-label">Officer Role</InputLabel>
                         <Grid size={12}>
-                            <Select id="role" name="role" label="Officer Role" variant="outlined" fullWidth defaultValue={''} required> {
+                            <Select id="role" name="role" label="Officer Role" variant="outlined" fullWidth defaultValue={''} required
+                            onChange={(e) => setRole(e.target.value)}> {
                                 officerTypes.map((type) => (<MenuItem key={type} value={type}>{type.replaceAll('_', ' ')}</MenuItem>
                                 ))
                             }
                             </Select>
                         </Grid>
                     </FormControl>
+                    {role === 'technical_office_staff' && (
                     <FormControl fullWidth>
                         <InputLabel id="office-select-label">Office</InputLabel>
                         <Grid size={12}>
@@ -112,6 +120,7 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                             </Select>
                         </Grid>
                     </FormControl>
+                    )}
                     {error && <Grid size={12}><p className="error">{error}</p></Grid>}
                     <Grid size={6}>
                         <Button variant="outlined" onClick={() => setShowForm(false)} fullWidth>Go Back</Button>
