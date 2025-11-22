@@ -169,7 +169,7 @@ describe("Officers API Integration Tests", () => {
       const userToken = generateToken({
         id: user.id,
         username: user.email,
-        type: "CITIZEN"
+        type: "user"
       });
       const report = await createReport(
         userToken,
@@ -200,7 +200,7 @@ describe("Officers API Integration Tests", () => {
       const userToken = generateToken({
         id: user.id,
         username: user.email,
-        type: "CITIZEN"
+        type: "user"
       });
       await createReport(
         userToken,
@@ -226,7 +226,7 @@ describe("Officers API Integration Tests", () => {
       const userToken = generateToken({
         id: user.id,
         username: user.email,
-        type: "CITIZEN"
+        type: "user"
       });
       const report = await createReport(
         userToken,
@@ -264,7 +264,7 @@ describe("Officers API Integration Tests", () => {
       const userToken = generateToken({
         id: user.id,
         username: user.email,
-        type: "CITIZEN"
+        type: "user"
       });
       const report = await createReport(
         userToken,
@@ -291,7 +291,7 @@ describe("Officers API Integration Tests", () => {
       const userToken = generateToken({
         id: user.id,
         username: user.email,
-        type: "CITIZEN"
+        type: "user"
       });
       const report = await createReport(
         userToken,
@@ -333,7 +333,7 @@ describe("Officers API Integration Tests", () => {
       const userToken = generateToken({
         id: user.id,
         username: user.email,
-        type: "CITIZEN"
+        type: "user"
       });
       const report = await createReport(
         userToken,
