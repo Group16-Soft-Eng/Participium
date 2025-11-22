@@ -93,7 +93,11 @@ const MapPage: React.FC = () => {
               <Paper sx={{ width: '100%', p: 1.25, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} elevation={1} onClick={() => setSelectedId(r.id)}>
                 <Box>
                   <Typography variant="subtitle1">{r.title}</Typography>
-                  <Typography variant="caption" color="text.secondary">{r.category} • {new Date(r.createdAt).toLocaleDateString()}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {/* Show reporter: anonymous when report.anonymity is true, otherwise show author name if available */}
+                    {r.anonymity ? 'Anonymous' : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown')}
+                    {` • ${new Date(r.createdAt).toLocaleDateString()}`}
+                  </Typography>
                 </Box>
                 <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
               </Paper>
