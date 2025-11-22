@@ -21,6 +21,8 @@ export interface OfficerReport {
     description?: string;
     photos?: string[];
   };
+  state?: ReportState;
+  assignedOfficerId?: number;
 }
 
 export async function getAssignedReports(): Promise<OfficerReport[]> {
@@ -29,6 +31,16 @@ export async function getAssignedReports(): Promise<OfficerReport[]> {
     return res.data;
   } catch (e) {
     console.error('Error fetching assigned reports:', e);
+    return [];
+  }
+}
+
+export async function getMyAssignedReports(): Promise<OfficerReport[]> {
+  try {
+    const res = await api.get<OfficerReport[]>('/officers/assigned');
+    return res.data;
+  } catch (e) {
+    console.error('Error fetching my assigned reports:', e);
     return [];
   }
 }
