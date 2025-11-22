@@ -88,4 +88,25 @@ export class UserRepository {
     const user = await this.getUserByUsername(username);
     await this.repo.remove(user);
   }
+
+  async getUseryTelegramUsername(telegramUsername: string): Promise<UserDAO> {
+    return findOrThrowNotFound(
+      await this.repo.find({ where: { telegramUsername } }),
+      () => true,
+      `User with telegram username '${telegramUsername}' not found`
+    );
+  }
+
+  //? update profile (story 9 -> telegram username, email notifications, avatar)
+  async updateProfile(userId: number, data: {
+      telegramUsername?: string | null;
+      emailNotifications?: boolean;
+      avatarPath?: string | null
+  }): Promise<UserDAO> {
+    const user = await this.getUserById(userId);
+    if (data.telegramUsername !== undefined) user.telegramUsername = data.telegramUsername;
+    if (data.emailNotifications !== undefined) user.emailNotifications = data.emailNotifications;
+    if (data.avatarPath !== undefined) user.avatar = data.avatarPath;
+    return this.repo.save(user);
+  }
 }

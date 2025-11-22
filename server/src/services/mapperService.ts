@@ -18,7 +18,10 @@ export function mapUserDAOToDTO(dao: UserDAO): User {
     lastName: dao.lastName,
     email: dao.email,
     // Non restituiamo mai la password in DTO!
-    password: undefined
+    password: undefined,
+    avatar: dao.avatar || undefined,
+    telegramUsername: dao.telegramUsername || undefined,
+    emailNotifications: dao.emailNotifications
   };
 }
 
@@ -54,6 +57,10 @@ export function mapReportDAOToDTO(dao: ReportDAO): Report {
     document: {
       description: dao.document?.Description,
       photos: dao.document?.Photos
-    }
+    },
+    //? aggiunti per la getAssigned (non la retrieve che prende solo i pending, ma in generale la getAssigned che prende tutti i report assegnati anche non-pending)
+    state: dao.state as any,
+    reason: dao.reason || undefined,
+    assignedOfficerId: (dao as any).assignedOfficerId || undefined
   };
 }

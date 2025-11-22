@@ -44,3 +44,20 @@ export const uploadPhotos = multer({
     files: 3 // min 1, max 3 photos
   }
 }).array("photos", 3); // field "photos" nel form-data (max 3 photos as story)
+
+//? manage uploading avatar image (story 9)
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "../../uploads/avatars"));
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+export const uploadAvatar = multer({
+  storage: avatarStorage,
+  fileFilter: fileFilter
+}).single("avatar");
+

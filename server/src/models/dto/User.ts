@@ -55,6 +55,24 @@ export interface User {
      * @memberof User
      */
     email?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof User
+     */
+    avatar?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof User
+     */
+    telegramUsername?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof User
+     */
+    emailNotifications?: boolean;
 }
 
 /**
@@ -80,6 +98,9 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
         'password': json['password'] == null ? undefined : json['password'],
         'email': json['email'] == null ? undefined : json['email'],
+        'avatar': json['avatar'] == null ? undefined : json['avatar'],
+        'telegramUsername': json['telegramUsername'] == null ? undefined : json['telegramUsername'],
+        'emailNotifications': json['emailNotifications'] == null ? undefined : json['emailNotifications'],
     };
 }
 
@@ -100,6 +121,9 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
         'lastName': value['lastName'],
         'password': value['password'],
         'email': value['email'],
+        'avatar': value['avatar'],
+        'telegramUsername': value['telegramUsername'],
+        'emailNotifications': value['emailNotifications'],
     };
 }
 
