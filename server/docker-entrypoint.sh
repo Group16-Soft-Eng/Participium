@@ -23,5 +23,12 @@ chown -R node:node "$DB_PATH" || true
 
 echo "Starting Participium server (entrypoint)..."
 
+# Diagnostic: list application directory and dist contents to help debug missing files
+echo "PWD=$(pwd)"
+echo "Listing /usr/src/app:" 
+ls -la /usr/src/app || true
+echo "Listing /usr/src/app/dist:" 
+ls -la /usr/src/app/dist || true
+
 # If command passed, execute it (CMD provided in Dockerfile)
 exec "$@"
