@@ -34,9 +34,9 @@ export const redisClient = createClient({
 });
 
 export async function initializeRedis() {
-    redisClient.on("error", (err) => console.log("Redis Client Error", err));
-    await redisClient.connect();
-    console.log("Successfully connected to Redis");
+  redisClient.on("error", (err: unknown) => console.log("Redis Client Error", err));
+  await redisClient.connect();
+  console.log("Successfully connected to Redis");
 }
 
 export async function closeRedis() {

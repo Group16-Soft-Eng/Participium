@@ -3,7 +3,7 @@ WORKDIR /usr/src/app
 
 # Install all dependencies (including dev) and build
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 COPY . .
 RUN npm run build
 
@@ -14,7 +14,7 @@ ENV NODE_ENV=production
 
 # Install only production dependencies
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --only=production --no-audit --no-fund
 
 # Copy built app and uploads if present
 COPY --from=builder /usr/src/app/dist ./dist

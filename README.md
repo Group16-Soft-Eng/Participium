@@ -156,6 +156,7 @@ Notes:
 - The server uses SQLite by default; the DB file is mounted to `./server/participium.db`.
 - Uploaded files are stored under `./server/uploads` on the host
 - Environment variables (JWT secret, DB type/name, Redis host) can be overridden in your shell or by adapting `docker-compose.yml`
+- Aggiunto il tsconfig.build.json chiamato solo da CI/Docker, in questo modo con npm run dev il percorso "./src" rimane così, ma co docker sarà "."
 
 ## License
 See LICENSE file for details

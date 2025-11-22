@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
     "redis" : "sudo systemctl start redis-server && sudo systemctl enable redis-server && sudo systemctl status redis-server",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "test": "jest --runInBand",
     "test:coverage": "jest --runInBand --coverage"
@@ -20,6 +20,7 @@
     "multer": "^2.0.2",
     "pg": "^8.11.3",
     "reflect-metadata": "^0.1.13",
+    "redis": "^4.6.7",
     "sqlite3": "^5.1.7",
     "swagger-ui-express": "^5.0.0",
     "typeorm": "^0.3.17",
