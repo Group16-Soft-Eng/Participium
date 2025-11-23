@@ -7,6 +7,13 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - participium-network
 
   server:
     build:
@@ -20,14 +27,22 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=change_me
+      - REDIS_CONNECT_TIMEOUT=30000
     ports:
       - "5000:5000"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     volumes:
       - ./server/uploads:/usr/src/app/uploads
       - ./server/participium.db:/usr/src/app/participium.db
     restart: unless-stopped
+    networks:
+      - participium-network
 
 volumes:
   redis-data:
+
+networks:
+  participium-network:
+    driver: bridge
