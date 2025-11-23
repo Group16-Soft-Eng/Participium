@@ -11,11 +11,9 @@ conv_handler = ConversationHandler(
 )
 
 async def post_init(application):
+    # Set only /start command initially (global default)
     await application.bot.set_my_commands([
         BotCommand("start", "Avvia il bot"),
-        BotCommand("report", "Invia un report"),
-        BotCommand("login", "Effettua il login"),
-        BotCommand("info", "Recupera le informazioni dell'utente"),
     ])
 
 app = ApplicationBuilder().token("8413586512:AAHkAtWfo3A2LLfwc7_QmEnlYTTsjqn7_UM").post_init(post_init).build()
