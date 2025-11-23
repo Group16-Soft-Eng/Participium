@@ -1,6 +1,6 @@
 import {app}  from "@app";
 import { CONFIG } from "@config";
-import { initializeDatabase } from "@database";
+import { initializeDatabase, initializeRedis } from "@database";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -14,8 +14,16 @@ async function startServer() {
       fs.mkdirSync(uploadsDir, { recursive: true });
       console.log("Created uploads directory:", uploadsDir);
     }
-    
+
+    //? Ensure avatars directory exists (as for reports, but for story 9)
+    const avatarsDir = path.join(__dirname, "../uploads/avatars");
+    if (!fs.existsSync(avatarsDir)) {
+      fs.mkdirSync(avatarsDir, { recursive: true });
+      console.log("Created uploads directory:", avatarsDir);
+    }
+
     await initializeDatabase();
+    await initializeRedis();
     app.listen(CONFIG.APP_PORT);
     console.log("Server Started on port", CONFIG.APP_PORT);
   } catch (error) {

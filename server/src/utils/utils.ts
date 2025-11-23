@@ -32,6 +32,14 @@ export class BadRequestError extends Error {
   }
 }
 
+export class ForbiddenError extends Error {
+  statusCode = 403;
+  constructor(message: string) {
+    super(message);
+    this.name = "ForbiddenError";
+  }
+}
+
 
 export function findOrThrowNotFound<T>(
   elements: T[],

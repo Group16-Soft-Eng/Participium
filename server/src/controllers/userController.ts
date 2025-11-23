@@ -3,7 +3,50 @@
 import { User } from "@dto/User";
 import { UserRepository } from "@repositories/UserRepository";
 import { mapUserDAOToDTO } from "@services/mapperService";
+import { blacklistUserSessions, getSession } from "@services/authService";
 
+//? get user profile (story 9)
+export async function getMyProfile(userId: number): Promise<any> {
+  const userRepo = new UserRepository();
+  const user = await userRepo.getUserById(userId);
+  const dto = mapUserDAOToDTO(user) as any;
+
+  dto.avatar = user.avatar ?? null;
+  dto.telegramUsername = user.telegramUsername ?? null;
+  dto.emailNotifications = user.emailNotifications ?? true;
+  return dto;
+}
+
+//? update user profile (story 9)
+export async function updateMyProfile(userId: number, data: { telegramUsername?: string | null; emailNotifications?: boolean; avatarPath?: string | null }): Promise<any> {
+  const userRepo = new UserRepository();
+  
+  // Check if telegram username is being changed
+  const currentUser = await userRepo.getUserById(userId);
+  const telegramUsernameChanged = data.telegramUsername !== undefined && 
+                                   data.telegramUsername !== currentUser.telegramUsername;
+
+  const updated = await userRepo.updateProfile(userId, {
+    telegramUsername: data.telegramUsername,
+    emailNotifications: data.emailNotifications,
+    avatarPath: data.avatarPath,
+  });
+
+  // If telegram username changed, invalidate telegram sessions
+  if (telegramUsernameChanged) {
+    const session = await getSession(userId, "telegram");
+    if (session) {
+      await blacklistUserSessions(userId, "telegram", "telegram_username_changed");
+    }
+  }
+
+  const dto = mapUserDAOToDTO(updated) as any;
+  
+  dto.avatar = updated.avatar;
+  dto.telegramUsername = updated.telegramUsername;
+  dto.emailNotifications = updated.emailNotifications;
+  return dto;
+}
 
 export async function getAllUsers(): Promise<User[]> {
   const userRepo = new UserRepository();

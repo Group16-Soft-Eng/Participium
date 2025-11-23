@@ -1,0 +1,426 @@
+from __future__ import annotations
+
+import os
+import requests
+from typing import List, Dict
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    ConversationHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+)
+
+# ------------------------------------------------------------------ #
+# Configuration / State
+# ------------------------------------------------------------------ #
+SERVER_URL = "http://localhost:5000/api/v1"
+
+sessions: Dict[int, str] = {}
+categories: List[str] = []
+
+try:
+    response = requests.get(f"{SERVER_URL}/info-types", timeout=5)
+    data = response.json()
+    categories = data.get("officeTypes", []) or []
+    print("Loaded categories:", categories)
+except Exception as e:
+    print("Failed to load categories:", e)
+    categories = []
+
+# Conversation states
+WAITING_TITLE = 1
+WAITING_DESCRIPTION = 2
+WAITING_CATEGORY = 3
+WAITING_PHOTO = 4
+WAITING_LOCATION = 5
+WAITING_ANONYMOUS = 6
+
+# ------------------------------------------------------------------ #
+# Helpers
+# ------------------------------------------------------------------ #
+def build_category_keyboard() -> InlineKeyboardMarkup:
+    keyboard = [
+        [InlineKeyboardButton(label, callback_data=f"category_{i}")]
+        for i, label in enumerate(categories)
+    ]
+    # Add back and cancel button row
+    keyboard.append([InlineKeyboardButton("⬅️ Back", callback_data="back_description"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")])
+    return InlineKeyboardMarkup(keyboard)
+
+def build_yes_no_keyboard(prefix: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("✅ Yes", callback_data=f"{prefix}_yes"),
+                InlineKeyboardButton("❌ No", callback_data=f"{prefix}_no"),
+            ]
+        ]
+    )
+
+def in_turin(latitude: float, longitude: float) -> bool:
+    return 44.9 <= latitude <= 45.2 and 7.5 <= longitude <= 7.8
+
+def build_main_menu() -> InlineKeyboardMarkup:
+    """Build main menu with available functionalities."""
+    keyboard = [
+        [InlineKeyboardButton("📝 Create Report", callback_data="start_report")],
+        # Add more functionalities here in the future
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+# ------------------------------------------------------------------ #
+# Handlers
+# ------------------------------------------------------------------ #
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("Welcome to the Participium Bot! Use /login to authenticate.")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    image_path = os.path.join(script_dir, "welcome.png")
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as f:
+            await update.message.reply_sticker(sticker=f)
+    else:
+        print(f"Warning: Image not found at {image_path}")
+
+async def handle_login(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Callback login handler triggered by inline button."""
+    query = update.callback_query
+    await query.answer()
+    chat_id = update.effective_chat.id
+    username = update.effective_user.username
+    try:
+        response = requests.post(f"{SERVER_URL}/auth/telegram", json={"username": username}, timeout=5)
+    except Exception as e:
+        await query.edit_message_text(f"Error connecting to server: {e}")
+        return
+    if response.status_code == 200:
+        token = response.json()
+        sessions[chat_id] = token
+        await query.edit_message_text(
+            "✅ Login successful! Choose a functionality:",
+            reply_markup=build_main_menu()
+        )
+    else:
+        await query.edit_message_text("❌ Error during login. Make sure you have registered your Telegram username.")
+
+async def retrieveAccount(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.effective_chat.id
+    username = update.effective_user.username
+    try:
+        response = requests.post(f"{SERVER_URL}/auth/telegram", json={"username": username}, timeout=5)
+    except Exception as e:
+        await update.message.reply_text(f"Error connecting to server: {e}")
+        return
+    if response.status_code == 200:
+        token = response.json()
+        sessions[chat_id] = token
+        await update.message.reply_text(
+            "✅ Login successful! Choose a functionality:",
+            reply_markup=build_main_menu()
+        )
+    else:
+        await update.message.reply_text("Error during login. Make sure you have registered your Telegram username.")
+
+async def sendReport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    chat_id = update.effective_chat.id
+    if chat_id not in sessions:
+        await update.message.reply_text("You must first log in with /login.")
+        return ConversationHandler.END
+    keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]]
+    await update.message.reply_text(
+        "Let's start. Please send the report title.",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+    return WAITING_TITLE
+
+async def receiveTitle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data["title"] = update.message.text.strip()
+    keyboard = [
+        [InlineKeyboardButton("⬅️ Back", callback_data="back_title"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+    ]
+    await update.message.reply_text(
+        "Title received. Now send the description.",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+    return WAITING_DESCRIPTION
+
+async def receiveDescription(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    description = (update.message.text or "").strip()
+    if not description:
+        await update.message.reply_text("Description cannot be empty. Please send a valid description.")
+        return WAITING_DESCRIPTION
+    if len(description) < 30:
+        await update.message.reply_text("Description must be at least 30 characters. Send a more detailed description.")
+        return WAITING_DESCRIPTION
+    context.user_data["description"] = description
+    await update.message.reply_text("Choose a category:", reply_markup=build_category_keyboard())
+    return WAITING_CATEGORY
+
+async def receiveCategory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    index = int(query.data.replace("category_", ""))
+    category = categories[index]
+    context.user_data["category"] = category
+    context.user_data["photos"] = []
+    await query.edit_message_text(f"Category selected: {category}")
+    keyboard = [
+        [InlineKeyboardButton("⬅️ Back", callback_data="back_category"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+    ]
+    await query.message.reply_text(
+        "Send at least 1 photo (max 3). When done, send /done.",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+    return WAITING_PHOTO
+
+async def receivePhoto(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    photos = context.user_data.setdefault("photos", [])
+    if len(photos) >= 3:
+        await update.message.reply_text("Already 3 photos. Processing...")
+        return WAITING_PHOTO
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    photos_dir = os.path.join(script_dir, "photos")
+    os.makedirs(photos_dir, exist_ok=True)
+    photo_file = await update.message.photo[-1].get_file()
+    photo_path = os.path.join(photos_dir, f"{photo_file.file_id}.jpg")
+    await photo_file.download_to_drive(photo_path)
+    photos.append(photo_path)
+    num = len(photos)
+    
+    # If 3 photos, automatically move to next step
+    if num >= 3:
+        await update.message.reply_text(f"Photo {num}/3 received. Maximum reached!")
+        keyboard = [
+            [InlineKeyboardButton("⬅️ Back", callback_data="back_photos"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        ]
+        await update.message.reply_text(
+            "Now send your location.",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        return WAITING_LOCATION
+    
+    # Show Done button after first photo
+    keyboard = [
+        [InlineKeyboardButton("✅ Done", callback_data="done_photos")],
+        [InlineKeyboardButton("⬅️ Back", callback_data="back_photos"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+    ]
+    await update.message.reply_text(
+        f"Photo {num}/3 received. Send another photo or tap Done.",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+    return WAITING_PHOTO
+
+async def done_photos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    # Handle both callback query and command
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        num = len(context.user_data.get("photos", []))
+        if num < 1:
+            await query.message.reply_text("At least 1 photo required.")
+            return WAITING_PHOTO
+        await query.edit_message_text(f"{num} photo(s) received.")
+        keyboard = [
+            [InlineKeyboardButton("⬅️ Back", callback_data="back_photos"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        ]
+        await query.message.reply_text(
+            "Now send your location.",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+    else:
+        # Handle /done command
+        num = len(context.user_data.get("photos", []))
+        if num < 1:
+            await update.message.reply_text("At least 1 photo required.")
+            return WAITING_PHOTO
+        keyboard = [
+            [InlineKeyboardButton("⬅️ Back", callback_data="back_photos"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        ]
+        await update.message.reply_text(
+            "Now send your location.",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+    return WAITING_LOCATION
+
+async def skip_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("You must send at least 1 photo or /cancel.")
+    return WAITING_PHOTO
+
+async def receiveLocation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    lat = update.message.location.latitude
+    lng = update.message.location.longitude
+    if not in_turin(lat, lng):
+        await update.message.reply_text("⚠️ Location must be within Turin area. Send a valid location in Turin.")
+        return WAITING_LOCATION
+    context.user_data["latitude"] = lat
+    context.user_data["longitude"] = lng
+    # Yes/No + Back + Cancel inline keyboard
+    anon_keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("✅ Yes", callback_data="anonymous_yes"),
+            InlineKeyboardButton("❌ No", callback_data="anonymous_no"),
+        ],
+        [InlineKeyboardButton("⬅️ Back", callback_data="back_location"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")],
+    ])
+    await update.message.reply_text("Do you want to send the report anonymously?", reply_markup=anon_keyboard)
+    return WAITING_ANONYMOUS
+
+async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Generic back navigation handler."""
+    query = update.callback_query
+    await query.answer()
+    data = query.data  # e.g., back_description
+    target = data.replace("back_", "")
+
+    if target == "title":
+        # Already at first step; just re-prompt title
+        await query.edit_message_text("Going back...")
+        keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]]
+        await query.message.reply_text(
+            "Send the report title again:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        context.user_data.pop("title", None)
+        context.user_data.pop("description", None)
+        return WAITING_TITLE
+    if target == "description":
+        await query.edit_message_text("Going back...")
+        keyboard = [
+            [InlineKeyboardButton("⬅️ Back", callback_data="back_title"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        ]
+        await query.message.reply_text(
+            "Send the description again:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        context.user_data.pop("description", None)
+        return WAITING_DESCRIPTION
+    if target == "category":
+        await query.edit_message_text("Going back...")
+        context.user_data.pop("category", None)
+        context.user_data.pop("photos", None)
+        await query.message.reply_text("Choose a category:", reply_markup=build_category_keyboard())
+        return WAITING_CATEGORY
+    if target == "photos":
+        # Go back to photo collection stage
+        await query.edit_message_text("Going back...")
+        keyboard = [
+            [InlineKeyboardButton("⬅️ Back", callback_data="back_category"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        ]
+        await query.message.reply_text(
+            "Send at least 1 photo (max 3). When done, send /done.",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        return WAITING_PHOTO
+    if target == "location":
+        # Back from anonymous to location
+        await query.edit_message_text("Going back...")
+        keyboard = [
+            [InlineKeyboardButton("⬅️ Back", callback_data="back_photos"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        ]
+        await query.message.reply_text(
+            "Send your location again.",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        context.user_data.pop("latitude", None)
+        context.user_data.pop("longitude", None)
+        return WAITING_LOCATION
+    # Fallback: end conversation if unknown
+    await query.edit_message_text("Unknown back target.")
+    return ConversationHandler.END
+
+async def receiveAnonymous(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    anonymous = query.data.endswith("_yes")
+    context.user_data["anonymous"] = anonymous
+    chat_id = update.effective_chat.id
+    token = sessions.get(chat_id)
+    report_data = {
+        "title": context.user_data.get("title"),
+        "description": context.user_data.get("description"),
+        "category": context.user_data.get("category"),
+        "latitude": str(context.user_data.get("latitude")),
+        "longitude": str(context.user_data.get("longitude")),
+        "anonymity": "1" if anonymous else "0",
+    }
+    photo_paths = context.user_data.get("photos", [])
+    files = []
+    for p in photo_paths:
+        if os.path.exists(p):
+            files.append(("photos", (os.path.basename(p), open(p, "rb"), "image/jpeg")))
+    try:
+        response = requests.post(f"{SERVER_URL}/reports", data=report_data, files=files, headers={"Authorization": f"Bearer {token}"})
+        if response.status_code in (200, 201):
+            await query.edit_message_text(f"✅ Report sent with {len(files)} photo(s)! {'(Anonymous)' if anonymous else ''}")
+            # Show main menu after successful report
+            await query.message.reply_text(
+                "What would you like to do next?",
+                reply_markup=build_main_menu()
+            )
+        elif response.status_code == 401:
+            # Clear session on unauthorized
+            sessions.pop(chat_id, None)
+            await query.edit_message_text("❌ Unauthorized. Your session has expired. Please /login again.")
+        else:
+            await query.edit_message_text(f"❌ Error sending report: {response.text}")
+    finally:
+        for _, file_tuple in files:
+            file_tuple[1].close()
+        for p in photo_paths:
+            if os.path.exists(p):
+                os.remove(p)
+    context.user_data.clear()
+    return ConversationHandler.END
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    # Handle both command and callback query
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        context.user_data.clear()
+        await query.edit_message_text(
+            "❌ Operation cancelled. Choose a functionality:",
+            reply_markup=build_main_menu()
+        )
+    else:
+        await update.message.reply_text("Operation cancelled.")
+        context.user_data.clear()
+    return ConversationHandler.END
+
+async def show_categories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    if not categories:
+        await update.message.reply_text("No categories available.")
+        return ConversationHandler.END
+    await update.message.reply_text("Choose a category:", reply_markup=build_category_keyboard())
+    return WAITING_CATEGORY
+
+async def handle_start_report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    chat_id = update.effective_chat.id
+    if chat_id not in sessions:
+        await query.edit_message_text("You must first log in with /login.")
+        return ConversationHandler.END
+    await query.edit_message_text("Starting report submission...")
+    keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]]
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text="Let's start the report submission process. Please send the report title.",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+    return WAITING_TITLE
+
+
+async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Logout user and clear session."""
+    chat_id = update.effective_chat.id
+    
+    if chat_id in sessions:
+        sessions.pop(chat_id, None)
+        await update.message.reply_text("✅ Logged out successfully. Use /login to authenticate again.")
+    else:
+        await update.message.reply_text("❌ You are not logged in.")

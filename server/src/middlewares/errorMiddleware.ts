@@ -5,7 +5,8 @@ import {
   NotFoundError,
   ConflictError,
   UnauthorizedError,
-  BadRequestError
+  BadRequestError,
+  ForbiddenError
 } from "@utils/utils";
 
 
@@ -41,6 +42,14 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
     if (err instanceof BadRequestError) {
         res.status(400).json({
         code: "BAD_REQUEST",
+        message: err.message
+        });
+        return;
+    }
+
+    if (err instanceof ForbiddenError) {
+        res.status(403).json({
+        code: "FORBIDDEN",
         message: err.message
         });
         return;

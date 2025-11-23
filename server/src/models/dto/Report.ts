@@ -96,10 +96,34 @@ export interface Report {
      * @memberof Report
      */
     document?: ReportDocument;
+    /**
+     * @type {string}
+     * @memberof Report
+     */
+    state?: string;
+    /**
+     * @type {string}
+     * @memberof Report
+     */
+    reason?: string;
+    /**
+     * @type {number}
+     * @memberof Report
+     */
+    assignedOfficerId?: number;     
 }
+/*
 
+  @Column({ type: "text", default: ReportState.PENDING })
+  state!: ReportState;
 
+  @Column({ type: "text", nullable: true })
+  reason!: string | null;
 
+  @Column({ type: "integer", nullable: true })
+  assignedOfficerId!: number | null;
+
+    */
 /**
  * Check if a given object implements the Report interface.
  */
