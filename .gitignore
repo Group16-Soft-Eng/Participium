@@ -4,3 +4,4 @@
 **/.vite/
 **/uploads/
 /server/participium.db
+/telegram/photos
