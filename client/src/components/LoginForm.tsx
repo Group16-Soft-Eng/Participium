@@ -44,7 +44,9 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                     navigate('/admin');
                 }
                 else {
-                    setRole('officer');
+                    // Detected may be a specific officer role (e.g. technical_office_staff, municipal_public_relations_officer)
+                    const roleToStore = detected ?? 'officer';
+                    setRole(roleToStore as any);
                     window.dispatchEvent(new Event('authChange'));
                     setLoading(false);
                     // if there's a pending location for a report, go to submit form
@@ -52,7 +54,12 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                     if (pending) {
                         navigate('/submitReport');
                     } else {
-                        navigate('/officer');
+                        // redirect based on specific officer role
+                        if (roleToStore === 'technical_office_staff') {
+                            navigate('/technical');
+                        } else {
+                            navigate('/officer');
+                        }
                     }
                 }
         } catch (e) {

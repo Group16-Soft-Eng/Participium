@@ -55,5 +55,9 @@ export function mapReportDAOToDTO(dao: ReportDAO): Report {
       description: dao.document?.Description,
       photos: dao.document?.Photos
     }
+    ,
+    state: dao.state,
+    assignedOfficerId: dao.assignedOfficerId ?? undefined,
+    reason: dao.reason ?? undefined
   };
 }
