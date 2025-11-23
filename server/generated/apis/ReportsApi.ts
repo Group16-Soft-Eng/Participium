@@ -14,13 +14,7 @@
 
 
 import * as runtime from '../runtime';
-import type {
-  Report,
-} from '../models/index';
-import {
-    ReportFromJSON,
-    ReportToJSON,
-} from '../models/index';
+// Model types from generated models are not needed at runtime for server tests
 
 export interface UploadReportRequest {
     report?: Report;

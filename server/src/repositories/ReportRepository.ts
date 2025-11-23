@@ -1,12 +1,10 @@
-//! REPORT REPOSITORY
-
 import { AppDataSource } from "@database";
 import { Repository } from "typeorm";
 import { ReportDAO } from "@dao/ReportDAO";
 import { UserDAO } from "@dao/UserDAO";
 import { OfficeType } from "@models/enums/OfficeType";
 import { ReportState } from "@models/enums/ReportState";
-import { findOrThrowNotFound } from "@utils";
+import { findOrThrowNotFound } from "../utils/utils";
 
 export class ReportRepository {
   private repo: Repository<ReportDAO>;
@@ -23,6 +21,16 @@ export class ReportRepository {
   async getApprovedReports(): Promise<ReportDAO[]> {
     return this.repo.find({
       where: { state: ReportState.APPROVED },
+      relations: ["author"],
+      order: {
+        date: "DESC" // Most recent first
+      }
+    });
+  }
+
+  async getReportsByState(state: ReportState): Promise<ReportDAO[]> {
+    return this.repo.find({
+      where: { state },
       relations: ["author"]
     });
   }
@@ -38,6 +46,15 @@ export class ReportRepository {
   async getReportsByCategory(category: OfficeType): Promise<ReportDAO[]> {
     return this.repo.find({
       where: { category },
+      relations: ["author"]
+    });
+  }
+
+  async getReportsByAssignedOfficer(officerId: number): Promise<ReportDAO[]> {
+    return this.repo.find({
+      where: { 
+        assignedOfficerId: officerId
+      },
       relations: ["author"]
     });
   }
@@ -58,12 +75,14 @@ export class ReportRepository {
       Photos?: string[];
     }
   ): Promise<ReportDAO> {
+    // Ensure category is not null (DB constraint). Default to OTHER when missing.
+    const safeCategory = category || (OfficeType as any).OTHER || 'other';
     return this.repo.save({
       title,
       location,
       author,
       anonymity,
-      category,
+      category: safeCategory,
       document,
       state: ReportState.PENDING,
       date: new Date()
@@ -88,5 +107,14 @@ export class ReportRepository {
   async deleteReport(id: number): Promise<void> {
     const report = await this.getReportById(id);
     await this.repo.remove(report);
+  }
+
+  async assignReportToOfficer(reportId: number, officerId: number): Promise<ReportDAO> {
+    const report = await this.getReportById(reportId);
+    report.assignedOfficerId = officerId;
+    console.log('[ReportRepository] assignReportToOfficer before save assignedOfficerId=', report.assignedOfficerId);
+    const saved = await this.repo.save(report);
+    console.log('[ReportRepository] assignReportToOfficer saved.assignedOfficerId=', (saved as any).assignedOfficerId);
+    return saved;
   }
 }

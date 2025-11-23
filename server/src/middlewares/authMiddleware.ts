@@ -3,6 +3,7 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "@services/authService";
 import { UnauthorizedError } from "@utils";
+import { OfficerRepository } from "@repositories/OfficerRepository";
 
 /**
  * Middleware per autenticare richieste con JWT Bearer token
@@ -31,21 +32,36 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
  * da usare DOPO authenticateToken
  */
 export function requireUserType(allowedTypes: string[]) {
-    return (req: Request, res: Response, next: NextFunction): void => {
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
         const user = (req as any).user;
-        
+
         if (!user) {
             throw new UnauthorizedError("Authentication required");
         }
 
-        if (!allowedTypes.includes(user.type)) {
-            throw new UnauthorizedError(
-            `Insufficient permissions. Required: ${allowedTypes.join(" or ")}`
-            );
+        // If allowedTypes contains simple types like 'user' or 'officer', allow direct comparison
+        if (allowedTypes.includes(user.type)) {
+            return next();
         }
 
-        next();
+        // If the user is an officer and allowedTypes are officer roles, resolve the officer from DB
+        if (user.type === 'officer') {
+            const officerRepo = new OfficerRepository();
+            const officer = await officerRepo.getOfficerById(user.id);
+            if (!officer) {
+                throw new UnauthorizedError("Officer not found");
+            }
+
+            // officer.role should be comparable to allowedTypes values
+            if (allowedTypes.includes((officer as any).role)) {
+                return next();
+            }
+        }
+
+        throw new UnauthorizedError(
+            `Insufficient permissions. Required: ${allowedTypes.join(" or ")}`
+        );
         } catch (error) {
         next(error);
         }

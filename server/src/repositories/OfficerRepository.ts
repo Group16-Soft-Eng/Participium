@@ -5,7 +5,7 @@ import { Repository } from "typeorm";
 import { OfficerDAO } from "@dao/OfficerDAO";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
-import { findOrThrowNotFound, throwConflictIfFound } from "@utils";
+import { findOrThrowNotFound, throwConflictIfFound } from "../utils/utils";
 import { hashPassword } from "@services/authService";
 
 export class OfficerRepository {
@@ -35,7 +35,12 @@ export class OfficerRepository {
     );
   }
 
+  async getOfficersByOffice(office: OfficeType): Promise<OfficerDAO[]> {
+    return this.repo.find({ where: { office } });
+  }
+
   async createOfficer(
+    username: string,
     name: string,
     surname: string,
     email: string,
@@ -53,6 +58,7 @@ export class OfficerRepository {
     const hashedPassword = await hashPassword(plainPassword);
 
     return this.repo.save({
+      username,
       name,
       surname,
       email,
@@ -65,5 +71,24 @@ export class OfficerRepository {
   async deleteOfficer(email: string): Promise<void> {
     const officer = await this.getOfficerByEmail(email);
     await this.repo.remove(officer);
+  }
+
+  async updateOfficer(
+    id: number,
+    username: string,
+    name: string,
+    surname: string,
+    email: string,
+    role: OfficerRole,
+    office: OfficeType
+  ): Promise<OfficerDAO> {
+    const officer = await this.getOfficerById(id);
+    officer.username = username;
+    officer.name = name;
+    officer.surname = surname;
+    officer.email = email;
+    officer.role = role;
+    officer.office = office;
+    return this.repo.save(officer);
   }
 }

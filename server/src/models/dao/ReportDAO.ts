@@ -55,6 +55,9 @@ export class ReportDAO {
   @Column({ type: "text", default: ReportState.PENDING })
   state!: ReportState;
 
+  @Column({ type: "integer", nullable: true })
+  assignedOfficerId!: number | null;
+
   @Column({ type: "text", nullable: true })
   reason!: string | null;
 }

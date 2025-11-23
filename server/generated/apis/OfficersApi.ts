@@ -1,3 +1,7 @@
+// Model types from generated models are not needed at runtime for server tests
+
+/* tslint:disable */
+/* eslint-disable */
 /* tslint:disable */
 /* eslint-disable */
 /**
@@ -18,16 +22,16 @@ import type {
   Officer,
   Report,
 } from '../models/index';
-import {
-    OfficerFromJSON,
-    OfficerToJSON,
-    ReportFromJSON,
-    ReportToJSON,
-} from '../models/index';
-
-export interface CreateOfficerRequest {
-    officer?: Officer;
-}
+// import type {
+//   Officer,
+//   Officer1,
+// } from '../models/index';
+// import {
+//     OfficerFromJSON,
+//     OfficerToJSON,
+//     Officer1FromJSON,
+//     Officer1ToJSON,
+// } from '../models/index';
 
 export interface ReviewDocRequest {
     idDoc: number;

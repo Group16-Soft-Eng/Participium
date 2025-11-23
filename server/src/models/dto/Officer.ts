@@ -12,7 +12,7 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../../../generated/runtime';
+import type { OfficeType } from './OfficeType';
 import type { OfficerRole } from './OfficerRole';
 import {
     OfficerRoleFromJSON,
@@ -20,7 +20,6 @@ import {
     OfficerRoleToJSON,
     OfficerRoleToJSONTyped,
 } from './OfficerRole';
-import type { OfficeType } from './OfficeType';
 import {
     OfficeTypeFromJSON,
     OfficeTypeFromJSONTyped,
@@ -40,6 +39,12 @@ export interface Officer {
      * @memberof Officer
      */
     id?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof Officer
+     */
+    username?: string;
     /**
      * 
      * @type {string}
@@ -98,6 +103,7 @@ export function OfficerFromJSONTyped(json: any, ignoreDiscriminator: boolean): O
     return {
         
         'id': json['id'] == null ? undefined : json['id'],
+        'username': json['username'] == null ? undefined : json['username'],
         'name': json['name'] == null ? undefined : json['name'],
         'surname': json['surname'] == null ? undefined : json['surname'],
         'email': json['email'] == null ? undefined : json['email'],
@@ -119,6 +125,7 @@ export function OfficerToJSONTyped(value?: Officer | null, ignoreDiscriminator: 
     return {
         
         'id': value['id'],
+        'username': value['username'],
         'name': value['name'],
         'surname': value['surname'],
         'email': value['email'],

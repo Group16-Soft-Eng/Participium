@@ -12,7 +12,6 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../../../generated/runtime';
 import type { User } from './User';
 import {
     UserFromJSON,
@@ -96,6 +95,24 @@ export interface Report {
      * @memberof Report
      */
     document?: ReportDocument;
+    /**
+     * Current state of the report
+     * @type {string}
+     * @memberof Report
+     */
+    state?: string;
+    /**
+     * Id of the officer assigned to the report (if any)
+     * @type {number}
+     * @memberof Report
+     */
+    assignedOfficerId?: number;
+    /**
+     * Optional reason (for declines etc.)
+     * @type {string}
+     * @memberof Report
+     */
+    reason?: string;
 }
 
 
@@ -125,6 +142,9 @@ export function ReportFromJSONTyped(json: any, ignoreDiscriminator: boolean): Re
         'date': json['Date'] == null ? undefined : json['Date'],
         'category': json['Category'] == null ? undefined : OfficeTypeFromJSON(json['Category']),
         'document': json['Document'] == null ? undefined : ReportDocumentFromJSON(json['Document']),
+        'state': json['state'] == null ? (json['State'] == null ? undefined : json['State']) : json['state'],
+        'assignedOfficerId': json['assignedOfficerId'] == null ? (json['AssignedOfficerId'] == null ? undefined : json['AssignedOfficerId']) : json['assignedOfficerId'],
+        'reason': json['reason'] == null ? (json['Reason'] == null ? undefined : json['Reason']) : json['reason'],
     };
 }
 
@@ -147,6 +167,9 @@ export function ReportToJSONTyped(value?: Report | null, ignoreDiscriminator: bo
         'Date': value['date'],
         'Category': OfficeTypeToJSON(value['category']),
         'Document': ReportDocumentToJSON(value['document']),
+        'state': value['state'],
+        'assignedOfficerId': value['assignedOfficerId'],
+        'reason': value['reason'],
     };
 }
 

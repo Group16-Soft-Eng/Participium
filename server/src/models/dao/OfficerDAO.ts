@@ -8,6 +8,9 @@ export class OfficerDAO {
   id!: number;
 
   @Column({ nullable: false })
+  username!: string;
+
+  @Column({ nullable: false })
   name!: string;
 
   @Column({ nullable: false })

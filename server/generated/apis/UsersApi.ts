@@ -14,13 +14,7 @@
 
 
 import * as runtime from '../runtime';
-import type {
-  User,
-} from '../models/index';
-import {
-    UserFromJSON,
-    UserToJSON,
-} from '../models/index';
+// Model types from generated models are not needed at runtime for server tests
 
 export interface CreateUserRequest {
     user?: User;

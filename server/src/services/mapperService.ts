@@ -28,6 +28,7 @@ export function mapUserDAOToDTO(dao: UserDAO): User {
 export function mapOfficerDAOToDTO(dao: OfficerDAO): Officer {
   return {
     id: dao.id,
+    username: dao.username,
     name: dao.name,
     surname: dao.surname,
     email: dao.email,
@@ -48,11 +49,16 @@ export function mapReportDAOToDTO(dao: ReportDAO): Report {
     location: dao.location,
     author: dao.author ? mapUserDAOToDTO(dao.author) : undefined,
     anonymity: dao.anonymity,
-    date: dao.date.toISOString(),
+    date: dao.date ? (dao.date instanceof Date ? dao.date.toISOString() : String(dao.date)) : undefined,
     category: dao.category as any,
     document: {
-      description: dao.document?.Description,
-      photos: dao.document?.Photos
+      // accept both generated-style `Description`/`Photos` and lowercase `description`/`photos`
+      description: dao.document?.Description ?? (dao.document as any)?.description,
+      photos: dao.document?.Photos ?? (dao.document as any)?.photos
     }
+    ,
+    state: dao.state,
+    assignedOfficerId: dao.assignedOfficerId ?? undefined,
+    reason: dao.reason ?? undefined
   };
 }

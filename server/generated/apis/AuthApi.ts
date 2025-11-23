@@ -14,16 +14,7 @@
 
 
 import * as runtime from '../runtime';
-import type {
-  LoginUserRequest,
-  LoginUserRequest1,
-} from '../models/index';
-import {
-    LoginUserRequestFromJSON,
-    LoginUserRequestToJSON,
-    LoginUserRequest1FromJSON,
-    LoginUserRequest1ToJSON,
-} from '../models/index';
+// Model types from generated models are not needed at runtime for server tests
 
 export interface LoginOfficerRequest {
     loginUserRequest?: LoginUserRequest;

@@ -12,7 +12,6 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../../../generated/runtime';
 import type { Report } from './Report';
 import {
     ReportFromJSON,
