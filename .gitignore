@@ -4,3 +4,5 @@
 **/.vite/
 **/uploads/
 /server/participium.db
+__pycache__/
+venv/
