@@ -10,9 +10,10 @@ import { LoginScreen } from './pages/LoginScreen';
 import ReportForm from './Map/MapComponents/ReportForm';
 import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
+import { RequireAdmin, RequireLogin, RequireOfficer, RequireCitizen } from './components/RequireAuth';
 import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
-import { RequireAdmin, RequireLogin, RequireOfficer } from './components/RequireAuth';
 import { AdminScreen } from './pages/AdminPage';
+import { UserPage } from './pages/UserPage';
 
 function App() {
   const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
@@ -166,6 +167,7 @@ function App() {
             <Route path="/map" element={<MapPage />} />
             <Route path="/admin" element={<RequireAdmin><AdminScreen /></RequireAdmin>} />
             <Route path="/officer" element={<RequireOfficer><OfficerPage /></RequireOfficer>} />
+            <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
             <Route path="/technical" element={<RequireOfficer><TechnicalOfficerPage /></RequireOfficer>} />
           </Routes>
         </Box>

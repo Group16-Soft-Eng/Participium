@@ -18,7 +18,10 @@ export function mapUserDAOToDTO(dao: UserDAO): User {
     lastName: dao.lastName,
     email: dao.email,
     // Non restituiamo mai la password in DTO!
-    password: undefined
+    password: undefined,
+    avatar: dao.avatar || undefined,
+    telegramUsername: dao.telegramUsername || undefined,
+    emailNotifications: dao.emailNotifications
   };
 }
 

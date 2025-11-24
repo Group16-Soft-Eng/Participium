@@ -16,6 +16,7 @@ tags:
     description: Office personnel
   - name: Reports
     description: Reports Operation
+  - name: Telegram
 paths:
   /auth/users:
     post:
@@ -205,6 +206,59 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Retrieve authenticated user's profile
+      description: Returns the profile of the authenticated user (avatar, telegramUsername, emailNotifications included).
+      operationId: getMyProfile
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    patch:
+      tags:
+        - Users
+      summary: Update authenticated user's profile
+      description: Update telegram username, email notification preference and optionally upload an avatar image.
+      operationId: updateMyProfile
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                telegramUsername:
+                  type: string
+                emailNotifications:
+                  type: boolean
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /users/logout:
     get:
       tags:
@@ -260,7 +314,7 @@ paths:
     get:
       tags:
         - Officers
-      summary: Retrieve Reports assigned to him
+      summary: Retrieve Reports assigned to him, only the pending ones
       description: Using the session key, the officer is able to retrieve the docs assigned to him.
       operationId: retrieveDocs
       parameters: []
@@ -271,6 +325,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Report"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /officers/assigned:
+    get:
+      tags:
+        - Officers
+      summary: Retrieve reports assigned to the authenticated officer
+      description: Returns all reports whose `assignedOfficerId` equals the authenticated officer id.
+      operationId: getAssignedReports
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
         default:
           description: Unexpected error
           content:
@@ -394,6 +470,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /auth/telegram:
+    post:
+      tags:
+        - Auth
+      summary: Retrieve user account associated with Telegram username
+      description: Given a Telegram username, retrieve the corresponding user account from the system.
+      operationId: retrieveTelegramAccount
+      requestBody:
+        description: Telegram username
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: telegram_user
+              required:
+                - username
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: user_token
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     OfficeType:
@@ -436,6 +548,15 @@ components:
         email:
           type: string
           example: mail@domain.com
+        avatar:
+          type: string
+          example: /uploads/avatars/167123123-avatar.jpg
+        telegramUsername:
+          type: string
+          example: my_telegram
+        emailNotifications:
+          type: boolean
+          example: true
       xml:
         name: user
     Officer:

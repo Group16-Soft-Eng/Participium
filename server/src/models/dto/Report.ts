@@ -115,9 +115,18 @@ export interface Report {
      */
     reason?: string;
 }
+/*
 
+  @Column({ type: "text", default: ReportState.PENDING })
+  state!: ReportState;
 
+  @Column({ type: "text", nullable: true })
+  reason!: string | null;
 
+  @Column({ type: "integer", nullable: true })
+  assignedOfficerId!: number | null;
+
+    */
 /**
  * Check if a given object implements the Report interface.
  */

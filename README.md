@@ -57,10 +57,21 @@ Server will run on `http://localhost:5000`
 #### Start the Frontend Client
 ```bash
 cd client
-npm run dev
+sudo systemctl start redis-server && sudo systemctl enable redis-server && sudo systemctl status redis-server
 ```
 Client will run on `http://localhost:5173`
 
+### Starting the Redis Server
+```bash
+cd server
+npm run redis
+```
+
+### Starting the Telegram Bot
+```bash
+cd telegram
+python3 bot_config.py
+```
 ## Database Management
 
 ### Creating Test Users
@@ -127,6 +138,25 @@ npx ts-node src/utils/clearReports.ts
 - SQLite database
 - Multer for file uploads
 - JWT for authentication
+
+## Docker (Development)
+
+Quick instructions to run the backend and Redis via Docker Compose (creates persistent folders `server/uploads` and `server/data`):
+
+```powershell
+# from project root
+docker-compose up --build
+
+# stop
+docker-compose down
+```
+
+Notes:
+- The compose file defines a `redis` service and a `server` service built from `./server`
+- The server uses SQLite by default; the DB file is mounted to `./server/participium.db`.
+- Uploaded files are stored under `./server/uploads` on the host
+- Environment variables (JWT secret, DB type/name, Redis host) can be overridden in your shell or by adapting `docker-compose.yml`
+- Aggiunto il tsconfig.build.json chiamato solo da CI/Docker, in questo modo con npm run dev il percorso "./src" rimane così, ma co docker sarà "."
 
 ## License
 See LICENSE file for details

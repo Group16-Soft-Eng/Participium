@@ -91,6 +91,13 @@ export async function getAssignedReports(officerId: number): Promise<Report[]> {
   return reports.map(mapReportDAOToDTO);
 }
 
+//? added for story 8 (officer can see all assigned reports, also the non-pending ones)
+export async function getAllAssignedReportsOfficer(officerId: number): Promise<Report[]> {
+  const reportRepo = new ReportRepository();
+  const reports = await reportRepo.getReportsByAssignedOfficer(officerId);
+  return reports.map(mapReportDAOToDTO);
+}
+
 
 export async function reviewDoc(officerId: number, idDoc: number, state: ReportState, reason?: string): Promise<Report> {
   const reportRepo = new ReportRepository();
