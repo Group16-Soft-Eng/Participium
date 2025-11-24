@@ -10,7 +10,7 @@ import { LoginScreen } from './pages/LoginScreen';
 import ReportForm from './Map/MapComponents/ReportForm';
 import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
-import { RequireAdmin, RequireLogin, RequireOfficer } from './components/RequireAuth';
+import { RequireAdmin, RequireLogin, RequireOfficer, RequireCitizen } from './components/RequireAuth';
 import { AdminScreen } from './pages/AdminPage';
 import { UserPage } from './pages/UserPage';
 
@@ -128,7 +128,7 @@ function App() {
             <Route path="/map" element={<MapPage />} />
             <Route path="/admin" element={<RequireAdmin><AdminScreen /></RequireAdmin>} />
             <Route path="/officer" element={<RequireOfficer><OfficerPage /></RequireOfficer>} />
-            <Route path="/user" element={<RequireLogin><UserPage /></RequireLogin>} />
+            <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
           </Routes>
         </Box>
 

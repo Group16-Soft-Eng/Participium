@@ -1,6 +1,6 @@
 import React from 'react';
 import { IconButton, Avatar, Menu, MenuItem, Typography, Box } from '@mui/material';
-import { getPicture, getToken, getUserFromToken, logout } from '../services/auth';
+import { getPicture, getRole, getToken, getUserFromToken, logout } from '../services/auth';
 import { useNavigate } from 'react-router-dom';
 import { static_ip_address } from '../API/API';
 
@@ -23,18 +23,19 @@ const UserMenu: React.FC = () => {
   };
 
   const picture = getPicture();
+  const role = getRole();
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <Typography variant="body1" sx={{ mr: 1 }}>{displayName}</Typography>
       <IconButton onClick={handleOpen} size="small" sx={{ p: 0.5 }} aria-controls={open ? 'user-menu' : undefined} aria-haspopup="true">
         <Avatar sx={{ width: 32, height: 32 }}> {
-          picture != null ?
+          (picture != null && role == 'citizen') ?
           <img src={static_ip_address + picture} alt="User Avatar" style={{ width: '100%', height: '100%' }} /> : (displayName || 'U').charAt(0).toUpperCase()}</Avatar>
       </IconButton>
 
       <Menu id="user-menu" anchorEl={anchorEl} open={open} onClose={handleClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
-        <MenuItem onClick={() => navigate('/user')}>Account Settings</MenuItem>
+        {role == 'citizen' && <MenuItem onClick={() => navigate('/user')}>Account Settings</MenuItem>}
         <MenuItem onClick={handleLogout}>Logout</MenuItem>
       </Menu>
     </Box>
