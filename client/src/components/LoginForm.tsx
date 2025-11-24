@@ -3,7 +3,7 @@ import './Forms.css';
 import { useState } from "react";
 import { userLogin, officerLogin, getUserProfile } from "../API/API";
 import { setToken, setRole, getRoleFromToken, setPicture } from '../services/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LoginFormProps {
     setShowLogin: (show: boolean) => void;
@@ -13,6 +13,8 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const navigate = useNavigate();
+    const location = useLocation();
+    const fromPath = (location && (location as any).state && (location as any).state.from && (location as any).state.from.pathname) ? (location as any).state.from.pathname : null;
 
     async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -37,18 +39,31 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 setPicture(details.avatar);
             // try to read role from token if available
             const detected = getRoleFromToken(token);
-            if (detected === 'municipal_administrator') {
-                setRole('municipal_administrator');
-                window.dispatchEvent(new Event('authChange'));
-                setLoading(false);
-                navigate('/admin');
-            }
-            else {
-                setRole('officer');
-                window.dispatchEvent(new Event('authChange'));
-                setLoading(false);
-                navigate('/officer');
-            }
+                if (detected === 'municipal_administrator') {
+                    setRole('municipal_administrator');
+                    window.dispatchEvent(new Event('authChange'));
+                    setLoading(false);
+                    navigate('/admin');
+                }
+                else {
+                    // Detected may be a specific officer role (e.g. technical_office_staff, municipal_public_relations_officer)
+                    const roleToStore = detected ?? 'officer';
+                    setRole(roleToStore as any);
+                    window.dispatchEvent(new Event('authChange'));
+                    setLoading(false);
+                    // if there's a pending location for a report, go to submit form
+                    const pending = localStorage.getItem('pendingReportLocation');
+                    if (pending) {
+                        navigate('/submitReport');
+                    } else {
+                        // redirect based on specific officer role
+                        if (roleToStore === 'technical_office_staff') {
+                            navigate('/technical');
+                        } else {
+                            navigate('/officer');
+                        }
+                    }
+                }
         } catch (e) {
             // if officer login failed, try user login
             console.log('Officer login failed, trying user login...');
@@ -62,9 +77,16 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 console.log('Detected role:', detected);
                 setRole('citizen');
                 window.dispatchEvent(new Event('authChange'));
-                console.log('Navigating to /map');
                 setLoading(false);
-                navigate('/map');
+                // Prefer returning to the original path, otherwise if a pending report location exists, go to the submit form
+                const pending = localStorage.getItem('pendingReportLocation');
+                if (pending) {
+                    navigate('/submitReport');
+                } else if (fromPath) {
+                    navigate(fromPath);
+                } else {
+                    navigate('/map');
+                }
             } catch (err) {
                 console.error('Both login attempts failed:', err);
                 setError('Login failed. Please check your credentials.');

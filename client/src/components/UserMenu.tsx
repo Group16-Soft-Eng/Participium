@@ -14,6 +14,7 @@ const UserMenu: React.FC = () => {
   const handleOpen = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
   const handleClose = () => setAnchorEl(null);
   const navigate = useNavigate();
+  const role = getRole();
 
 
   const handleLogout = () => {
@@ -36,6 +37,20 @@ const UserMenu: React.FC = () => {
 
       <Menu id="user-menu" anchorEl={anchorEl} open={open} onClose={handleClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
         {role == 'citizen' && <MenuItem onClick={() => navigate('/user')}>Account Settings</MenuItem>}
+        {/* Role-specific shortcuts */}
+        {role === 'technical_office_staff' && (
+          <MenuItem onClick={() => { handleClose(); navigate('/technical'); }}>Technical Workspace</MenuItem>
+        )}
+        {role === 'municipal_public_relations_officer' && (
+          <MenuItem onClick={() => { handleClose(); navigate('/officer'); }}>Review Reports</MenuItem>
+        )}
+        {role === 'municipal_administrator' && (
+          <MenuItem onClick={() => { handleClose(); navigate('/admin'); }}>Admin Dashboard</MenuItem>
+        )}
+        {/* Citizen shortcut */}
+        {!role && (
+          <MenuItem onClick={() => { handleClose(); navigate('/submitReport'); }}>Write a report</MenuItem>
+        )}
         <MenuItem onClick={handleLogout}>Logout</MenuItem>
       </Menu>
     </Box>
