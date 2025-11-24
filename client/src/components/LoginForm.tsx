@@ -1,8 +1,8 @@
 import { Box, Button, Container, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { useState } from "react";
-import { userLogin, officerLogin } from "../API/API";
-import { setToken, setRole, getRoleFromToken } from '../services/auth';
+import { userLogin, officerLogin, getUserProfile } from "../API/API";
+import { setToken, setRole, getRoleFromToken, setPicture } from '../services/auth';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
@@ -33,6 +33,8 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             const token = await officerLogin(user);
             console.log('Officer login successful');
             setToken(token);
+                const details = await getUserProfile();
+                setPicture(details.avatar);
             // try to read role from token if available
             const detected = getRoleFromToken(token);
             if (detected === 'municipal_administrator') {
@@ -55,6 +57,8 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 console.log('User login successful, token:', token);
                 setToken(token);
                 const detected = getRoleFromToken(token);
+                const details = await getUserProfile();
+                setPicture(details.avatar);
                 console.log('Detected role:', detected);
                 setRole('citizen');
                 window.dispatchEvent(new Event('authChange'));

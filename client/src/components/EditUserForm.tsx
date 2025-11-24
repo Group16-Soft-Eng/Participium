@@ -2,7 +2,7 @@ import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, Stack,
 import './Forms.css';
 import { useState } from "react";
 import { userLogin, officerLogin, updateUserProfile } from "../API/API";
-import { setToken, setRole, getRoleFromToken } from '../services/auth';
+import { setToken, setRole, getRoleFromToken, setPicture } from '../services/auth';
 import { useNavigate } from 'react-router-dom';
 import UploadAvatar from "./UploadAvatar";
 
@@ -55,6 +55,7 @@ export function EditUserForm({ setShowEdit, avatar, telegram, emailNotifications
         try {
             const response = await updateUserProfile(updatedData);
             setLoading(false);
+            setPicture(response.avatar);
             if (response) {
                 setShowEdit(false);
             }
