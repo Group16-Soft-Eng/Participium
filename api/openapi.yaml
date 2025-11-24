@@ -17,6 +17,7 @@ tags:
   - name: Reports
     description: Reports Operation
   - name: Telegram
+  - name: Notifications
 paths:
   /auth/users:
     post:
@@ -506,6 +507,98 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: List user notifications
+      description: Returns notifications for the authenticated user. Use query param unreadOnly=true to filter unread.
+      parameters:
+        - in: query
+          name: unreadOnly
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /notifications/{id}/read:
+    patch:
+      tags:
+        - Notifications
+      summary: Mark notification as read
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  read:
+                    type: boolean
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /reports/{id}/message:
+    post:
+      tags:
+        - Reports
+      summary: Officer sends a message to report author
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "Aggiornamento sul tuo report"
+              required:
+                - message
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     OfficeType:
@@ -637,6 +730,27 @@ components:
           example: Message for only denied Reports.
         Officer:
           $ref: "#/components/schemas/Officer"
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        reportId:
+          type: integer
+        type:
+          type: string
+          enum:
+            - STATUS_CHANGE
+            - OFFICER_MESSAGE
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        read:
+          type: boolean
     ApiResponse:
       type: object
       properties:
