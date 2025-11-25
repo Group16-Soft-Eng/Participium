@@ -21,6 +21,8 @@ export interface OfficerReport {
     description?: string;
     photos?: string[];
   };
+  state?: ReportState;
+  assignedOfficerId?: number;
 }
 
 export async function getAssignedReports(): Promise<OfficerReport[]> {
@@ -33,7 +35,23 @@ export async function getAssignedReports(): Promise<OfficerReport[]> {
   }
 }
 
-export async function reviewReport(id: number, approved: ReportState, reason?: string): Promise<boolean> {
+export async function getMyAssignedReports(): Promise<OfficerReport[]> {
+  try {
+    const res = await api.get<OfficerReport[]>('/officers/assigned');
+    return res.data;
+  } catch (e) {
+    console.error('Error fetching my assigned reports:', e);
+    return [];
+  }
+}
+
+export async function reviewReport(
+  id: number, 
+  approved: ReportState, 
+  reason?: string,
+  reportDetails?: { title: string; authorId?: number; authorUsername?: string },
+  officerMessage?: string
+): Promise<boolean> {
   try {
     // Backend expects: { state: 'APPROVED' | 'DECLINED', reason?: string }
     const payload = {
@@ -42,6 +60,63 @@ export async function reviewReport(id: number, approved: ReportState, reason?: s
     };
 
     await api.patch(`/officers/reviewdocs/${id}`, payload);
+    
+    // Store notification in localStorage for the report author
+    if (reportDetails?.authorId) {
+      let notification;
+      
+      if (approved === 'APPROVED') {
+        notification = {
+          id: `${Date.now()}_${id}`,
+          userId: reportDetails.authorId,
+          reportId: id,
+          reportTitle: reportDetails.title,
+          message: `Your report "${reportDetails.title}" has been approved by an officer.`,
+          type: 'success' as const,
+          timestamp: Date.now(),
+          read: false
+        };
+        
+        // If officer included a message, store it separately
+        if (officerMessage) {
+          const messageData = {
+            id: `msg_${Date.now()}_${id}`,
+            userId: reportDetails.authorId,
+            reportId: id,
+            reportTitle: reportDetails.title,
+            from: 'officer',
+            message: officerMessage,
+            timestamp: Date.now(),
+            read: false
+          };
+          
+          const messagesStr = localStorage.getItem('participium_messages');
+          const messages = messagesStr ? JSON.parse(messagesStr) : [];
+          messages.push(messageData);
+          localStorage.setItem('participium_messages', JSON.stringify(messages));
+        }
+      } else if (approved === 'DECLINED') {
+        notification = {
+          id: `${Date.now()}_${id}`,
+          userId: reportDetails.authorId,
+          reportId: id,
+          reportTitle: reportDetails.title,
+          message: `Your report "${reportDetails.title}" has been rejected. Reason: ${reason || 'No reason provided'}`,
+          type: 'error' as const,
+          timestamp: Date.now(),
+          read: false
+        };
+      }
+      
+      if (notification) {
+        // Get existing notifications
+        const stored = localStorage.getItem('participium_pending_notifications');
+        const notifications = stored ? JSON.parse(stored) : [];
+        notifications.push(notification);
+        localStorage.setItem('participium_pending_notifications', JSON.stringify(notifications));
+      }
+    }
+    
     return true;
   } catch (e) {
     console.error('Error reviewing report:', e);

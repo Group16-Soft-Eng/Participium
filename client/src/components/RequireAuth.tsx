@@ -11,7 +11,7 @@ const RequireLogin: React.FC<RequireAuthProps> = ({ children }) => {
   const location = useLocation();
   const role = getRole();
 
-  // require that a token exists and role is 'employee'
+  // require that a token exists
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
@@ -20,13 +20,45 @@ const RequireLogin: React.FC<RequireAuthProps> = ({ children }) => {
 };
 
 
-const RequireOfficer: React.FC<RequireAuthProps> = ({ children }) => {
+
+const RequireCitizen: React.FC<RequireAuthProps> = ({ children }) => {
+  const token = getToken();
+  const location = useLocation();
+  const role = getRole();
+
+  // require that a token exists and role is 'citizen'
+  if (!token || role != 'citizen') {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+
+
+const RequirePublicRelations: React.FC<RequireAuthProps> = ({ children }) => {
   const role = getRole();
   const token = getToken();
   const location = useLocation();
+  // require that a token exists and role represents some kind of officer or admin
+  // Accept either the legacy 'officer' value, 'municipal_administrator',
+  // or specific officer roles returned by the token (they usually contain 'officer').
+  const isOfficerLike = !!role && (role == 'municipal_public_relations_officer');
+  if (!token || !isOfficerLike) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-  // require that a token exists and role is 'employee'
-  if (!token || role !== 'officer' && role !== 'municipal_administrator') {
+  return children;
+};
+
+const RequireTechnical: React.FC<RequireAuthProps> = ({ children }) => {
+  const role = getRole();
+  const token = getToken();
+  const location = useLocation();
+  // require that a token exists and role represents some kind of officer or admin
+  // Accept either the legacy 'officer' value, 'municipal_administrator',
+  // or specific officer roles returned by the token (they usually contain 'officer').
+  const isOfficerLike = !!role && (role == 'technical_office_staff');
+  if (!token || !isOfficerLike) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -47,4 +79,4 @@ const RequireAdmin: React.FC<RequireAuthProps> = ({ children }) => {
   return children;
 };
 
-export { RequireLogin, RequireOfficer, RequireAdmin };
+export { RequireCitizen, RequireLogin, RequireTechnical, RequirePublicRelations, RequireAdmin };

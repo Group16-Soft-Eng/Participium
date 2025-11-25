@@ -43,6 +43,7 @@ router.get("/me", authenticateToken, async (req, res, next) => {
 
 //? PATCH /users/me (update personal account info story 9)
 router.patch("/me", authenticateToken, uploadAvatar, async (req, res, next) => {
+  console.log("PATCH /users/me called");
   try {
     const userId = (req as any).user?.id;
     // body may come in req.body (fields) and req.file (avatar)

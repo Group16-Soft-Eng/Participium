@@ -1,6 +1,6 @@
 import { Box, Button, Container, Grid, Stack, TextField } from "@mui/material";
 import './Forms.css';
-import { Form, useNavigate } from "react-router-dom";
+import { Form, useNavigate, useLocation } from "react-router-dom";
 import { useActionState, useState } from "react";
 import { userLogin, userRegister } from "../API/API";
 import { setRole, setToken } from "../services/auth";
@@ -16,6 +16,8 @@ type RegisterState = {
 
 export function RegisterForm({ setShowRegister }: RegisterFormProps) {
     const navigate = useNavigate();
+    const location = useLocation();
+    const fromPath = (location && (location as any).state && (location as any).state.from && (location as any).state.from.pathname) ? (location as any).state.from.pathname : null;
 
     const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
     const [error, setError] = useState<string | null>(null);
@@ -43,7 +45,15 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
             setToken(token);
             setRole('citizen')
             window.dispatchEvent(new Event('authChange'));
-            navigate('/map');
+            // If a pending location exists, redirect to the submit report page so the selection is preserved
+            const pending = localStorage.getItem('pendingReportLocation');
+            if (pending) {
+                navigate('/submitReport');
+            } else if (fromPath) {
+                navigate(fromPath);
+            } else {
+                navigate('/map');
+            }
             return { success: true }
         }
         catch (error) {

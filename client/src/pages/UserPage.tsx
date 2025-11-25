@@ -1,29 +1,48 @@
 import { Box, Button, Checkbox, Container, FormControlLabel, Stack, TextField } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getToken, getUserFromToken } from "../services/auth";
+import { getUserProfile } from "../API/API";
+import UploadAvatar from "../components/UploadAvatar";
+import { EditUserForm } from "../components/EditUserForm";
+
+import {static_ip_address} from "../API/API"
+
+export interface User {
+    id?: number;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    password?: string;
+    email?: string;
+    avatar?: string;
+    telegramUsername?: string;
+    emailNotifications?: boolean;
+}
+
 
 export function UserPage() {
 
     const [edit, setEdit] = useState(false);
+    const [user, setUser] = useState<User>({});
 
-    const user = getUserFromToken(getToken() || '');
+    useEffect(() => {
+        getUserProfile().then((data) => {
+            setUser(data);
+        });
+    }, [edit]);
 
-    const userData = {
-        name: user?.name,
-        surname: user?.family_name,
-        username: user?.username,
-        email: user?.email,
-        telegram: "@johndoe",
-        emailNotifications: false
+    const setShowEdit = (show: boolean) => {
+        setEdit(show);
     }
 
-    const confirmChanges = () => {
-        userData.name = (document.getElementsByTagName('input')[0] as HTMLInputElement).value;
-        userData.surname = (document.getElementsByTagName('input')[1] as HTMLInputElement).value;
-        userData.username = (document.getElementsByTagName('input')[2] as HTMLInputElement).value;
-        userData.email = (document.getElementsByTagName('input')[3] as HTMLInputElement).value;
-        userData.telegram = (document.getElementsByTagName('input')[4] as HTMLInputElement).value;
-        userData.emailNotifications = (document.getElementsByTagName('input')[5] as HTMLInputElement).checked;
+    const userData = {
+        avatar: static_ip_address + user?.avatar || '../assets/userImage.png',
+        name: user?.firstName,
+        surname: user?.lastName,
+        username: user?.username,
+        email: user?.email,
+        telegram: user?.telegramUsername,
+        emailNotifications: user?.emailNotifications || false
     }
 
     return (
@@ -35,74 +54,22 @@ export function UserPage() {
                         {!edit ? (
                             <Box mt={4}>
                                 <Container>
-                                    <img src="../assets/userImage.png" alt="User Avatar" style={{ borderRadius: '50%', height: '10rem', width: '10rem' }} />
+                                    <img src={userData.avatar} alt="User Avatar" style={{ borderRadius: '50%', height: '10rem', width: '10rem' }} />
                                 </Container>
                                 <Box style={{ textAlign: 'left', fontSize: '1.2rem' }}>
                                     <p><strong>Name:</strong> {userData.name}</p>
                                     <p><strong>Surname:</strong> {userData.surname}</p>
                                     <p><strong>Username:</strong> {userData.username}</p>
                                     <p><strong>Email:</strong> {userData.email}</p>
-                                    <p><strong>Telegram:</strong> {userData.telegram}</p>
+                                    <p><strong>Telegram:</strong> {userData.telegram != null ? "@" + userData.telegram : 'None'}</p>
                                     <p><strong>Email Notifications:</strong> {userData.emailNotifications ? 'Enabled' : 'Disabled'}</p>
                                 </Box>
+                            <Button variant="contained" onClick={() => setEdit(true)}>Edit Profile</Button>
                             </Box>
                         ) : (
-                            <Box mt={4}>
-                                <form>
-                                    <Box mb={2}>
-                                        <TextField
-                                            label="Name"
-                                            defaultValue={userData.name}
-                                            fullWidth
-                                            required
-                                        />
-                                    </Box>
-                                    <Box mb={2}>
-                                        <TextField
-                                            label="Surname"
-                                            defaultValue={userData.surname}
-                                            fullWidth
-                                            required
-                                        />
-                                    </Box>
-                                    <Box mb={2}>
-                                        <TextField
-                                            label="Username"
-                                            defaultValue={userData.username}
-                                            fullWidth
-                                            required
-                                        />
-                                    </Box>
-                                    <Box mb={2}>
-                                        <TextField
-                                            label="Email"
-                                            type="email"
-                                            defaultValue={userData.email}
-                                            fullWidth
-                                            required
-                                        />
-                                    </Box>
-                                    <Box mb={2}>
-                                        <TextField
-                                            label="Telegram"
-                                            defaultValue={userData.telegram}
-                                            fullWidth
-                                        />
-                                    </Box>
-                                    <Box mb={2}>
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    defaultChecked={userData.emailNotifications}
-                                                />
-                                            }
-                                            label="Email Notifications"
-                                        />
-                                    </Box>
-                                </form>
-                            </Box>
-                        )}
-                        <Button variant="contained" onClick={() => { if (edit) { confirmChanges(); } setEdit(!edit); }}>{edit ? 'Confirm Changes' : 'Edit Info'}</Button>
+                            <EditUserForm setShowEdit={setEdit} avatar={userData.avatar} telegram={userData.telegram} emailNotifications={userData.emailNotifications} />
+                        )
+                    }
                     </Stack>
                 </Box>
             </Container>

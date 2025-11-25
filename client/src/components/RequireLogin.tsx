@@ -26,7 +26,7 @@ const RequireLogin: React.FC<RequireLoginProps> = ({ children }) => {
   }
 
   // Redirect officers to their dashboard
-  if (authState.role === 'employee') {
+  if (authState.role === 'officer') {
     return <Navigate to="/officer" replace />;
   }
 

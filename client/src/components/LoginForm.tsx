@@ -1,8 +1,8 @@
 import { Box, Button, Container, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { useState } from "react";
-import { userLogin, officerLogin } from "../API/API";
-import { setToken, setRole, getRoleFromToken } from '../services/auth';
+import { userLogin, officerLogin, getUserProfile } from "../API/API";
+import { setToken, setRole, getRoleFromToken, setPicture } from '../services/auth';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
@@ -25,8 +25,6 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             password: formData.get('password') as string
         }
 
-        console.log('Attempting login for:', user.username);
-
         try {
             // first try officer login
             console.log('Trying officer login...');
@@ -42,7 +40,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 navigate('/admin');
             }
             else {
-                setRole('officer');
+                setRole(detected);
                 window.dispatchEvent(new Event('authChange'));
                 setLoading(false);
                 navigate('/officer');
@@ -55,10 +53,10 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 console.log('User login successful, token:', token);
                 setToken(token);
                 const detected = getRoleFromToken(token);
-                console.log('Detected role:', detected);
+                const details = await getUserProfile();
+                setPicture(details.avatar);
                 setRole('citizen');
                 window.dispatchEvent(new Event('authChange'));
-                console.log('Navigating to /map');
                 setLoading(false);
                 navigate('/map');
             } catch (err) {

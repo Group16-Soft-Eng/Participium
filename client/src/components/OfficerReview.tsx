@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { getAssignedReports, reviewReport } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
-import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton } from '@mui/material';
+import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Snackbar, Alert, Dialog, DialogContent } from '@mui/material';
+import ReportDetailDialog from './ReportDetailDialog';
 
 interface RejectState {
   open: boolean;
@@ -28,7 +29,10 @@ const OfficerReview: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [reject, setReject] = useState<RejectState>({ open: false, reportId: null, reason: '' });
   const [selected, setSelected] = useState<OfficerReport | null>(null);
-  const [openImageIndex, setOpenImageIndex] = useState<number | null>(null);
+  // image/lightbox is handled in the shared ReportDetailDialog
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [snackMessage, setSnackMessage] = useState('');
+  const [snackSeverity, setSnackSeverity] = useState<'success'|'error'|'info'>('success');
 
   useEffect(() => {
     fetchReports();
@@ -43,7 +47,16 @@ const OfficerReview: React.FC = () => {
 
   const handleApprove = async (id: number) => {
     const ok = await reviewReport(id, 'APPROVED');
-    if (ok) setReports((r) => r.filter((x) => x.id !== id));
+    if (ok) {
+      setReports((r) => r.filter((x) => x.id !== id));
+      setSnackMessage('Report ' + id + ' approved and forwarded to technical office');
+      setSnackSeverity('success');
+      setSnackOpen(true);
+    } else {
+      setSnackMessage('Failed to approve report ' + id);
+      setSnackSeverity('error');
+      setSnackOpen(true);
+    }
   };
 
   const openRejectDialog = (id: number) => setReject({ open: true, reportId: id, reason: '' });
@@ -55,7 +68,16 @@ const OfficerReview: React.FC = () => {
       return;
     }
     const ok = await reviewReport(reject.reportId, 'DECLINED', reject.reason.trim());
-    if (ok) setReports((r) => r.filter((x) => x.id !== reject.reportId));
+    if (ok) {
+      setReports((r) => r.filter((x) => x.id !== reject.reportId));
+      setSnackMessage('Report ' + reject.reportId + ' rejected');
+      setSnackSeverity('success');
+      setSnackOpen(true);
+    } else {
+      setSnackMessage('Failed to reject report ' + reject.reportId);
+      setSnackSeverity('error');
+      setSnackOpen(true);
+    }
     setReject({ open: false, reportId: null, reason: '' });
   };
 
@@ -148,99 +170,13 @@ const OfficerReview: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-            <Dialog open={selected !== null} onClose={() => setSelected(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>Report: {selected?.title}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <Box>
-              <strong>Category:</strong> {selected?.category}
-            </Box>
-            <Box>
-              <strong>Reported by:</strong> {' '}
-              {selected?.anonymity 
-                ? 'Anonymous' 
-                : (selected?.author ? `${selected.author.firstName || ''} ${selected.author.lastName || ''}`.trim() : 'Unknown')}
-            </Box>
-            <Box>
-              <strong>Description:</strong> {selected?.document?.description || selected?.description || 'No description'}
-            </Box>
-            {/* Photos (if any) */}
-            {selected?.document?.photos && selected.document.photos.length > 0 && (
-              <Box>
-                <strong>Photos:</strong>
-                <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
-                  {selected.document.photos.map((p, idx) => {
-                    // backend returns paths like "/uploads/reports/xxxx.jpg" - convert to absolute server URL
-                    const apiBase = (import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api/v1').replace(/\/api\/v1\/?$/i, '');
-                    const src = p.startsWith('http') ? p : `${apiBase}${p}`;
-                    return (
-                      <img
-                        key={idx}
-                        src={src}
-                        alt={`report-photo-${idx}`}
-                        style={{ width: 120, height: 90, objectFit: 'cover', borderRadius: 6, border: '1px solid #ddd', cursor: 'pointer' }}
-                        onClick={() => setOpenImageIndex(idx)}
-                      />
-                    );
-                  })}
-                </Box>
-              </Box>
-            )}
-            <Box>
-              <strong>Location:</strong> {selected?.location?.Coordinates?.latitude}, {selected?.location?.Coordinates?.longitude}
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button 
-            onClick={() => {
-              if (selected?.location?.Coordinates) {
-                const { latitude, longitude } = selected.location.Coordinates;
-                window.open(`/map?lat=${latitude}&lng=${longitude}&zoom=16`, '_blank');
-              }
-            }}
-            variant="contained"
-            color="primary"
-          >
-            View on Map
-          </Button>
-          <Button onClick={() => setSelected(null)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+        <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+          <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
+            {snackMessage}
+          </Alert>
+        </Snackbar>
 
-      {/* Lightbox dialog for viewing photos */}
-      <Dialog open={openImageIndex !== null} onClose={() => setOpenImageIndex(null)} maxWidth="md" fullWidth>
-        <DialogContent sx={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', p: 0, bgcolor: 'black' }}>
-          {selected && selected.document?.photos && openImageIndex !== null && (
-            <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: '60vh' }}>
-              <IconButton
-                onClick={() => setOpenImageIndex(i => (i !== null ? (i - 1 + selected.document!.photos!.length) % selected.document!.photos!.length : null))}
-                sx={{ color: 'white', position: 'absolute', left: 8, bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }, fontSize: '2rem' }}
-              >
-                ‹
-              </IconButton>
-
-              <img
-                src={(import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api/v1').replace(/\/api\/v1\/?$/i, '') + selected.document.photos[openImageIndex]}
-                alt={`full-${openImageIndex}`}
-                style={{ maxWidth: '100%', maxHeight: '80vh', margin: '0 auto', display: 'block' }}
-              />
-
-              <IconButton
-                onClick={() => setOpenImageIndex(i => (i !== null ? (i + 1) % selected.document!.photos!.length : null))}
-                sx={{ color: 'white', position: 'absolute', right: 8, bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }, fontSize: '2rem' }}
-              >
-                ›
-              </IconButton>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ bgcolor: 'black' }}>
-          <Button onClick={() => setOpenImageIndex(null)} variant="contained" color="primary">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ReportDetailDialog open={selected !== null} report={selected} onClose={() => setSelected(null)} />
     </Box>
   );
 };

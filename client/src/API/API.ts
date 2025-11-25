@@ -2,7 +2,7 @@ import { getToken } from "../services/auth";
 
 const URI = 'http://localhost:5000/api/v1'
 
-const static_ip_address = "http://localhost:5000/";
+const static_ip_address = "http://localhost:5000";
 
 type Credentials = {
     username: string;
@@ -181,4 +181,67 @@ async function getAvailableOfficerTypes() {
     }
 }
 
-export { userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes };
+async function getUserProfile() {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/users/me`, {
+        method: 'GET',
+        headers: headers,
+    });
+    if (response.ok) {
+        console.log(response)
+        const profile = await response.json();
+        return profile;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+interface UpdatedData {
+    telegram?: string;
+    emailNotifications?: boolean;
+    avatar?: File;
+}
+
+async function updateUserProfile(updatedData: UpdatedData) {
+    const token = getToken();
+
+    const formData = new FormData();
+
+    if (updatedData.telegram !== undefined) {
+        formData.append("telegramUsername", updatedData.telegram);
+    }
+
+    if (updatedData.emailNotifications !== undefined) {
+        formData.append("emailNotifications", updatedData.emailNotifications ? "true" : "false");
+    }
+
+    if (updatedData.avatar instanceof File) {
+        formData.append("avatar", updatedData.avatar);
+    }
+    
+    const response = await fetch(URI + `/users/me`, {
+        method: 'PATCH',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw await response.text();
+    }
+
+    return await response.json();
+}
+
+
+export { static_ip_address, userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile };

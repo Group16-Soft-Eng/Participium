@@ -1,5 +1,5 @@
 // Minimal auth helpers for dev: login stores token and role in localStorage
-export type Role = 'citizen' | 'officer' | 'municipal_administrator' | null;
+export type Role = 'citizen' | 'technical_office_staff' | 'municipal_public_relations_officer' | 'municipal_administrator' | null;
 
 export function setToken(token: string) {
   localStorage.setItem('token', token);
@@ -16,6 +16,15 @@ export function setRole(role: Role) {
 
 export function getRole(): Role {
   return (localStorage.getItem('role') as Role) || null;
+}
+
+export function setPicture(picture: string) {
+  if (picture) localStorage.setItem('picture', picture);
+  else localStorage.removeItem('picture');
+}
+
+export function getPicture(): string | null {
+  return localStorage.getItem('picture');
 }
 
 export function logout() {
@@ -54,7 +63,8 @@ export function getRoleFromToken(token: string | null): Role {
   // common claim names: role, roles, scope
   if (data.type) return data.type as Role;
   if (data.type && Array.isArray(data.type) && data.type.length > 0) return (data.type[0] as Role);
-  if (typeof data.scope === 'string' && data.scope.includes('office')) return 'officer';
+  if (typeof data.scope === 'string' && data.scope.includes('technical_office_staff')) return 'technical_office_staff';
+  if (typeof data.scope === 'string' && data.scope.includes('municipal_public_relations_officer')) return 'municipal_public_relations_officer';
   if (typeof data.scope === 'string' && data.scope.includes('municipal_administrator')) return 'municipal_administrator';
 
   return null;
@@ -80,4 +90,14 @@ export function getUserFromToken(token: string | null): DecodedUser | null {
   if (data.name) user.name = data.name;
   if (data.email) user.email = data.email;
   return user;
+}
+
+export function getUserIdFromToken(token: string | null): number | null {
+  const data = decodeJwt(token);
+  if (!data) return null;
+  // Try common claim names for user ID
+  if (data.userId) return Number(data.userId);
+  if (data.id) return Number(data.id);
+  if (data.sub && !isNaN(Number(data.sub))) return Number(data.sub);
+  return null;
 }
