@@ -19,7 +19,7 @@ export class NotificationRepository {
 
     //? segna come letta una notifica specifica per uno user
     async markRead(id: number, userId: number): Promise<NotificationDAO> {
-        const notif = await this.repo.findOneByOrFail({ id });
+        const notif = await this.repo.findOneByOrFail( { id } );
         if (notif.userId !== userId) {
             throw new Error("Not allowed to modify this notification");
         }
