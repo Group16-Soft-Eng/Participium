@@ -13,7 +13,7 @@ import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
 import OfficerMessagesPage from './pages/OfficerMessagesPage';
 import MessagesPage from './pages/MessagesPage';
-import { RequireAdmin, RequireLogin, RequireOfficer, RequireCitizen } from './components/RequireAuth';
+import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePublicRelations } from './components/RequireAuth';
 import { AdminScreen } from './pages/AdminPage';
 import { NotificationProvider } from './contexts/NotificationContext';
 import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
@@ -182,10 +182,10 @@ function App() {
             <Route path="/map" element={<MapPage />} />
             <Route path="/messages" element={<RequireLogin><MessagesPage /></RequireLogin>} />
             <Route path="/admin" element={<RequireAdmin><AdminScreen /></RequireAdmin>} />
-            <Route path="/officer" element={<RequireOfficer><OfficerPage /></RequireOfficer>} />
-            <Route path="/officer/messages" element={<RequireOfficer><OfficerMessagesPage /></RequireOfficer>} />
+            <Route path="/officer" element={<RequirePublicRelations><OfficerPage /></RequirePublicRelations>} />
+            <Route path="/officer/messages" element={<RequireTechnical><OfficerMessagesPage /></RequireTechnical>} />
             <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
-            <Route path="/technical" element={<RequireOfficer><TechnicalOfficerPage /></RequireOfficer>} />
+            <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
           </Routes>
         </Box>
 

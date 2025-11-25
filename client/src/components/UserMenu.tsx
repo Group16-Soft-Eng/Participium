@@ -24,7 +24,6 @@ const UserMenu: React.FC = () => {
   };
 
   const picture = getPicture();
-  const role = getRole();
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>

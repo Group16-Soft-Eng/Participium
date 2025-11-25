@@ -1,19 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { getAssignedReports, reviewReport } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
-import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Snackbar, Alert } from '@mui/material';
+import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Snackbar, Alert, Dialog, DialogContent } from '@mui/material';
 import ReportDetailDialog from './ReportDetailDialog';
 
 interface RejectState {
   open: boolean;
   reportId: number | null;
   reason: string;
-}
-
-interface ApproveState {
-  open: boolean;
-  reportId: number | null;
-  message: string;
 }
 
 // Category colors matching the map
@@ -34,7 +28,6 @@ const OfficerReview: React.FC = () => {
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [reject, setReject] = useState<RejectState>({ open: false, reportId: null, reason: '' });
-  const [approve, setApprove] = useState<ApproveState>({ open: false, reportId: null, message: '' });
   const [selected, setSelected] = useState<OfficerReport | null>(null);
   // image/lightbox is handled in the shared ReportDetailDialog
   const [snackOpen, setSnackOpen] = useState(false);
@@ -140,7 +133,7 @@ const OfficerReview: React.FC = () => {
                   <TableCell sx={{ width: 180 }}>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                   <TableCell align="right">
                     <Button variant="contained" color="primary" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                    <Button variant="contained" color="success" size="small" onClick={() => openApproveDialog(r.id)} sx={{ mr: 1 }}>Approve</Button>
+                    <Button variant="contained" color="success" size="small" onClick={() => handleApprove(r.id)} sx={{ mr: 1 }}>Approve</Button>
                     <Button variant="outlined" color="error" size="small" onClick={() => openRejectDialog(r.id)}>Reject</Button>
                   </TableCell>
                 </TableRow>
@@ -150,32 +143,6 @@ const OfficerReview: React.FC = () => {
           </TableContainer>
         </Paper>
       )}
-
-      <Dialog open={approve.open} onClose={() => setApprove({ open: false, reportId: null, message: '' })} fullWidth maxWidth="sm">
-        <DialogTitle>Approve Report</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            You can optionally send a message to the user about this approval.
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="normal"
-            id="message"
-            label="Message to User (Optional)"
-            type="text"
-            fullWidth
-            multiline
-            minRows={4}
-            value={approve.message}
-            onChange={(e) => setApprove((s) => ({ ...s, message: e.target.value }))}
-            placeholder="e.g., Your report has been approved. Our team will address this issue within 5 business days..."
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setApprove({ open: false, reportId: null, message: '' })}>Cancel</Button>
-          <Button color="success" variant="contained" onClick={handleConfirmApprove}>Confirm Approve</Button>
-        </DialogActions>
-      </Dialog>
 
       <Dialog open={reject.open} onClose={() => setReject({ open: false, reportId: null, reason: '' })} fullWidth maxWidth="sm">
         <DialogTitle>Reject Report</DialogTitle>

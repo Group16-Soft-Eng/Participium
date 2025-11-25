@@ -1,10 +1,9 @@
 import { Box, Button, Container, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { useState } from "react";
-import { useNotification } from '../contexts/NotificationContext';
 import { userLogin, officerLogin, getUserProfile } from "../API/API";
 import { setToken, setRole, getRoleFromToken, setPicture } from '../services/auth';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
     setShowLogin: (show: boolean) => void;
@@ -14,9 +13,6 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const navigate = useNavigate();
-    const { checkPendingNotifications } = useNotification();
-    const location = useLocation();
-    const fromPath = (location && (location as any).state && (location as any).state.from && (location as any).state.from.pathname) ? (location as any).state.from.pathname : null;
 
     async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -29,45 +25,26 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             password: formData.get('password') as string
         }
 
-        console.log('Attempting login for:', user.username);
-
         try {
             // first try officer login
             console.log('Trying officer login...');
             const token = await officerLogin(user);
             console.log('Officer login successful');
             setToken(token);
-                const details = await getUserProfile();
-                setPicture(details.avatar);
             // try to read role from token if available
             const detected = getRoleFromToken(token);
-                if (detected === 'municipal_administrator') {
-                    setRole('municipal_administrator');
-                    window.dispatchEvent(new Event('authChange'));
-                    checkPendingNotifications();
-                    setLoading(false);
-                    navigate('/admin');
-                }
-                else {
-                    // Detected may be a specific officer role (e.g. technical_office_staff, municipal_public_relations_officer)
-                    const roleToStore = detected ?? 'officer';
-                    setRole(roleToStore as any);
-                    window.dispatchEvent(new Event('authChange'));
-                    checkPendingNotifications();
-                    setLoading(false);
-                    // if there's a pending location for a report, go to submit form
-                    const pending = localStorage.getItem('pendingReportLocation');
-                    if (pending) {
-                        navigate('/submitReport');
-                    } else {
-                        // redirect based on specific officer role
-                        if (roleToStore === 'technical_office_staff') {
-                            navigate('/technical');
-                        } else {
-                            navigate('/officer');
-                        }
-                    }
-                }
+            if (detected === 'municipal_administrator') {
+                setRole('municipal_administrator');
+                window.dispatchEvent(new Event('authChange'));
+                setLoading(false);
+                navigate('/admin');
+            }
+            else {
+                setRole(detected);
+                window.dispatchEvent(new Event('authChange'));
+                setLoading(false);
+                navigate('/officer');
+            }
         } catch (e) {
             // if officer login failed, try user login
             console.log('Officer login failed, trying user login...');
@@ -78,21 +55,10 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 const detected = getRoleFromToken(token);
                 const details = await getUserProfile();
                 setPicture(details.avatar);
-                console.log('Detected role:', detected);
                 setRole('citizen');
                 window.dispatchEvent(new Event('authChange'));
-                checkPendingNotifications();
-                console.log('Navigating to /map');
                 setLoading(false);
-                // Prefer returning to the original path, otherwise if a pending report location exists, go to the submit form
-                const pending = localStorage.getItem('pendingReportLocation');
-                if (pending) {
-                    navigate('/submitReport');
-                } else if (fromPath) {
-                    navigate(fromPath);
-                } else {
-                    navigate('/map');
-                }
+                navigate('/map');
             } catch (err) {
                 console.error('Both login attempts failed:', err);
                 setError('Login failed. Please check your credentials.');

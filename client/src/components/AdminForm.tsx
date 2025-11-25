@@ -51,7 +51,7 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
             Role: formData.get('role') as string
         }
 
-        if (officer.Role === 'technical_office_staff' || officer.Role === 'municipal_administrator') {
+        if (officer.Role === 'municipal_public_relations_officer' || officer.Role === 'municipal_administrator') {
             officer.Office = 'organization';
         }
         if (formData.get('email') !== formData.get('cemail')) {
