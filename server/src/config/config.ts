@@ -39,6 +39,7 @@ export const CONFIG = {
     V1_OFFICERS: APP_V1_BASE_URL + "/officers",
     V1_REPORTS: APP_V1_BASE_URL + "/reports",
     V1_INFO_TYPES: APP_V1_BASE_URL + "/info-types",
+    V1_NOTIFICATIONS: APP_V1_BASE_URL + "/notifications",
   },
 
   REDIS_HOST: process.env.REDIS_HOST || "localhost",

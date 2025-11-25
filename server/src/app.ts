@@ -7,6 +7,7 @@ import { userRouter } from "@routes/UserRoutes";
 import { reportRouter } from "@routes/ReportRoutes";
 import {officerRouter} from "@routes/OfficerRoutes";
 import { infoTypeRouter } from "@routes/InfoType";
+import { notificationRouter } from "@routes/NotificationRoutes";
 
 export const app = express();
 let routes = CONFIG.ROUTES;
@@ -26,6 +27,7 @@ app.use(routes.V1_USERS, userRouter);
 app.use(routes.V1_REPORTS, reportRouter);
 app.use(routes.V1_OFFICERS, officerRouter);
 app.use(routes.V1_INFO_TYPES, infoTypeRouter);
+app.use(routes.V1_NOTIFICATIONS, notificationRouter);
 
 // static files
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

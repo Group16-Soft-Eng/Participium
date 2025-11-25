@@ -5,6 +5,8 @@ import {ReportFromJSON} from "@dto/Report";
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import { uploadPhotos } from "@middlewares/uploadMiddleware";
 import { OfficerRole } from "@models/enums/OfficerRole";
+import { ReportRepository } from "@repositories/ReportRepository";
+import { NotificationRepository } from "@repositories/NotificationRepository";
 import { OfficerRepository } from "@repositories/OfficerRepository";
 
 const router = Router({mergeParams : true});
@@ -74,6 +76,36 @@ router.get("/", async(req, res, next) =>{
     catch(error)
     {
         next(error);
+    }
+});
+
+//? PT-11 (officer manda messaggio all'autore del report [1-way only, guarda su Telegram])
+router.post("/:id/message", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, OfficerRole.MUNICIPAL_ADMINISTRATOR]), async (req, res, next) => {
+    try {
+        const reportId = Number(req.params.id);
+        const text: string = req.body.message;
+
+        if (!text || text.trim().length === 0) {
+            return res.status(400).json({ error: "message is required" });
+        }
+
+        const reportRepo = new ReportRepository();
+        const notificationRepo = new NotificationRepository();
+
+        const report = await reportRepo.getReportById(reportId);
+        const officerId = (req as any).user.id;
+
+        const created = await notificationRepo.createOfficerMessageNotification(report as any, officerId, text.trim());
+
+        if (!created) {
+            return res.status(200).json({
+                info: "No notification created (anonymous report)."
+            });
+        }
+
+        res.status(201).json({ id: created.id, type: created.type, message: created.message, reportId: created.reportId });
+    } catch (err) {
+        next(err);
     }
 });
 
