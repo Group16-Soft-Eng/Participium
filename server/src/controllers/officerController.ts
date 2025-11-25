@@ -6,6 +6,7 @@ import { OfficerRepository } from "@repositories/OfficerRepository";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
 import { ReportState } from "@models/enums/ReportState";
+import { NotificationRepository } from "@repositories/NotificationRepository";
 
 
 export async function getAllOfficers(): Promise<Officer[]> {
@@ -97,6 +98,7 @@ export async function getAllAssignedReportsOfficer(officerId: number): Promise<R
 export async function reviewDoc(officerId: number, idDoc: number, state: ReportState, reason?: string): Promise<Report> {
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
+  const notificationRepo = new NotificationRepository();
   
   // Get the report
   const report = await reportRepo.getReportById(idDoc);
@@ -120,6 +122,9 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
       updatedReport = await reportRepo.assignReportToOfficer(idDoc, officers[0].id);
     }
   }
+
+  //? PT-11 (viene aggiunta la notifica allo user quando lo stato del report cambia)
+  await notificationRepo.createStatusChangeNotification(updatedReport as any);
   
   return mapReportDAOToDTO(updatedReport);
 }
