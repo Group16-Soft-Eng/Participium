@@ -5,3 +5,5 @@
 **/uploads/
 /server/participium.db
 /telegram/photos
+__pycache__/
+venv/
