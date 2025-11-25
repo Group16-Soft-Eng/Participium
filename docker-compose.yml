@@ -39,7 +39,6 @@ services:
       start_period: 30s
     volumes:
       - ./server/uploads:/usr/src/app/uploads
-      - ./server/participium.db:/usr/src/app/participium.db
     restart: unless-stopped
     networks:
       - participium-network
@@ -55,7 +54,19 @@ services:
         condition: service_healthy
     networks:
       - participium-network
-      
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - participium-network
 volumes:
   redis-data:
 
