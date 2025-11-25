@@ -1,4 +1,11 @@
 import "reflect-metadata";
+jest.mock('@services/authService', () => {
+  const original = jest.requireActual('@services/authService');
+  return {
+    ...original,
+    saveSession: jest.fn().mockResolvedValue(undefined),
+  };
+});
 import request from "supertest";
 import { app } from "../../../src/app";
 import { initializeTestDatabase, closeTestDatabase, clearDatabase } from "../../setup/test-datasource";

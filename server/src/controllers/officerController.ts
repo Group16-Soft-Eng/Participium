@@ -7,7 +7,7 @@ import { ReportRepository } from "@repositories/ReportRepository";
 import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
 import { ReportState } from "@models/enums/ReportState";
 import { NotificationRepository } from "@repositories/NotificationRepository";
-
+import { OfficerRole } from "@models/enums/OfficerRole";
 
 export async function getAllOfficers(): Promise<Officer[]> {
   const officerRepo = new OfficerRepository();

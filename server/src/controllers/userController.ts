@@ -63,6 +63,12 @@ export async function getUser(username: string): Promise<User> {
 
 
 export async function createUser(userDto: User): Promise<User> {
+  const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!regexEmail.test(userDto.email!)) {
+    const err: any = new Error("Invalid email format");
+    err.statusCode = 400;
+    throw err;
+  }
   const userRepo = new UserRepository();
   const createdUser = await userRepo.createUser(
     userDto.username!,
