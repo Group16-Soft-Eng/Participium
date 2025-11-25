@@ -1,6 +1,7 @@
 import { Box, Button, Container, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { useState } from "react";
+import { useNotification } from '../contexts/NotificationContext';
 import { userLogin, officerLogin, getUserProfile } from "../API/API";
 import { setToken, setRole, getRoleFromToken, setPicture } from '../services/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -13,6 +14,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const navigate = useNavigate();
+    const { checkPendingNotifications } = useNotification();
     const location = useLocation();
     const fromPath = (location && (location as any).state && (location as any).state.from && (location as any).state.from.pathname) ? (location as any).state.from.pathname : null;
 
@@ -42,6 +44,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 if (detected === 'municipal_administrator') {
                     setRole('municipal_administrator');
                     window.dispatchEvent(new Event('authChange'));
+                    checkPendingNotifications();
                     setLoading(false);
                     navigate('/admin');
                 }
@@ -50,6 +53,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                     const roleToStore = detected ?? 'officer';
                     setRole(roleToStore as any);
                     window.dispatchEvent(new Event('authChange'));
+                    checkPendingNotifications();
                     setLoading(false);
                     // if there's a pending location for a report, go to submit form
                     const pending = localStorage.getItem('pendingReportLocation');
@@ -77,6 +81,8 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 console.log('Detected role:', detected);
                 setRole('citizen');
                 window.dispatchEvent(new Event('authChange'));
+                checkPendingNotifications();
+                console.log('Navigating to /map');
                 setLoading(false);
                 // Prefer returning to the original path, otherwise if a pending report location exists, go to the submit form
                 const pending = localStorage.getItem('pendingReportLocation');

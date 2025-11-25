@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
-import { LatLng } from 'leaflet';
+import { LatLng, LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import '../CssMap/MapWithPin.css';
 import type { Report } from '../types/report';
 
-const TURIN_COORDINATES: [number, number] = [45.0703, 7.6869];
+const TURIN_COORDINATES: [number, number] = [45.0703, 7.6600];
+
+// Torino main city boundaries (tighter bounds)
+const TURIN_BOUNDS = new LatLngBounds(
+  [45.0100, 7.6200],  // Southwest corner
+  [45.1300, 7.7500]   // Northeast corner
+);
 
 const CATEGORY_COLORS: Record<string, string> = {
   infrastructure: '#8b5cf6',
@@ -101,7 +107,11 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
     <div className="map-container">
       <MapContainer
         center={selectedPosition || initialPosition}
-        zoom={13}
+        zoom={14}
+        maxBounds={TURIN_BOUNDS}
+        maxBoundsViscosity={1.0}
+        minZoom={14}
+        maxZoom={18}
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
