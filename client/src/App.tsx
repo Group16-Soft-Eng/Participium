@@ -13,9 +13,11 @@ import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
 import OfficerMessagesPage from './pages/OfficerMessagesPage';
 import MessagesPage from './pages/MessagesPage';
-import { RequireAdmin, RequireLogin, RequireOfficer } from './components/RequireAuth';
+import { RequireAdmin, RequireLogin, RequireOfficer, RequireCitizen } from './components/RequireAuth';
 import { AdminScreen } from './pages/AdminPage';
 import { NotificationProvider } from './contexts/NotificationContext';
+import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
+import { UserPage } from './pages/UserPage';
 
 function App() {
   const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
@@ -28,8 +30,10 @@ function App() {
     }, []);
 
   const isLoggedIn = Boolean(auth.token);
-  const isOfficer = auth.role === 'officer';
   const isAdmin = auth.role === 'municipal_administrator';
+  const isPROfficer = auth.role === 'municipal_public_relations_officer' || auth.role === 'municipal_public_relations_officer';
+  const isTechnicalOfficer = auth.role === 'technical_office_staff';
+  const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';
 
     return (
     <NotificationProvider>
@@ -66,22 +70,58 @@ function App() {
               
               {/* Show different button based on user role */}
               {isOfficer ? (
-                <Button
-                  component={Link}
-                  to="/officer"
-                  variant="contained"
-                  color="primary"
-                  sx={{
-                    px: 2.2,
-                    py: 0.7,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
-                  }}
-                >
-                  Review Reports
-                </Button>
+                isPROfficer ? (
+                  <Button
+                    component={Link}
+                    to="/officer"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    Review Reports
+                  </Button>
+                ) : isTechnicalOfficer ? (
+                  <Button
+                    component={Link}
+                    to="/technical"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    Technical Workspace
+                  </Button>
+                ) : (
+                  <Button
+                    component={Link}
+                    to="/officer"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    Review Reports
+                  </Button>
+                )
               ) : isAdmin ? (
                 <Button
                   component={isLoggedIn ? Link : undefined}
@@ -144,6 +184,8 @@ function App() {
             <Route path="/admin" element={<RequireAdmin><AdminScreen /></RequireAdmin>} />
             <Route path="/officer" element={<RequireOfficer><OfficerPage /></RequireOfficer>} />
             <Route path="/officer/messages" element={<RequireOfficer><OfficerMessagesPage /></RequireOfficer>} />
+            <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
+            <Route path="/technical" element={<RequireOfficer><TechnicalOfficerPage /></RequireOfficer>} />
           </Routes>
         </Box>
 

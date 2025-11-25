@@ -34,12 +34,24 @@ const ReportForm: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   useEffect(() => {
-    // expect state.position = [lat, lng]
+    // 1. Prefer location.state.position if present
     if (location && (location as any).state && (location as any).state.position) {
       const pos = (location as any).state.position as [number, number];
       if (pos && pos.length === 2) {
         handleLocationSelect(pos[0], pos[1]);
+        localStorage.removeItem('pendingReportLocation');
+        return;
       }
+    }
+    // 2. Otherwise, check localStorage for pendingReportLocation
+    const stored = localStorage.getItem('pendingReportLocation');
+    if (stored) {
+      try {
+        const [lat, lng] = JSON.parse(stored);
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          handleLocationSelect(lat, lng);
+        }
+      } catch {}
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
@@ -52,6 +64,8 @@ const ReportForm: React.FC = () => {
     }));
     setSelectedLocation([lat, lng]);
     setTouched(prev => ({ ...prev, location: true }));
+    // Save to localStorage for persistence across login
+    localStorage.setItem('pendingReportLocation', JSON.stringify([lat, lng]));
   };
 
   const handleInputChange = (
@@ -88,7 +102,7 @@ const ReportForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       setTouched({
         title: true,
@@ -105,49 +119,42 @@ const ReportForm: React.FC = () => {
 
     try {
       await createReport(report);
-      setShowSuccess(true);
-      
-      // Reset form after short delay to show success message
-      setTimeout(() => {
-        setReport({
-          title: '',
-          description: '',
-          category: '',
-          photos: [],
-          latitude: null,
-          longitude: null,
-        });
-        setSelectedLocation(null);
-        setTouched({
-          title: false,
-          description: false,
-          category: false,
-          photos: false,
-          location: false,
-        });
-        
-        // Navigate to map page after 2 seconds
-        setTimeout(() => {
-          navigate('/map');
-        }, 2000);
-      }, 500);
-    } catch (error) {
-      console.error('Failed to submit report:', error);
-      setErrorMessage('Failed to submit report. Please try again.');
-      setShowError(true);
+      alert('Report submitted successfully!');
+
+      setReport({
+        title: '',
+        description: '',
+        category: '',
+        photos: [],
+        latitude: null,
+        longitude: null,
+      });
+      setSelectedLocation(null);
+      setTouched({
+        title: false,
+        description: false,
+        category: false,
+        photos: false,
+        location: false,
+      });
+      localStorage.removeItem('pendingReportLocation');
+    } catch (err) {
+      console.error('Submit error', err);
+      alert('Failed to submit report.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const isFieldValid = (fieldName: keyof typeof touched) => {
-    if (!touched[fieldName]) return true;
-    
+  const isFieldValid = (fieldName: string): boolean => {
+    // if not touched yet, consider valid to avoid showing errors immediately
+    if (!((touched as any)[fieldName])) return true;
+
     switch (fieldName) {
       case 'title':
         return report.title.trim() !== '';
       case 'description':
-        return report.description.trim() !== '';
+        return report.description.trim() !== '' && report.description.trim().length >= 30;
       case 'category':
         return report.category !== '';
       case 'photos':

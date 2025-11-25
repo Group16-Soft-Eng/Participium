@@ -6,6 +6,7 @@ import { OfficerRepository } from "@repositories/OfficerRepository";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
 import { ReportState } from "@models/enums/ReportState";
+import { OfficerRole } from "@models/enums/OfficerRole";
 
 
 export async function getAllOfficers(): Promise<Officer[]> {
@@ -39,7 +40,6 @@ export async function createOfficer(officerDto: Officer): Promise<Officer> {
 export async function updateOfficer(officerDto: Officer): Promise<Officer> {
   const officerRepo = new OfficerRepository();
   const updatedOfficer = await officerRepo.updateOfficer(
-    
     officerDto.id!,
     officerDto.username!,
     officerDto.name!,
@@ -75,15 +75,27 @@ export async function assignReportToOfficer(reportId: number, officerId: number)
 
 export async function retrieveDocs(officerId: number): Promise<Report[]> {
   const reportRepo = new ReportRepository();
-  const officerRepo = new OfficerRepository();
+  
   // Get all PENDING reports that need review (not yet assigned or assigned to this officer)
-  const reports = await reportRepo.getReportsByState(ReportState.PENDING);
-  const category = await officerRepo.getOfficerById(officerId);
-  const office = category.office;
-  const reportsCategory = await reportRepo.getReportsByCategory(office)
-  const filteredReports = reports.filter(r => reportsCategory.some(rc => rc.id === r.id));
+  const allPending = await reportRepo.getReportsByState(ReportState.PENDING);
+  // filter: only unassigned or assigned to this officer
+  const reports = allPending.filter(r => r.assignedOfficerId === null || r.assignedOfficerId === officerId);
+  
+  return reports.map(mapReportDAOToDTO);
+}
 
-  return filteredReports.map(mapReportDAOToDTO);
+
+export async function getAssignedReports(officerId: number): Promise<Report[]> {
+  const reportRepo = new ReportRepository();
+  const reports = await reportRepo.getReportsByAssignedOfficer(officerId);
+  return reports.map(mapReportDAOToDTO);
+}
+
+//? added for story 8 (officer can see all assigned reports, also the non-pending ones)
+export async function getAllAssignedReportsOfficer(officerId: number): Promise<Report[]> {
+  const reportRepo = new ReportRepository();
+  const reports = await reportRepo.getReportsByAssignedOfficer(officerId);
+  return reports.map(mapReportDAOToDTO);
 }
 
 
@@ -105,12 +117,13 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
   
   // if approved, assign to an officer
   if (state === ReportState.APPROVED) {
-    // find an officer in the correct office (based on the report's category)
+    // find officers in the correct office (based on the report's category)
     const officers = await officerRepo.getOfficersByOffice(report.category as any);
-    
+
     if (officers.length > 0) {
-      // assign to the first available officer
-      updatedReport = await reportRepo.assignReportToOfficer(idDoc, officers[0].id);
+      // Prefer an officer with the TECHNICAL_OFFICE_STAFF role for assignment
+      const preferred = officers.find(o => o.role === OfficerRole.TECHNICAL_OFFICE_STAFF) || officers[0];
+      updatedReport = await reportRepo.assignReportToOfficer(idDoc, preferred.id);
     }
   }
   

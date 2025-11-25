@@ -64,6 +64,11 @@ function LocationMarker({
       const { lat, lng } = e.latlng;
       setPosition(e.latlng);
       onLocationSelect(lat, lng);
+      try {
+        localStorage.setItem('pendingReportLocation', JSON.stringify([lat, lng]));
+      } catch (err) {
+        // ignore storage errors
+      }
       map.flyTo(e.latlng, map.getZoom());
     },
   });

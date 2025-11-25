@@ -77,9 +77,28 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
   // handle map clicks to add a pin
   useMapEvents({
     click(e) {
-      setPinned({ lat: e.latlng.lat, lng: e.latlng.lng });
+      const p = { lat: e.latlng.lat, lng: e.latlng.lng };
+      setPinned(p);
+      try {
+        localStorage.setItem('pendingReportLocation', JSON.stringify([p.lat, p.lng]));
+      } catch (err) {}
     },
   });
+
+  // restore pinned location from localStorage (so pin survives navigation)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('pendingReportLocation');
+      if (stored) {
+        const [lat, lng] = JSON.parse(stored);
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          setPinned({ lat, lng });
+        }
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, []);
 
   useMapEvents({
     zoomend: () => setZoom(map.getZoom()),

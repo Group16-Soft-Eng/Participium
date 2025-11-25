@@ -18,7 +18,10 @@ export function mapUserDAOToDTO(dao: UserDAO): User {
     lastName: dao.lastName,
     email: dao.email,
     // Non restituiamo mai la password in DTO!
-    password: undefined
+    password: undefined,
+    avatar: dao.avatar || undefined,
+    telegramUsername: dao.telegramUsername || undefined,
+    emailNotifications: dao.emailNotifications
   };
 }
 
@@ -55,5 +58,9 @@ export function mapReportDAOToDTO(dao: ReportDAO): Report {
       description: dao.document?.Description,
       photos: dao.document?.Photos
     }
+    ,
+    state: dao.state,
+    assignedOfficerId: dao.assignedOfficerId ?? undefined,
+    reason: dao.reason ?? undefined
   };
 }

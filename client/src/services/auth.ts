@@ -18,6 +18,15 @@ export function getRole(): Role {
   return (localStorage.getItem('role') as Role) || null;
 }
 
+export function setPicture(picture: string) {
+  if (picture) localStorage.setItem('picture', picture);
+  else localStorage.removeItem('picture');
+}
+
+export function getPicture(): string | null {
+  return localStorage.getItem('picture');
+}
+
 export function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('role');
