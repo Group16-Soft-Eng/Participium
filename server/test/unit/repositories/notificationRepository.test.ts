@@ -6,6 +6,10 @@ import { ReportDAO } from "../../../src/models/dao/ReportDAO";
 import { Repository } from "typeorm";
 import { ReportState } from "../../../src/models/enums/ReportState";
 import { userInfo } from "os";
+//!TODO : FIX IMPORTS IF NEEDED
+
+//! STILL GET ERRORS WITH REPOSITORY MOTHODS (findOneOrFail)
+//! Solution --> ADD SPYON FOR REPO METHODS IF NEEDED
 
 // Mock TypeORM Repository
 jest.mock("typeorm", () => {
@@ -25,9 +29,13 @@ describe("NotificationRepository", () => {
     mockRepo = {
       find: jest.fn(),
       findOne: jest.fn(),
+      findOneBy: jest.fn(),
+      findOneByOrFail: jest.fn(),
       save: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
     } as any;
 
     // Mock getRepository to return our mock
@@ -114,44 +122,67 @@ describe("NotificationRepository", () => {
     });
   });
 
-  describe("markAsRead", () => {
-
+  describe("markRead", () => {
     it("should mark notification as read", async () => {
       const notificationId = 1;
-      const userId = 1; 
-      const mockUpdatedNotification: NotificationDAO = {
+      const userId = 1;
+      const mockNotification: NotificationDAO = {
         id: notificationId,
-        userId: 1,
+        userId: userId,
         reportId: 1,
         title: "Test",
         message: "Test",
         type: "REPORT_APPROVED",
-        read: true,
+        read: false,
         createdAt: new Date(),
       } as NotificationDAO;
 
-      mockRepo.findOne.mockResolvedValue(mockUpdatedNotification);
+      const mockUpdatedNotification: NotificationDAO = {
+        ...mockNotification,
+        read: true,
+      };
+
+      mockRepo.findOneByOrFail.mockResolvedValue(mockNotification);
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
+      mockRepo.findOneBy.mockResolvedValue(mockUpdatedNotification);
 
       const result = await notificationRepo.markRead(notificationId, userId);
 
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        notificationId,
-        { read: true }
-      );
-      expect(mockRepo.findOne).toHaveBeenCalled();
+      expect(mockRepo.findOneByOrFail).toHaveBeenCalledWith({ id: notificationId });
+      expect(mockRepo.update).toHaveBeenCalledWith(notificationId, { read: true });
       expect(result?.read).toBe(true);
     });
 
     it("should return null if notification not found", async () => {
       const userId = 1;
       const notificationId = 999;
-      mockRepo.update.mockResolvedValue({ affected: 0 } as any);
-      mockRepo.findOne.mockResolvedValue(null);
+      
+      mockRepo.findOneByOrFail.mockRejectedValue(new Error("Entity not found"));
 
-      const result = await notificationRepo.markRead(notificationId, userId);
+      await expect(
+        notificationRepo.markRead(notificationId, userId)
+      ).rejects.toThrow();
+    });
 
-      expect(result).toBeNull();
+    it("should throw error if notification belongs to different user", async () => {
+      const userId = 1;
+      const notificationId = 1;
+      const mockNotification: NotificationDAO = {
+        id: notificationId,
+        userId: 999,
+        reportId: 1,
+        title: "Test",
+        message: "Test",
+        type: "REPORT_APPROVED",
+        read: false,
+        createdAt: new Date(),
+      } as NotificationDAO;
+
+      mockRepo.findOneByOrFail.mockResolvedValue(mockNotification);
+
+      await expect(
+        notificationRepo.markRead(notificationId, userId)
+      ).rejects.toThrow("Not allowed to modify this notification");
     });
   });
 
@@ -338,6 +369,5 @@ describe("NotificationRepository", () => {
       expect(result).toBeNull();
       expect(mockRepo.create).not.toHaveBeenCalled();
     });
-  });
-
+    });
 });
