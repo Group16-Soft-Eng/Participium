@@ -57,15 +57,17 @@ test.describe('Complete Workflow: Citizen Report to Officer Review', () => {
 
     // Step 3: Admin creates a new officer
     const adminToken = await authHelper.loginOfficer('n.s@comune.it', 'pass');
+
+    const officerUsername = `officer_${timestamp}`;
     
     const newOfficer = {
-      username: `officer_${timestamp}`,
+      username: officerUsername,
       name: 'Test',
       surname: 'Officer',
       email: `officer_${timestamp}@comune.torino.it`,
-      password: 'Officer@123',
+      password: 'pass',
       Role: 'MUNICIPAL_PUBLIC_RELATIONS_OFFICER',
-      Office: 'INFRASTRUCTURE',
+      Office: 'ORGANIZATION',
     };
 
     const createOfficerResponse = await page.request.post(`${API_BASE_URL}/officers`, {
@@ -79,7 +81,7 @@ test.describe('Complete Workflow: Citizen Report to Officer Review', () => {
     expect(createOfficerResponse.ok()).toBeTruthy();
 
     // Step 4: Officer logs in
-    const officerToken = await authHelper.loginOfficer('SeverjanLici', 'pass');
+    const officerToken = await authHelper.loginOfficer(officerUsername, 'pass');
     expect(officerToken).toBeTruthy();
 
     // Step 5: Officer approves first report
