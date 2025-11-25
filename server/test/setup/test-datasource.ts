@@ -11,28 +11,28 @@ export const TestDataSource = new DataSource({
   dropSchema: true,
   entities: [UserDAO, OfficerDAO, ReportDAO],
   synchronize: true,
-  logging: true // Abilito per vedere cosa succede
+  logging: false // Abilito per vedere cosa succede
 });
 
 export async function initializeTestDatabase() {
   if (!TestDataSource.isInitialized) {
-    console.log("🔄 Inizializzazione database di test...");
+    // console.log("🔄 Inizializzazione database di test...");
     await TestDataSource.initialize();
     
     // Verifica che il database sia stato inizializzato correttamente
     const entities = TestDataSource.entityMetadatas;
-    console.log("✅ Database di test inizializzato con successo");
-    console.log(`📊 Database type: ${TestDataSource.options.type}`);
-    console.log(`📁 Database: ${TestDataSource.options.database}`);
-    console.log(`📦 Entità caricate: ${entities.length}`);
+    // console.log("✅ Database di test inizializzato con successo");
+    // console.log(`📊 Database type: ${TestDataSource.options.type}`);
+    // console.log(`📁 Database: ${TestDataSource.options.database}`);
+    // console.log(`📦 Entità caricate: ${entities.length}`);
     
     if (entities.length > 0) {
-      console.log("📋 Lista entità:");
+      // console.log("📋 Lista entità:");
       entities.forEach(entity => {
-        console.log(`   - ${entity.name} (tabella: ${entity.tableName})`);
+        // console.log(`   - ${entity.name} (tabella: ${entity.tableName})`);
       });
     } else {
-      console.warn("⚠️ ATTENZIONE: Nessuna entità caricata!");
+      // console.warn("⚠️ ATTENZIONE: Nessuna entità caricata!");
     }
   }
   return TestDataSource;
@@ -41,7 +41,7 @@ export async function initializeTestDatabase() {
 export async function closeTestDatabase() {
   if (TestDataSource.isInitialized) {
     await TestDataSource.destroy();
-    console.log("Test database closed");
+    // console.log("Test database closed");
   }
 }
 
