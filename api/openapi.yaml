@@ -388,6 +388,18 @@ paths:
           required: true
           schema:
             type: integer
+      requestBody:
+        description: Review doc assigned to Officer
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                state:
+                  $ref: "#/components/schemas/State"
+                reason:
+                  type: string
+                  example: "Insufficient evidence"
       responses:
         "200":
           description: successful operation
@@ -401,14 +413,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /officers/assign-docs:
+  /officers/assign-report:
     post:
       tags:
         - Officers
       summary: Admins assign new document to an officer
-      operationId: assignDoc
+      operationId: assignReport
       requestBody:
-        description: Assign doc to Officer
+        description: Assign report to Officer
         content:
           application/json:
             schema:
