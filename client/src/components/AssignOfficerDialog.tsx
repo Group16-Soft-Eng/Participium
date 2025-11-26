@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, IconButton, Select, Stack, MenuItem, FormControl, InputLabel, Grid } from '@mui/material';
 import type { OfficerReport } from '../services/reportService';
+import { getOfficersByOffice } from "../API/API";
+import { useEffect } from 'react';
 
 interface Props {
     open: boolean;
@@ -9,16 +11,18 @@ interface Props {
     onClose: () => void;
 }
 
-const officers = [
-    'Pietro Pantani',
-    'Luca Marchetti',
-    'Giulia Bianchi',
-    'Francesca Rossi',
-    'Marco Verdi',
-    'Sara Neri'
-];
-
 const AssignOfficerDialog: React.FC<Props> = ({ open, report, onClose, office }) => {
+
+    const [officers, setOfficers] = useState<string[]>([]);
+
+    useEffect(() => {
+        const fetchOfficers = async () => {
+            const result = await getOfficersByOffice(office);
+            setOfficers(result);
+            console.log(result);
+        };
+        fetchOfficers();
+    }, [office]);
 
     return (
         <>
@@ -28,16 +32,22 @@ const AssignOfficerDialog: React.FC<Props> = ({ open, report, onClose, office })
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
                         <Stack spacing={2}>
                             <Box>
-                            Available Officers for {office} office:
+                                {officers.length > 0 &&
+                                `Available Officers for ${office} office:`}
                             </Box>
                             <FormControl fullWidth>
-                                <InputLabel id="officer-select-label">Select an officer</InputLabel>
                                 <Grid size={12}>
-                                    <Select id="officer" name="officer" label="Select an officer" variant="outlined" fullWidth defaultValue={''} required> {
-                                        officers.map((officer) => (<MenuItem key={officer} value={officer}>{officer}</MenuItem>
-                                        ))
+                                    {officers.length === 0 && <Box>No officers available for this office.</Box>}
+                                    {officers.length > 0 &&
+                                    <>
+                                        <InputLabel id="officer-select-label">Select an officer</InputLabel>
+                                        <Select id="officer" name="officer" label="Select an officer" variant="outlined" fullWidth defaultValue={''} required> {
+                                            officers.map((officer) => (<MenuItem key={officer} value={officer}>{officer}</MenuItem>
+                                            ))
+                                        }
+                                        </Select>
+                                        </>
                                     }
-                                    </Select>
                                 </Grid>
                             </FormControl>
                         </Stack>

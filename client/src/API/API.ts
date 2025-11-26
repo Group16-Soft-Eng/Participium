@@ -243,7 +243,7 @@ async function updateUserProfile(updatedData: UpdatedData) {
     return await response.json();
 }
 
-async function getOfficerByOffice(office: string) {
+async function getOfficersByOffice(office: string) {
     const token = getToken();
 
     const headers: HeadersInit = {};
@@ -252,7 +252,7 @@ async function getOfficerByOffice(office: string) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/officers/office/${office}`, {
+    const response = await fetch(URI + `/officers/OfficerByOfficeType/${office}`, {
         method: 'GET',
         headers: headers,
     });
@@ -267,4 +267,4 @@ async function getOfficerByOffice(office: string) {
 }
 
 
-export { static_ip_address, userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile };
+export { static_ip_address, userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice };
