@@ -30,7 +30,23 @@ const MapPage: React.FC = () => {
       try {
         setLoading(true);
         const data = await getAllReports();
-        setReports(data);
+        // Show only APPROVED, IN_PROGRESS, and SUSPENDED reports on map
+        let visibleReports = data.filter(report => {
+          const status = report.status?.toLowerCase();
+          return status === 'approved' || status === 'in_progress' || status === 'suspended';
+        });
+        
+        // If there's a specific report ID in the URL, ensure it's included even if filtered
+        const reportIdParam = searchParams.get('id');
+        if (reportIdParam) {
+          const specificReport = data.find(r => r.id === reportIdParam);
+          if (specificReport && !visibleReports.find(r => r.id === reportIdParam)) {
+            visibleReports = [...visibleReports, specificReport];
+          }
+          setSelectedId(reportIdParam);
+        }
+        
+        setReports(visibleReports);
       } catch (error) {
         console.error('Error fetching reports:', error);
         // Show empty array if API fails
@@ -41,7 +57,7 @@ const MapPage: React.FC = () => {
     };
 
     fetchReports();
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const lat = searchParams.get('lat');
@@ -88,21 +104,39 @@ const MapPage: React.FC = () => {
       }} elevation={2}>
         <Typography variant="h6" gutterBottom>Reports on map ({reports.length})</Typography>
         <List>
-          {reports.map((r) => (
-            <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
-              <Paper sx={{ width: '100%', p: 1.25, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} elevation={1} onClick={() => setSelectedId(r.id)}>
-                <Box>
-                  <Typography variant="subtitle1">{r.title}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {/* Show reporter: anonymous when report.anonymity is true, otherwise show author name if available */}
-                    {r.anonymity ? 'Anonymous' : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown')}
-                    {` • ${new Date(r.createdAt).toLocaleDateString()}`}
-                  </Typography>
-                </Box>
-                <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
-              </Paper>
-            </ListItem>
-          ))}
+          {reports.map((r) => {
+            const status = r.status?.toLowerCase();
+            const isInProgress = status === 'in_progress';
+            const isSuspended = status === 'suspended';
+            return (
+              <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
+                <Paper 
+                  sx={{ 
+                    width: '100%', 
+                    p: 1.25, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between', 
+                    cursor: 'pointer',
+                    bgcolor: isInProgress ? '#e3f2fd' : isSuspended ? '#fff3e0' : 'white',
+                    borderLeft: isInProgress ? '4px solid #1976d2' : isSuspended ? '4px solid #f57c00' : 'none'
+                  }} 
+                  elevation={1} 
+                  onClick={() => setSelectedId(r.id)}
+                >
+                  <Box>
+                    <Typography variant="subtitle1">{r.title}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {/* Show reporter: anonymous when report.anonymity is true, otherwise show author name if available */}
+                      {r.anonymity ? 'Anonymous' : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown')}
+                      {` • ${new Date(r.createdAt).toLocaleDateString()}`}
+                    </Typography>
+                  </Box>
+                  <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
+                </Paper>
+              </ListItem>
+            );
+          })}
         </List>
       </Paper>
     </Box>

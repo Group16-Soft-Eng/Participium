@@ -21,9 +21,9 @@ export class LoginPage {
     this.errorMessage = page.locator('.error, .alert-danger, [role="alert"]');
   }
 
-  async goto() {
+  async goto(baseURL: string = 'http://localhost:5173') {
     // Navigate to login page and click Login button
-    await this.page.goto('/login');
+    await this.page.goto(`${baseURL}/login`);
     await this.page.click('button:has-text("Login")');
     // Wait for login form to appear
     await this.usernameInput.waitFor({ state: 'visible', timeout: 5000 });

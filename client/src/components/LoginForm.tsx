@@ -33,17 +33,19 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             setToken(token);
             // try to read role from token if available
             const detected = getRoleFromToken(token);
+            setRole(detected);
+            window.dispatchEvent(new Event('authChange'));
+            setLoading(false);
+            
+            // Redirect based on role
             if (detected === 'municipal_administrator') {
-                setRole('municipal_administrator');
-                window.dispatchEvent(new Event('authChange'));
-                setLoading(false);
                 navigate('/admin');
-            }
-            else {
-                setRole(detected);
-                window.dispatchEvent(new Event('authChange'));
-                setLoading(false);
+            } else if (detected === 'municipal_public_relations_officer') {
                 navigate('/officer');
+            } else if (detected === 'technical_office_staff') {
+                navigate('/technical');
+            } else {
+                navigate('/technical'); // default fallback
             }
         } catch (e) {
             // if officer login failed, try user login
