@@ -24,7 +24,7 @@ services:
       - DB_NAME=/usr/src/app/participium.db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=change_me
+      - JWT_SECRET=CHANGE_ME_IN_PRODUCTION
       - REDIS_CONNECT_TIMEOUT=30000
     ports:
       - "5000:5000"
@@ -55,7 +55,19 @@ services:
         condition: service_healthy
     networks:
       - participium-network
-      
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - participium-network
 volumes:
   redis-data:
 

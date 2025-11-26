@@ -36,7 +36,10 @@ describe("ReportRepository Unit Tests", () => {
         firstName: "Test",
         lastName: "User",
         email: "user@example.com",
-        password: "hash"
+        password: "hash",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
       };
 
       const mockReports: ReportDAO[] = [
@@ -229,7 +232,10 @@ describe("ReportRepository Unit Tests", () => {
         firstName: "Test",
         lastName: "User",
         email: "user@example.com",
-        password: "hash"
+        password: "hash",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
       };
 
       const reportData = {
