@@ -69,19 +69,19 @@ const OfficerReview: React.FC = () => {
     setView(false);
   }
 
-  const handleAssign = async (id: number) => {
-    const ok = await reviewReport(id, 'ASSIGNED');
-    if (ok) {
-      setReports((r) => r.filter((x) => x.id !== id));
-      setSnackMessage('Report ' + id + ' forwarded to technical office');
-      setSnackSeverity('success');
-      setSnackOpen(true);
-    } else {
-      setSnackMessage('Failed to assign report ' + id);
-      setSnackSeverity('error');
-      setSnackOpen(true);
-    }
+  const successfulAssign = async (id: number) => {
+    setReports((r) => r.filter((x) => x.id !== id));
+    setSnackMessage('Report ' + id + ' forwarded to technical office');
+    setSnackSeverity('success');
+    setSnackOpen(true);
   };
+
+  const failedAssign = async (id: number) => {
+    setSnackMessage('Failed to assign report ' + id);
+    setSnackSeverity('error');
+    setSnackOpen(true);
+  };
+
 
   const openRejectDialog = (id: number) => setReject({ open: true, reportId: id, reason: '' });
 
@@ -201,11 +201,11 @@ const OfficerReview: React.FC = () => {
       </Snackbar>
 
       {!loading && view && (
-      <ReportDetailDialog open={selected !== null} report={selected} onClose={() => closeView()} />
+        <ReportDetailDialog open={selected !== null} report={selected} onClose={() => closeView()} />
       )}
 
       {!loading && showingAssign && (
-        <AssignOfficerDialog open={showingAssign} onClose={() => closeAssign()} office={selected?.category || ''} report={selected} />
+        <AssignOfficerDialog open={showingAssign} successfulAssign={(id) => successfulAssign(id)} failedAssign={(id) => failedAssign(id)} onClose={() => closeAssign()} office={selected?.category || ''} report={selected} />
       )}
 
     </Box>

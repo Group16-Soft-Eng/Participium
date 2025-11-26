@@ -266,5 +266,29 @@ async function getOfficersByOffice(office: string) {
     }
 }
 
+async function assignOfficer(reportId: number, officerId: number) {
+    const token = getToken();
 
-export { static_ip_address, userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice };
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/officers/assign-report`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ reportId, officerId }),
+    });
+    
+    if (response.ok) {
+        return true;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+
+export { static_ip_address, userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer };
