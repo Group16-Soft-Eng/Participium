@@ -49,7 +49,8 @@ function App() {
                 </svg>
               </Box>
 
-              <Box component={Link} to="/map" sx={{ textDecoration: 'none' }}>
+              
+              <Box id = "app-title" component={Link} to="/map" sx={{ textDecoration: 'none' }}>
                 <Typography variant="h6" component="div" sx={{ color: '#222', fontWeight: 700 }}>
                   Participium
                 </Typography>
@@ -60,7 +61,7 @@ function App() {
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Button component={Link} to="/map" color="inherit">Map</Button>
+              <Button className="flex-mobile" id="map-button" component={Link} to="/map" color="inherit">Map</Button>
               {isLoggedIn && !isOfficer && !isAdmin && (
                 <Button component={Link} to="/messages" color="inherit">Messages</Button>
               )}
@@ -143,7 +144,7 @@ function App() {
                   Admin Dashboard
                 </Button>
               ) : (
-                <Button
+                <Button id="report-button"
                   component={isLoggedIn ? Link : undefined}
                   to={isLoggedIn ? "/submitReport" : undefined}
                   onClick={!isLoggedIn ? () => setShowLoginDialog(true) : undefined}

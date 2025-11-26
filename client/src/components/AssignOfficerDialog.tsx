@@ -39,7 +39,6 @@ const AssignOfficerDialog: React.FC<Props> = ({ open, report, onClose, office, s
 
         try {
             // first try officer login
-            console.log('Trying officer assign');
             await assignOfficer(report!.id, officerId);
             successfulAssign(report!.id);
             onClose();

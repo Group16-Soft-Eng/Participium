@@ -15,13 +15,13 @@ body {
 /* Header / brand styles */
 .app-bar {
   background: transparent;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(4px);
 }
 
 .app-logo svg {
   border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .MuiToolbar-root {
@@ -55,13 +55,30 @@ body {
   0% {
     opacity: 0;
   }
+
   15% {
     opacity: 1;
   }
+
   85% {
     opacity: 1;
   }
+
   100% {
     opacity: 0;
+  }
+}
+
+.flex-mobile {
+  display: flex;
+}
+
+@media screen and (max-width: 600px) {
+
+  #app-title,
+  #map-button,
+  #report-button,
+  #user-display-name {
+    display: none;
   }
 }
