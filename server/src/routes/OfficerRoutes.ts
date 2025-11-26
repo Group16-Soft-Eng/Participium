@@ -28,9 +28,9 @@ router.get("/me", authenticateToken, async (req, res, next) => {
     }
 });
 
-router.get("/OfficerByOfficeType", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
+router.get("/OfficerByOfficeType/:officeType", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
     try{
-        const {officeType} = req.body;
+        const officeType = req.params.officeType as string;
         if(!officeType){
             return res.status(400).json({error: "officeType query parameter is required"});
         }

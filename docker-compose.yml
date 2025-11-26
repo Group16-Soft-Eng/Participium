@@ -17,6 +17,7 @@ services:
 
   server:
     image: shuba19/participium_g16:server
+    user: "${UID}:${GID}"
     environment:
       - NODE_ENV=production
       - PORT=5000

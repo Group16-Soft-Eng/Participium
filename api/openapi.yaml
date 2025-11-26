@@ -354,6 +354,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /officers/OfficerByOfficeType/{officeType}:
+    get:
+      tags:
+        - Officers
+      summary: Retrieve reports assigned to the authenticated officer
+      description: Only for admin or Public officers.
+      operationId: getOfficerByOfficeType
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /officers/reviewdocs/{id_doc}:
     patch:
       tags:
