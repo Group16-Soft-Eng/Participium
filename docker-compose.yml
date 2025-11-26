@@ -24,7 +24,7 @@ services:
       - DB_NAME=/usr/src/app/participium.db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=change_me
+      - JWT_SECRET=CHANGE_ME_IN_PRODUCTION
       - REDIS_CONNECT_TIMEOUT=30000
     ports:
       - "5000:5000"
@@ -39,6 +39,7 @@ services:
       start_period: 30s
     volumes:
       - ./server/uploads:/usr/src/app/uploads
+      - ./server/participium.db:/usr/src/app/participium.db
     restart: unless-stopped
     networks:
       - participium-network
