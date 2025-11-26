@@ -8,10 +8,19 @@ import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
 import { ReportState } from "@models/enums/ReportState";
 import { NotificationRepository } from "@repositories/NotificationRepository";
 import { OfficerRole } from "@models/enums/OfficerRole";
+import { OfficeType } from "@models/enums/OfficeType";
 
 export async function getAllOfficers(): Promise<Officer[]> {
   const officerRepo = new OfficerRepository();
   const officers = await officerRepo.getAllOfficers();
+  return officers.map(mapOfficerDAOToDTO);
+}
+
+export async function getAllOfficersByOfficeType(officeType: string): Promise<Officer[]> {
+  const officerRepo = new OfficerRepository();
+  //converte officeType da string a OfficeType
+  const officeTypeEnum = officeType as OfficeType;
+  const officers = await officerRepo.getOfficersByOffice(officeTypeEnum);
   return officers.map(mapOfficerDAOToDTO);
 }
 
@@ -119,7 +128,7 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
   // if approved, assign to an officer
   if (state === ReportState.APPROVED) {
     // find officers in the correct office (based on the report's category)
-    const officers = await officerRepo.getOfficersByOffice(report.category as any);
+    const officers = await officerRepo.getOfficersByOffice(report.category as OfficeType);
 
     if (officers.length > 0) {
       // Prefer an officer with the TECHNICAL_OFFICE_STAFF role for assignment

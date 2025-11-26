@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {createOfficer,retrieveDocs,reviewDoc, getAllOfficers, updateOfficer, assignReportToOfficer, getAllAssignedReportsOfficer} from "@controllers/officerController"
+import {createOfficer,retrieveDocs,reviewDoc, getAllOfficers, updateOfficer, assignReportToOfficer, getAllAssignedReportsOfficer, getAllOfficersByOfficeType} from "@controllers/officerController"
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import {OfficerFromJSON,OfficerToJSON} from "@dto/Officer";
 import { OfficerRole } from "@models/enums/OfficerRole";
@@ -27,6 +27,23 @@ router.get("/me", authenticateToken, async (req, res, next) => {
         next(err);
     }
 });
+
+router.get("/OfficerByOfficeType", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
+    try{
+        const {officeType} = req.body;
+        if(!officeType){
+            return res.status(400).json({error: "officeType query parameter is required"});
+        }
+        const alloff = await getAllOfficersByOfficeType(officeType);
+        const result = alloff.map(OfficerToJSON);
+        res.status(200).json(result);
+    }
+    catch(error)
+    {
+        next(error);
+    }
+});
+
 
 router.get("/admin",authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR]), async(req, res, next) =>{
     try{
