@@ -70,7 +70,7 @@ export function EditUserForm({ setShowEdit, avatar, telegram, emailNotifications
             <Stack spacing={2}>
                 <Box mt={4}>
                     <Container>
-                        <div className="avatar-wrapper">
+                        <div className="avatar-wrapper" style={{ marginBottom: '1rem' }}>
                             <img src={previewURL} alt="User Avatar" />
 
                             <div className="avatar-overlay">Change avatar</div>
@@ -100,11 +100,11 @@ export function EditUserForm({ setShowEdit, avatar, telegram, emailNotifications
                         />
                     </Box>
 
-                    <Button variant="contained" type="submit" disabled={loading}>
+                    <Button variant="contained" type="submit" disabled={loading} style={{margin: '0.5rem'}}>
                         {loading ? "Saving..." : "Save"}
                     </Button>
 
-                    <Button variant="outlined" onClick={() => setShowEdit(false)}>
+                    <Button variant="outlined" onClick={() => setShowEdit(false)} style={{margin: '0.5rem'}}>
                         Undo
                     </Button>
 

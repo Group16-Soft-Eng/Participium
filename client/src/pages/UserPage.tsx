@@ -36,7 +36,7 @@ export function UserPage() {
     }
 
     const userData = {
-        avatar: static_ip_address + user?.avatar || '../assets/userImage.png',
+        avatar: user.avatar == null ? '../assets/userImage.png' :  static_ip_address + user.avatar,
         name: user?.firstName,
         surname: user?.lastName,
         username: user?.username,
@@ -44,6 +44,8 @@ export function UserPage() {
         telegram: user?.telegramUsername,
         emailNotifications: user?.emailNotifications || false
     }
+
+    console.log("User data:", userData);
 
     return (
         <>
@@ -61,7 +63,7 @@ export function UserPage() {
                                     <p><strong>Surname:</strong> {userData.surname}</p>
                                     <p><strong>Username:</strong> {userData.username}</p>
                                     <p><strong>Email:</strong> {userData.email}</p>
-                                    <p><strong>Telegram:</strong> {userData.telegram != null ? "@" + userData.telegram : 'None'}</p>
+                                    <p><strong>Telegram:</strong> {userData.telegram != null && userData.telegram !== '' ? "@" + userData.telegram : 'None'}</p>
                                     <p><strong>Email Notifications:</strong> {userData.emailNotifications ? 'Enabled' : 'Disabled'}</p>
                                 </Box>
                             <Button variant="contained" onClick={() => setEdit(true)}>Edit Profile</Button>
