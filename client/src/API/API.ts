@@ -243,5 +243,28 @@ async function updateUserProfile(updatedData: UpdatedData) {
     return await response.json();
 }
 
+async function getOfficerByOffice(office: string) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/officers/office/${office}`, {
+        method: 'GET',
+        headers: headers,
+    });
+    if (response.ok) {
+        const officers = await response.json();
+        return officers;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
 
 export { static_ip_address, userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile };

@@ -64,9 +64,10 @@ function App() {
               {isLoggedIn && !isOfficer && !isAdmin && (
                 <Button component={Link} to="/messages" color="inherit">Messages</Button>
               )}
-              {isOfficer && (
+              {
+              /*isOfficer && (
                 <Button component={Link} to="/officer/messages" color="inherit">Messages</Button>
-              )}
+              )*/}
               
               {/* Show different button based on user role */}
               {isOfficer ? (
@@ -164,7 +165,7 @@ function App() {
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
               {isLoggedIn ? (
                 <>
-                  <NotificationBell />
+                  {!isOfficer && !isAdmin && <NotificationBell />}
                   <UserMenu />
                 </>
               ) : (
