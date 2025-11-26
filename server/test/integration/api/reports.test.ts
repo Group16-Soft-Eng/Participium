@@ -6,22 +6,8 @@ import { generateToken, saveSession } from "../../../src/services/authService";
 import { OfficeType } from "../../../src/models/enums/OfficeType";
 import { ReportState } from "../../../src/models/enums/ReportState";
 import { UserRepository } from "../../../src/repositories/UserRepository";
+import { getConnection } from "typeorm";
 
-/*
-username: string,
-    firstName: string,
-    lastName: string,
-    email: string,
-    plainPassword: string
-*/
-// Helper per creare un utente tramite API
-  // async function createUser(username: string, firstName: string, lastName: string, email: string, plainPassword: string) {
-  //   const response = await request(app)
-  //     .post("/api/v1/users")
-  //     .send({ username, firstName, lastName, email, plainPassword });
-  //     console.log("Create User Response:", response.status, response.body);
-  //   return response.body;
-//}
 jest.mock('@services/authService', () => {
   const original = jest.requireActual('@services/authService');
   return {
@@ -35,7 +21,6 @@ jest.mock('@services/authService', () => {
     validateSession: jest.fn().mockResolvedValue(true),
   };
 });
-
 
 describe("Reports API Integration Tests", () => {
   let userRepo: UserRepository;
@@ -55,16 +40,13 @@ describe("Reports API Integration Tests", () => {
   beforeEach(async () => {
     await clearDatabase();
     testUser = await userRepo.createUser("testuser", "Mario", "Rossi", "mario@test.com", "password123");
-    console.log("Created test user:", testUser);
     userToken = generateToken({
       id: testUser.id,
       username: testUser.username,
       type: "user",
       sessionType: "web"
     });
-    console.log("Generated user token:", userToken);
     const session = await saveSession(testUser.id, userToken);
-    console.log("Saved session:", session);
   });
 
   describe("POST /reports - Upload Report", () => {
@@ -95,7 +77,9 @@ describe("Reports API Integration Tests", () => {
         .field("document", JSON.stringify(newReport.document))
         .attach("photos", Buffer.from("fake-image-data"), "photo1.jpg");
 
-      expect(response.status).toBe(201);
+
+      console.log("------->Response body:", response.body);
+      expect(response.status).toBe(200);
       expect(response.body.title).toBe(newReport.title);
       expect(response.body.location).toEqual(newReport.location);
       expect(response.body.anonymity).toBe(newReport.anonymity);
@@ -124,21 +108,34 @@ describe("Reports API Integration Tests", () => {
       };
 
       const response = await request(app)
-        .post("/api/v1/reports")
-        .set("Authorization", `Bearer ${userToken}`)
-        .field("title", anonymousReport.title)
-        .field("location", JSON.stringify(anonymousReport.location))
-        .field("anonymity", anonymousReport.anonymity.toString())
-        .field("category", anonymousReport.category)
-        .field("document", JSON.stringify(anonymousReport.document))
-        .attach("photos", Buffer.from("fake-image-data"), "photo1.jpg");
+      .post("/api/v1/reports")
+      .set("Authorization", `Bearer ${userToken}`)
+      .field("title", anonymousReport.title)
+      .field("latitude", anonymousReport.location.Coordinates.latitude.toString())
+      .field("longitude", anonymousReport.location.Coordinates.longitude.toString())
+      .field("anonymity", anonymousReport.anonymity.toString())
+      .field("category", anonymousReport.category)
+      .field("description", anonymousReport.document.description)
+      .attach("photos", Buffer.from("fake-image-data"), "photo1.jpg");
+        // .post("/api/v1/reports")
+        // .set("Authorization", `Bearer ${userToken}`)
+        // .field("title", anonymousReport.title)
+        // .field("location", JSON.stringify(anonymousReport.location))
+        // .field("anonymity", anonymousReport.anonymity.toString())
+        // .field("category", anonymousReport.category)
+        // .field("document", JSON.stringify(anonymousReport.document))
+        // .attach("photos", Buffer.from("fake-image-data"), "photo1.jpg");
 
       // File upload might not work in tests without proper multer setup
-      expect([200, 201, 400]).toContain(response.status);
-      if (response.status === 201 || response.status === 200) {
-        expect(response.body.anonymity).toBe(true);
-        expect(response.body.author).toBeNull();
-      }
+      expect(response.status).toBe(200);
+      expect(response.body.title).toBe(anonymousReport.title);
+      expect(response.body.location).toEqual(anonymousReport.location);
+      expect(response.body.anonymity).toBe(anonymousReport.anonymity);
+      expect(response.body.category).toBe(anonymousReport.category);
+      expect(response.body.document.description).toBe(anonymousReport.document.description);
+      expect(Array.isArray(response.body.document.photos)).toBe(true);
+      expect(response.body.document.photos.length).toBe(1);
+      expect(response.body.author).toBeNull();
     });
 
     it("dovrebbe restituire errore 400 senza foto allegate", async () => {
