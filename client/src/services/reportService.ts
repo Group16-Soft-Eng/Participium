@@ -1,6 +1,6 @@
 import api from './api';
 
-export type ReportState = 'PENDING' | 'APPROVED' | 'DECLINED' | 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED';
+export type ReportState = 'PENDING' | 'APPROVED' | 'ASSIGNED' | 'DECLINED' | 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED';
 
 export interface OfficerReport {
   id: number;

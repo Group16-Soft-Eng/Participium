@@ -3,6 +3,8 @@ import { getAssignedReports, reviewReport } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
 import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Snackbar, Alert, Dialog, DialogContent } from '@mui/material';
 import ReportDetailDialog from './ReportDetailDialog';
+import AssignOfficerDialog from './AssignOfficerDialog';
+import { Select, Container, Stack } from '@mui/material';
 
 interface RejectState {
   open: boolean;
@@ -29,10 +31,12 @@ const OfficerReview: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [reject, setReject] = useState<RejectState>({ open: false, reportId: null, reason: '' });
   const [selected, setSelected] = useState<OfficerReport | null>(null);
+  const [view, setView] = useState(false);
   // image/lightbox is handled in the shared ReportDetailDialog
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState('');
-  const [snackSeverity, setSnackSeverity] = useState<'success'|'error'|'info'>('success');
+  const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
+  const [showingAssign, setShowingAssign] = useState(false);
 
   useEffect(() => {
     fetchReports();
@@ -45,15 +49,35 @@ const OfficerReview: React.FC = () => {
     setLoading(false);
   };
 
-  const handleApprove = async (id: number) => {
-    const ok = await reviewReport(id, 'APPROVED');
+  const openAssign = (report: OfficerReport) => {
+    setSelected(report);
+    setShowingAssign(true);
+  }
+
+  const closeAssign = () => {
+    setSelected(null);
+    setShowingAssign(false);
+  }
+
+  const openView = (report: OfficerReport) => {
+    setSelected(report);
+    setView(true);
+  }
+
+  const closeView = () => {
+    setSelected(null);
+    setView(false);
+  }
+
+  const handleAssign = async (id: number) => {
+    const ok = await reviewReport(id, 'ASSIGNED');
     if (ok) {
       setReports((r) => r.filter((x) => x.id !== id));
-      setSnackMessage('Report ' + id + ' approved and forwarded to technical office');
+      setSnackMessage('Report ' + id + ' forwarded to technical office');
       setSnackSeverity('success');
       setSnackOpen(true);
     } else {
-      setSnackMessage('Failed to approve report ' + id);
+      setSnackMessage('Failed to assign report ' + id);
       setSnackSeverity('error');
       setSnackOpen(true);
     }
@@ -61,7 +85,7 @@ const OfficerReview: React.FC = () => {
 
   const openRejectDialog = (id: number) => setReject({ open: true, reportId: id, reason: '' });
 
-    const handleConfirmReject = async () => {
+  const handleConfirmReject = async () => {
     if (!reject.reportId) return;
     if ((reject.reason || '').trim().length < 30) {
       alert('The rejection reason must be at least 30 characters long.');
@@ -95,51 +119,51 @@ const OfficerReview: React.FC = () => {
         <Paper elevation={1} sx={{ p: 2 }}>
           <TableContainer>
             <Table sx={{ minWidth: 650 }} size="medium">
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Title</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Reporter</TableCell>
-                <TableCell>Submitted</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {reports.map((r) => (
-                <TableRow key={r.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell sx={{ width: 60, fontWeight: 'bold' }}>{r.id}</TableCell>
-                  <TableCell>
-                    <Typography variant="subtitle2">{r.title}</Typography>
-                  </TableCell>
-                  <TableCell sx={{ width: 160 }}>
-                    <Chip 
-                      label={r.category || 'Unknown'} 
-                      size="small"
-                      sx={{ 
-                        backgroundColor: getCategoryColor(r.category),
-                        color: 'white',
-                        fontWeight: 'bold',
-                        fontSize: '0.75rem',
-                        textTransform: 'capitalize'
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell sx={{ width: 160 }}>
-                    {r.anonymity 
-                      ? 'Anonymous' 
-                      : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : '—')}
-                  </TableCell>
-                  <TableCell sx={{ width: 180 }}>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
-                  <TableCell align="right">
-                    <Button variant="contained" color="primary" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                    <Button variant="contained" color="success" size="small" onClick={() => handleApprove(r.id)} sx={{ mr: 1 }}>Approve</Button>
-                    <Button variant="outlined" color="error" size="small" onClick={() => openRejectDialog(r.id)}>Reject</Button>
-                  </TableCell>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Title</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell>Reporter</TableCell>
+                  <TableCell>Submitted</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {reports.map((r) => (
+                  <TableRow key={r.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                    <TableCell sx={{ width: 60, fontWeight: 'bold' }}>{r.id}</TableCell>
+                    <TableCell>
+                      <Typography variant="subtitle2">{r.title}</Typography>
+                    </TableCell>
+                    <TableCell sx={{ width: 160 }}>
+                      <Chip
+                        label={r.category || 'Unknown'}
+                        size="small"
+                        sx={{
+                          backgroundColor: getCategoryColor(r.category),
+                          color: 'white',
+                          fontWeight: 'bold',
+                          fontSize: '0.75rem',
+                          textTransform: 'capitalize'
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ width: 160 }}>
+                      {r.anonymity
+                        ? 'Anonymous'
+                        : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : '—')}
+                    </TableCell>
+                    <TableCell sx={{ width: 180 }}>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
+                    <TableCell align="right">
+                      <Button variant="contained" color="primary" size="small" onClick={() => openView(r)} sx={{ mr: 1 }}>View</Button>
+                      <Button variant="contained" color="success" size="small" onClick={() => openAssign(r)} sx={{ mr: 1 }}>Assign</Button>
+                      <Button variant="outlined" color="error" size="small" onClick={() => openRejectDialog(r.id)}>Reject</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </TableContainer>
         </Paper>
       )}
@@ -170,13 +194,20 @@ const OfficerReview: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-        <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-          <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
-            {snackMessage}
-          </Alert>
-        </Snackbar>
+      <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
+          {snackMessage}
+        </Alert>
+      </Snackbar>
 
-      <ReportDetailDialog open={selected !== null} report={selected} onClose={() => setSelected(null)} />
+      {!loading && view && (
+      <ReportDetailDialog open={selected !== null} report={selected} onClose={() => closeView()} />
+      )}
+
+      {!loading && showingAssign && (
+        <AssignOfficerDialog open={showingAssign} onClose={() => closeAssign()} office={selected?.category || ''} report={selected} />
+      )}
+
     </Box>
   );
 };
