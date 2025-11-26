@@ -120,6 +120,7 @@ const ReportForm: React.FC = () => {
     try {
       await createReport(report);
       alert('Report submitted successfully!');
+      navigate('/map');
 
       setReport({
         title: '',
