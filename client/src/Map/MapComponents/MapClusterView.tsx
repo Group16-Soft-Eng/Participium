@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import type { Report } from '../types/report';
 import '../CssMap/MapWithPin.css';
 import { useNavigate } from 'react-router-dom';
-import { getToken } from '../../services/auth';
+import { getRole, getToken } from '../../services/auth';
 
 const TURIN_COORDINATES: [number, number] = [45.0703, 7.6600];
 
@@ -181,7 +181,7 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
           );
         })}
         {/* render pinned marker if present */}
-        {pinned && (
+        {pinned && (getToken() == null || getRole() === 'citizen') && (
           <Marker position={[pinned.lat, pinned.lng]} icon={createPinIcon()}>
             <Popup>
               <div style={{ maxWidth: 260 }}>

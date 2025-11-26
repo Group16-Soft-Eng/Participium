@@ -179,7 +179,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/map" replace />} />
             <Route path="/login" element={<LoginScreen />} />
-            <Route path="/submitReport" element={<RequireLogin><ReportForm /></RequireLogin>} />
+            <Route path="/submitReport" element={<RequireCitizen><ReportForm /></RequireCitizen>} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/messages" element={<RequireLogin><MessagesPage /></RequireLogin>} />
             <Route path="/admin" element={<RequireAdmin><AdminScreen /></RequireAdmin>} />
