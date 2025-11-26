@@ -2,24 +2,50 @@ import "reflect-metadata";
 import request from "supertest";
 import { app } from "../../../src/app";
 import { initializeTestDatabase, closeTestDatabase, clearDatabase } from "../../setup/test-datasource";
-import { generateToken } from "../../../src/services/authService";
+import { generateToken, saveSession } from "../../../src/services/authService";
 import { OfficeType } from "../../../src/models/enums/OfficeType";
 import { ReportState } from "../../../src/models/enums/ReportState";
+import { UserRepository } from "../../../src/repositories/UserRepository";
 
+/*
+username: string,
+    firstName: string,
+    lastName: string,
+    email: string,
+    plainPassword: string
+*/
 // Helper per creare un utente tramite API
-async function createUser(username: string, name: string, surname: string, email: string, password: string) {
-  const response = await request(app)
-    .post("/api/v1/users")
-    .send({ username, name, surname, email, password });
-  return response.body;
-}
+  // async function createUser(username: string, firstName: string, lastName: string, email: string, plainPassword: string) {
+  //   const response = await request(app)
+  //     .post("/api/v1/users")
+  //     .send({ username, firstName, lastName, email, plainPassword });
+  //     console.log("Create User Response:", response.status, response.body);
+  //   return response.body;
+//}
+jest.mock('@services/authService', () => {
+  const original = jest.requireActual('@services/authService');
+  return {
+    ...original,
+    saveSession: jest.fn().mockResolvedValue(undefined),
+    getSession: jest.fn().mockResolvedValue({
+      token: "any",
+      sessionType: "web",
+      createdAt: Date.now()
+    }),
+    validateSession: jest.fn().mockResolvedValue(true),
+  };
+});
+
 
 describe("Reports API Integration Tests", () => {
-  let userToken: string;
+  let userRepo: UserRepository;
+  let userToken: any;
   let testUser: any;
 
   beforeAll(async () => {
     await initializeTestDatabase();
+    userRepo = new UserRepository();
+    
   });
 
   afterAll(async () => {
@@ -28,14 +54,17 @@ describe("Reports API Integration Tests", () => {
 
   beforeEach(async () => {
     await clearDatabase();
-    
-    // Crea un utente per i test tramite API
-    testUser = await createUser("testuser", "Mario", "Rossi", "mario@test.com", "password123");
+    testUser = await userRepo.createUser("testuser", "Mario", "Rossi", "mario@test.com", "password123");
+    console.log("Created test user:", testUser);
     userToken = generateToken({
       id: testUser.id,
-      username: testUser.email,
-      type: "user"
+      username: testUser.username,
+      type: "user",
+      sessionType: "web"
     });
+    console.log("Generated user token:", userToken);
+    const session = await saveSession(testUser.id, userToken);
+    console.log("Saved session:", session);
   });
 
   describe("POST /reports - Upload Report", () => {
@@ -66,15 +95,15 @@ describe("Reports API Integration Tests", () => {
         .field("document", JSON.stringify(newReport.document))
         .attach("photos", Buffer.from("fake-image-data"), "photo1.jpg");
 
-      // Note: File upload in tests might not work perfectly without proper multer mocking
-      // For now, we verify the API responds correctly even if files aren't processed
-      expect([200, 201, 400]).toContain(response.status);
-      if (response.status === 201 || response.status === 200) {
-        expect(response.body).toHaveProperty("id");
-        expect(response.body.title).toBe(newReport.title);
-        expect(response.body.category).toBe(newReport.category);
-        expect(response.body.state).toBe(ReportState.PENDING);
-      }
+      expect(response.status).toBe(201);
+      expect(response.body.title).toBe(newReport.title);
+      expect(response.body.location).toEqual(newReport.location);
+      expect(response.body.anonymity).toBe(newReport.anonymity);
+      expect(response.body.category).toBe(newReport.category);
+      expect(response.body.document.description).toBe(newReport.document.description);
+      expect(Array.isArray(response.body.document.photos)).toBe(true);
+      expect(response.body.document.photos.length).toBe(1);
+      expect(response.body.author.id).toBe(testUser.id);
     });
 
     it("dovrebbe creare un report anonimo", async () => {
