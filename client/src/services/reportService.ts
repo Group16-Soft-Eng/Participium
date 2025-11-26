@@ -1,6 +1,6 @@
 import api from './api';
 
-export type ReportState = 'PENDING' | 'APPROVED' | 'DECLINED';
+export type ReportState = 'PENDING' | 'APPROVED' | 'DECLINED' | 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED';
 
 export interface OfficerReport {
   id: number;
@@ -120,6 +120,16 @@ export async function reviewReport(
     return true;
   } catch (e) {
     console.error('Error reviewing report:', e);
+    return false;
+  }
+}
+
+export async function updateReportStatus(reportId: number, status: ReportState): Promise<boolean> {
+  try {
+    await api.patch(`/officers/reviewdocs/${reportId}`, { state: status });
+    return true;
+  } catch (e) {
+    console.error('Error updating report status:', e);
     return false;
   }
 }

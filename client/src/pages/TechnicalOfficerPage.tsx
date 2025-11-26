@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup } from '@mui/material';
 import ReportDetailDialog from '../components/ReportDetailDialog';
-import { getMyAssignedReports } from '../services/reportService';
+import { getMyAssignedReports, updateReportStatus } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
 
 // Category colors matching the map (kept small and consistent)
@@ -34,8 +34,24 @@ const TechnicalOfficerPage: React.FC = () => {
   const fetchAssigned = async () => {
     setLoading(true);
     const data = await getMyAssignedReports();
-    setReports(data);
+    // Filter out RESOLVED reports from the queue
+    const activeReports = data.filter(report => report.state?.toUpperCase() !== 'RESOLVED');
+    setReports(activeReports);
     setLoading(false);
+  };
+
+  const handleStatusChange = async (reportId: number, newStatus: 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED') => {
+    const success = await updateReportStatus(reportId, newStatus);
+    if (success) {
+      setSnackMessage(`Report status updated to ${newStatus.replace('_', ' ')}`);
+      setSnackSeverity('success');
+      setSnackOpen(true);
+      fetchAssigned(); // Refresh the list
+    } else {
+      setSnackMessage('Failed to update report status');
+      setSnackSeverity('error');
+      setSnackOpen(true);
+    }
   };
 
   // group reports by category for a compact overview
@@ -75,6 +91,7 @@ const TechnicalOfficerPage: React.FC = () => {
                       <TableRow>
                         <TableCell>ID</TableCell>
                         <TableCell>Title</TableCell>
+                        <TableCell>Status</TableCell>
                         <TableCell>Submitted</TableCell>
                         <TableCell align="right">Actions</TableCell>
                       </TableRow>
@@ -84,9 +101,21 @@ const TechnicalOfficerPage: React.FC = () => {
                         <TableRow key={r.id} hover>
                           <TableCell sx={{ width: 60 }}>{r.id}</TableCell>
                           <TableCell>{r.title}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={r.state || 'ASSIGNED'} 
+                              size="small" 
+                              color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
+                            />
+                          </TableCell>
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                           <TableCell align="right">
-                            <Button variant="contained" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                            <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                            <ButtonGroup size="small" variant="contained">
+                              <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
+                              <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
+                              <Button color="success" onClick={() => handleStatusChange(r.id, 'RESOLVED')}>Resolve</Button>
+                            </ButtonGroup>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -109,6 +138,7 @@ const TechnicalOfficerPage: React.FC = () => {
                         <TableRow>
                           <TableCell>ID</TableCell>
                           <TableCell>Title</TableCell>
+                          <TableCell>Status</TableCell>
                           <TableCell>Submitted</TableCell>
                           <TableCell align="right">Actions</TableCell>
                         </TableRow>
@@ -118,9 +148,21 @@ const TechnicalOfficerPage: React.FC = () => {
                           <TableRow key={r.id} hover>
                             <TableCell sx={{ width: 60 }}>{r.id}</TableCell>
                             <TableCell>{r.title}</TableCell>
+                            <TableCell>
+                              <Chip 
+                                label={r.state || 'ASSIGNED'} 
+                                size="small" 
+                                color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
+                              />
+                            </TableCell>
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
-                              <Button variant="contained" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                              <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                              <ButtonGroup size="small" variant="contained">
+                                <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
+                                <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
+                                <Button color="success" onClick={() => handleStatusChange(r.id, 'RESOLVED')}>Resolve</Button>
+                              </ButtonGroup>
                             </TableCell>
                           </TableRow>
                         ))}

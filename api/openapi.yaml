@@ -603,22 +603,13 @@ components:
   schemas:
     OfficeType:
       type: string
-      enum:
-        - Office 1
-        - Office 2
-        - Office 3
+      enum: [ "infrastructure", "environment","safety", "sanitation","transport","organization","other"]
     OfficerRole:
       type: string
-      enum:
-        - Role 1
-        - Role 2
-        - Role 3
+      enum: ["municipal_public_relations_officer", "municipal_administrator","technical_office_staff"]
     State:
       type: string
-      enum:
-        - PENDING
-        - APPROVED
-        - DECLINED
+      enum: [PENDING, ASSIGNED, IN_PROGRESS, SUSPENDED, REJECTED, RESOLVED]
     User:
       type: object
       properties:

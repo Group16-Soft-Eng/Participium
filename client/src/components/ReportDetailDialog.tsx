@@ -61,7 +61,7 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
             onClick={() => {
               if (report?.location?.Coordinates) {
                 const { latitude, longitude } = report.location.Coordinates;
-                window.open(`/map?lat=${latitude}&lng=${longitude}&zoom=16`, '_blank');
+                window.open(`/map?lat=${latitude}&lng=${longitude}&zoom=16&id=${report.id}`, '_blank');
               }
             }}
             variant="contained"

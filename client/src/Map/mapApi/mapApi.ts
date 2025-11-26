@@ -76,7 +76,7 @@ async function getAllReports(): Promise<Report[]> {
             latitude: br.location?.Coordinates?.latitude || 0,
             longitude: br.location?.Coordinates?.longitude || 0,
             createdAt: br.date ? new Date(br.date) : new Date(),
-            status: 'resolved' as const, // Approved reports are considered resolved
+            status: (br.state?.toLowerCase() || 'approved') as 'pending' | 'approved' | 'in_progress' | 'resolved',
             anonymity: br.anonymity,
             author: br.author ? {
                 id: br.author.id?.toString(),
