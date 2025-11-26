@@ -27,9 +27,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
 
         try {
             // first try officer login
-            console.log('Trying officer login...');
             const token = await officerLogin(user);
-            console.log('Officer login successful');
             setToken(token);
             // try to read role from token if available
             const detected = getRoleFromToken(token);
@@ -49,10 +47,8 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             }
         } catch (e) {
             // if officer login failed, try user login
-            console.log('Officer login failed, trying user login...');
             try {
                 const token = await userLogin(user);
-                console.log('User login successful, token:', token);
                 setToken(token);
                 const detected = getRoleFromToken(token);
                 const details = await getUserProfile();

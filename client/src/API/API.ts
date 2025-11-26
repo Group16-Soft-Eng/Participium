@@ -15,8 +15,6 @@ async function userLogin(credentials: Credentials) {
         username: credentials.username,
         password: credentials.password
     }
-    console.log('userLogin - Sending request to:', URI + `/auth/users`);
-    console.log('userLogin - Body:', bodyObject);
     
     try {
         const response = await fetch(URI + `/auth/users`, {
@@ -25,16 +23,12 @@ async function userLogin(credentials: Credentials) {
             credentials: 'include',
             body: JSON.stringify(bodyObject)
         })
-        
-        console.log('userLogin - Response status:', response.status);
-        
+                
         if (response.ok) {
             const token = await response.json();
-            console.log('userLogin - Token received:', token);
             return token;
         } else {
             const err = await response.text()
-            console.error('userLogin - Error response:', err);
             throw new Error(err || 'Login failed');
         }
     } catch (error) {
@@ -49,9 +43,7 @@ async function officerLogin(credentials: Credentials) {
         email: credentials.username, // Backend expects 'email' field for officers
         password: credentials.password
     }
-    console.log('officerLogin - Sending request to:', URI + `/auth/officers`);
-    console.log('officerLogin - Body:', bodyObject);
-    
+
     try {
         const response = await fetch(URI + `/auth/officers`, {
             method: 'POST',
@@ -60,11 +52,8 @@ async function officerLogin(credentials: Credentials) {
             body: JSON.stringify(bodyObject)
         })
         
-        console.log('officerLogin - Response status:', response.status);
-        
         if (response.ok) {
             const token = await response.json();
-            console.log('officerLogin - Token received:', token);
             return token;
         } else {
             const err = await response.text()
@@ -195,7 +184,6 @@ async function getUserProfile() {
         headers: headers,
     });
     if (response.ok) {
-        console.log(response)
         const profile = await response.json();
         return profile;
     }

@@ -27,7 +27,6 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                 const types = await getAvailableOfficerTypes();
                 setOfficeTypes(types.officeTypes || []);
                 setOfficerTypes(types.officerRoles || []);
-                console.log(types);
             } catch (error) {
                 console.error("Error fetching officer types:", error);
             }
