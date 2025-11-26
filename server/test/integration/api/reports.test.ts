@@ -6,7 +6,6 @@ import { generateToken, saveSession } from "../../../src/services/authService";
 import { OfficeType } from "../../../src/models/enums/OfficeType";
 import { ReportState } from "../../../src/models/enums/ReportState";
 import { UserRepository } from "../../../src/repositories/UserRepository";
-import { getConnection } from "typeorm";
 
 jest.mock('@services/authService', () => {
   const original = jest.requireActual('@services/authService');
@@ -77,8 +76,6 @@ describe("Reports API Integration Tests", () => {
         .field("document", JSON.stringify(newReport.document))
         .attach("photos", Buffer.from("fake-image-data"), "photo1.jpg");
 
-
-      console.log("------->Response body:", response.body);
       expect(response.status).toBe(200);
       expect(response.body.title).toBe(newReport.title);
       expect(response.body.location).toEqual(newReport.location);
@@ -135,7 +132,7 @@ describe("Reports API Integration Tests", () => {
       expect(response.body.document.description).toBe(anonymousReport.document.description);
       expect(Array.isArray(response.body.document.photos)).toBe(true);
       expect(response.body.document.photos.length).toBe(1);
-      expect(response.body.author).toBeNull();
+      expect(response.body.author).toBeUndefined();
     });
 
     it("dovrebbe restituire errore 400 senza foto allegate", async () => {
