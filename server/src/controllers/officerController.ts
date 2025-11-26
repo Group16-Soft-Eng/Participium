@@ -7,8 +7,10 @@ import { ReportRepository } from "@repositories/ReportRepository";
 import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
 import { ReportState } from "@models/enums/ReportState";
 import { NotificationRepository } from "@repositories/NotificationRepository";
+import { NotificationDAO} from "@models/dao/NotificationDAO"
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
+import { stat } from "fs";
 
 export async function getAllOfficers(): Promise<Officer[]> {
   const officerRepo = new OfficerRepository();
@@ -65,31 +67,31 @@ export async function updateOfficer(officerDto: Officer): Promise<Officer> {
 export async function assignReportToOfficer(reportId: number, officerId: number): Promise<void> {
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
-  
+
   // Verifica che il report sia in stato PENDING
   const report = await reportRepo.getReportById(reportId);
   if (report.state !== ReportState.PENDING) {
     throw new Error("Only PENDING reports can be assigned");
   }
-  
+
   // Verifica che l'officer esista
   const officer = await officerRepo.getOfficerById(officerId);
   if (!officer) {
     throw new Error("Officer not found");
   }
-  
+
   // Assegna il report all'officer
   await reportRepo.assignReportToOfficer(reportId, officerId);
 }
 
 export async function retrieveDocs(officerId: number): Promise<Report[]> {
   const reportRepo = new ReportRepository();
-  
+
   // Get all PENDING reports that need review (not yet assigned or assigned to this officer)
   const allPending = await reportRepo.getReportsByState(ReportState.PENDING);
   // filter: only unassigned or assigned to this officer
   const reports = allPending.filter(r => r.assignedOfficerId === null || r.assignedOfficerId === officerId);
-  
+
   return reports.map(mapReportDAOToDTO);
 }
 
@@ -112,19 +114,25 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
   const notificationRepo = new NotificationRepository();
-  
+
   // Get the report
   const report = await reportRepo.getReportById(idDoc);
-  
+
   // Only check assignment if the report is already assigned
   // PENDING reports that are not assigned can be reviewed by any officer
   if (report.assignedOfficerId !== null && report.assignedOfficerId !== officerId) {
     throw new Error("You can only review reports assigned to you");
   }
-  
+  if (report.state === ReportState.RESOLVED || report.state === ReportState.DECLINED) {
+    const payload = {
+      message: `Report with id '${idDoc}' is already in state '${report.state}' and cannot be reviewed again.`,
+      status: 400
+    };
+    throw new Error(JSON.stringify(payload));
+  }
   // update report state
   let updatedReport = await reportRepo.updateReportState(idDoc, state, reason);
-  
+
   // if approved, assign to an officer
   if (state === ReportState.APPROVED) {
     // find officers in the correct office (based on the report's category)
@@ -135,11 +143,17 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
       const preferred = officers.find(o => o.role === OfficerRole.TECHNICAL_OFFICE_STAFF) || officers[0];
       updatedReport = await reportRepo.assignReportToOfficer(idDoc, preferred.id);
     }
+    //notify user to change report state 
   }
+  const notifications = {
+    userId: updatedReport.author ? updatedReport.author.id : null,
+    reportId: updatedReport.id,
+    type: "STATUS_CHANGE" as const,
+    message: `Your report #${updatedReport.id} status has been updated to ${updatedReport.state}.`,
+    read: false
+  } as NotificationDAO;
+  await notificationRepo.createNotification(notifications);
 
-  //? PT-11 (viene aggiunta la notifica allo user quando lo stato del report cambia)
-  await notificationRepo.createStatusChangeNotification(updatedReport as any);
-  
   return mapReportDAOToDTO(updatedReport);
 }
 

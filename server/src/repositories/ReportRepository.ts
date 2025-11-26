@@ -116,7 +116,7 @@ export class ReportRepository {
   async assignReportToOfficer(reportId: number, officerId: number): Promise<ReportDAO> {
     const report = await this.getReportById(reportId);
     report.assignedOfficerId = officerId;
-    
+    report.state = ReportState.IN_PROGRESS;
     return this.repo.save(report);
   }
 }

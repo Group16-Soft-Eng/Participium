@@ -26,7 +26,10 @@ export class NotificationRepository {
         notif.read = true;
         return this.repo.save(notif);
     }
-
+    async createNotification(notification: Partial<NotificationDAO>): Promise<NotificationDAO> {
+        const newNotification = this.repo.create(notification);
+        return this.repo.save(newNotification);
+    }
     //? crea una notifica di cambio stato per l'autore del report (user quindi, se non è anonimo)
     async createStatusChangeNotification(report: ReportDAO): Promise<NotificationDAO | null> {
         if (!report.author || report.author.id === undefined) return null; // anonymous

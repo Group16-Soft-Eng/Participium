@@ -72,7 +72,7 @@ export async function uploadReport(reportDto: Report, files: Express.Multer.File
 
   // get author if not anonymous
   let author = null;
-  if (!reportDto.anonymity && userId) {
+  if (userId) {
     author = await userRepo.getUserById(userId);
   }
   

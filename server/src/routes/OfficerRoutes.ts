@@ -71,7 +71,7 @@ router.patch("/", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMI
     }
 });
 
-router.post("/assign-report", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR]), async (req, res, next) => {
+router.post("/assign-report", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async (req, res, next) => {
     try {
         const { reportId, officerId } = req.body;
         await assignReportToOfficer(reportId, officerId);
@@ -108,7 +108,8 @@ router.get("/assigned", authenticateToken, requireUserType([OfficerRole.TECHNICA
 router.patch("/reviewdocs/:id", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF]), async(req, res, next) =>{
     try{
         const officerId = (req as any).user?.id;
-        const result = await reviewDoc(officerId, Number(req.params.id), req.body.state, req.body.reason);
+        const{state,reason} = req.body;
+        const result = await reviewDoc(officerId, Number(req.params.id), state, reason);
         res.status(200).json(result);
     }
     catch(error)
