@@ -1,0 +1,83 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link [ref=e6] [cursor=pointer]:
+          - /url: /map
+          - img [ref=e7]:
+            - generic [ref=e9]: P
+        - link "Participium Turin civic reports" [ref=e10] [cursor=pointer]:
+          - /url: /map
+          - generic [ref=e11]: Participium
+          - generic [ref=e12]: Turin civic reports
+      - generic [ref=e13]:
+        - link "Map" [ref=e14] [cursor=pointer]:
+          - /url: /map
+        - link "Messages" [ref=e15] [cursor=pointer]:
+          - /url: /messages
+        - link "Write a report" [ref=e16] [cursor=pointer]:
+          - /url: /submitReport
+        - button [ref=e17] [cursor=pointer]:
+          - img [ref=e19]
+        - generic [ref=e21]:
+          - paragraph [ref=e22]: citizen_1764098748246
+          - button "C" [ref=e23] [cursor=pointer]:
+            - generic [ref=e24]: C
+  - generic [ref=e26]:
+    - generic [ref=e29]:
+      - generic:
+        - generic:
+          - button "📍" [ref=e30] [cursor=pointer]:
+            - generic [ref=e31]: 📍
+          - button "3" [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]: "3"
+      - generic:
+        - generic [ref=e34]:
+          - button "Zoom in" [ref=e35] [cursor=pointer]: +
+          - button "Zoom out" [disabled] [ref=e36]: −
+        - generic [ref=e37]:
+          - link "Leaflet" [ref=e38] [cursor=pointer]:
+            - /url: https://leafletjs.com
+            - img [ref=e39]
+            - text: Leaflet
+          - text: "| ©"
+          - link "OpenStreetMap" [ref=e43] [cursor=pointer]:
+            - /url: https://www.openstreetmap.org/copyright
+          - text: contributors
+    - generic [ref=e44]:
+      - heading "Reports on map (5)" [level=6] [ref=e45]
+      - list [ref=e46]:
+        - listitem [ref=e47]:
+          - generic [ref=e48] [cursor=pointer]:
+            - generic [ref=e49]:
+              - heading "safety" [level=6] [ref=e50]
+              - generic [ref=e51]: j j • 11/25/2025
+            - generic [ref=e53]: safety
+        - listitem [ref=e54]:
+          - generic [ref=e55] [cursor=pointer]:
+            - generic [ref=e56]:
+              - heading "trasportissim" [level=6] [ref=e57]
+              - generic [ref=e58]: j j • 11/25/2025
+            - generic [ref=e60]: transport
+        - listitem [ref=e61]:
+          - generic [ref=e62] [cursor=pointer]:
+            - generic [ref=e63]:
+              - heading "trasporto" [level=6] [ref=e64]
+              - generic [ref=e65]: j j • 11/25/2025
+            - generic [ref=e67]: transport
+        - listitem [ref=e68]:
+          - generic [ref=e69] [cursor=pointer]:
+            - generic [ref=e70]:
+              - heading "transport" [level=6] [ref=e71]
+              - generic [ref=e72]: j j • 11/25/2025
+            - generic [ref=e74]: transport
+        - listitem [ref=e75]:
+          - generic [ref=e76] [cursor=pointer]:
+            - generic [ref=e77]:
+              - heading "a" [level=6] [ref=e78]
+              - generic [ref=e79]: j j • 11/23/2025
+            - generic [ref=e81]: environment
+```

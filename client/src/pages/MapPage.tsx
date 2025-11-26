@@ -4,6 +4,7 @@ import MapClusterView from '../Map/MapComponents/MapClusterView';
 import type { Report } from '../Map/types/report';
 import { Box, List, ListItem, Paper, Typography, Chip, CircularProgress } from '@mui/material';
 import { getAllReports } from '../Map/mapApi/mapApi';
+import { getToken, getRole } from '../services/auth';
 
 const getCategoryColor = (cat: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
   switch (cat) {
@@ -25,6 +26,8 @@ const MapPage: React.FC = () => {
   const [initialZoom, setInitialZoom] = useState<number | null>(null);
   const [highlightLocation, setHighlightLocation] = useState<[number, number] | null>(null);
 
+  const logged = getToken() !== null;
+
   useEffect(() => {
     const fetchReports = async () => {
       try {
@@ -35,7 +38,7 @@ const MapPage: React.FC = () => {
           const status = report.status?.toLowerCase();
           return status === 'approved' || status === 'in_progress' || status === 'suspended';
         });
-        
+
         // If there's a specific report ID in the URL, ensure it's included even if filtered
         const reportIdParam = searchParams.get('id');
         if (reportIdParam) {
@@ -45,7 +48,7 @@ const MapPage: React.FC = () => {
           }
           setSelectedId(reportIdParam);
         }
-        
+
         setReports(visibleReports);
       } catch (error) {
         console.error('Error fetching reports:', error);
@@ -63,7 +66,7 @@ const MapPage: React.FC = () => {
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
     const zoom = searchParams.get('zoom');
-    
+
     if (lat && lng) {
       const location: [number, number] = [parseFloat(lat), parseFloat(lng)];
       setInitialCenter(location);
@@ -84,24 +87,26 @@ const MapPage: React.FC = () => {
     <Box sx={{ display: 'flex', gap: 0, alignItems: 'stretch', flexDirection: { xs: 'column', md: 'row' }, width: '100%', height: 'calc(100vh - 64px)' }}>
       {/* Map: 2/3 width on md+ screens, full width on xs */}
       <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 66.666%' }, minWidth: 0 }}>
-        <MapClusterView 
-          reports={reports} 
-          selectedId={selectedId} 
-          initialCenter={initialCenter}
-          initialZoom={initialZoom}
-          highlightLocation={highlightLocation}
-        />
+          <MapClusterView
+            reports={logged ? reports : []}
+            selectedId={selectedId}
+            initialCenter={initialCenter}
+            initialZoom={initialZoom}
+            highlightLocation={highlightLocation}
+          />
       </Box>
 
       {/* Sidebar list: 1/3 width on md+ screens, full width on xs */}
-      <Paper sx={{ 
-        flex: { xs: '0 0 100%', md: '0 0 33.333%' }, 
-        minWidth: { xs: '100%', md: 280 }, 
-        height: 'calc(100vh - 64px)', 
-        overflow: 'auto', 
+      <Paper sx={{
+        flex: { xs: '0 0 100%', md: '0 0 33.333%' },
+        minWidth: { xs: '100%', md: 280 },
+        height: 'calc(100vh - 64px)',
+        overflow: 'auto',
         p: 2,
         bgcolor: '#f8f9fa'
       }} elevation={2}>
+        { logged ? 
+        <>
         <Typography variant="h6" gutterBottom>Reports on map ({reports.length})</Typography>
         <List>
           {reports.map((r) => {
@@ -110,18 +115,18 @@ const MapPage: React.FC = () => {
             const isSuspended = status === 'suspended';
             return (
               <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
-                <Paper 
-                  sx={{ 
-                    width: '100%', 
-                    p: 1.25, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between', 
+                <Paper
+                  sx={{
+                    width: '100%',
+                    p: 1.25,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     cursor: 'pointer',
                     bgcolor: isInProgress ? '#e3f2fd' : isSuspended ? '#fff3e0' : 'white',
                     borderLeft: isInProgress ? '4px solid #1976d2' : isSuspended ? '4px solid #f57c00' : 'none'
-                  }} 
-                  elevation={1} 
+                  }}
+                  elevation={1}
                   onClick={() => setSelectedId(r.id)}
                 >
                   <Box>
@@ -138,6 +143,10 @@ const MapPage: React.FC = () => {
             );
           })}
         </List>
+        </>
+        : <>
+        <Typography variant="h6" gutterBottom>Please log in to view the available reports.</Typography>
+        </>}
       </Paper>
     </Box>
   );
