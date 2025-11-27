@@ -498,7 +498,7 @@ export async function seedReports() {
           Description: report.description,
           Photos: [],
         },
-        state: isApproved ? ReportState.APPROVED : ReportState.PENDING,
+        state: isApproved ? ReportState.IN_PROGRESS : ReportState.PENDING,
         reason: null,
         assignedOfficerId: null,
       });

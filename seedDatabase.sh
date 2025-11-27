@@ -89,7 +89,6 @@ insert_report() {
     local random=$((RANDOM % 10))
     if [ $random -lt 3 ]; then
         anonymity=1
-        author_id="NULL"
     fi
     
     # Escape single quotes in description
