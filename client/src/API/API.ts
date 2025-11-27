@@ -290,5 +290,61 @@ async function assignOfficer(reportId: number, officerId: number) {
     }
 }
 
+interface Notification {
+    id: number;
+    userId: number;
+    reportId?: number;
+    type: 'STATUS_CHANGE' | 'OFFICER_MESSAGE';
+    message: string;
+    createdAt: string;
+    read: boolean;
+}
 
-export { static_ip_address, userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer };
+async function getNotifications(unreadOnly: boolean = false): Promise<Notification[]> {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const url = unreadOnly ? URI + `/notifications?unreadOnly=true` : URI + `/notifications`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: headers,
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to fetch notifications');
+    }
+}
+
+async function markNotificationAsRead(notificationId: number): Promise<{ id: number; read: boolean }> {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/notifications/${notificationId}/read`, {
+        method: 'PATCH',
+        headers: headers,
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to mark notification as read');
+    }
+}
+
+
+export { static_ip_address, userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead };
+export type { Notification };

@@ -142,16 +142,10 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
       const preferred = officers.find(o => o.role === OfficerRole.TECHNICAL_OFFICE_STAFF) || officers[0];
       updatedReport = await reportRepo.assignReportToOfficer(idDoc, preferred.id);
     }
-    //notify user to change report state 
   }
-  const notifications = {
-    userId: updatedReport.author ? updatedReport.author.id : null,
-    reportId: updatedReport.id,
-    type: "STATUS_CHANGE" as const,
-    message: `Your report #${updatedReport.id} status has been updated to ${updatedReport.state}.`,
-    read: false
-  } as NotificationDAO;
-  await notificationRepo.createNotification(notifications);
+
+  // Create notification for status change (only if not anonymous)
+  await notificationRepo.createStatusChangeNotification(updatedReport);
 
   return mapReportDAOToDTO(updatedReport);
 }

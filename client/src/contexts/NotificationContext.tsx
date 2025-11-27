@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { AlertColor } from '@mui/material';
 import { getUserIdFromToken } from '../services/auth';
+import { getNotifications, markNotificationAsRead, type Notification as BackendNotification } from '../API/API';
 
 interface Notification {
   id: string;
@@ -8,6 +9,8 @@ interface Notification {
   type: AlertColor;
   timestamp: number;
   read?: boolean;
+  reportId?: number;
+  backendId?: number;
 }
 
 interface NotificationContextType {
@@ -15,6 +18,7 @@ interface NotificationContextType {
   allNotifications: Notification[];
   unreadCount: number;
   checkPendingNotifications: () => void;
+  refreshNotifications: () => Promise<void>;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   deleteNotification: (id: string) => void;
@@ -25,7 +29,43 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
 
-  // Load all notifications from localStorage on mount
+  const getNotificationType = (type: string): AlertColor => {
+    switch (type) {
+      case 'STATUS_CHANGE':
+        return 'info';
+      case 'OFFICER_MESSAGE':
+        return 'warning';
+      default:
+        return 'info';
+    }
+  };
+
+  const refreshNotifications = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const backendNotifications = await getNotifications();
+      
+      const converted: Notification[] = backendNotifications.map((bn: BackendNotification) => ({
+        id: `backend-${bn.id}`,
+        backendId: bn.id,
+        message: bn.message,
+        type: getNotificationType(bn.type),
+        timestamp: new Date(bn.createdAt).getTime(),
+        read: bn.read,
+        reportId: bn.reportId
+      }));
+
+      setAllNotifications(prev => {
+        const localOnly = prev.filter(n => !n.backendId);
+        return [...converted, ...localOnly].sort((a, b) => b.timestamp - a.timestamp);
+      });
+    } catch (error) {
+      console.error('Error fetching notifications from backend:', error);
+    }
+  }, []);
+
   useEffect(() => {
     const stored = localStorage.getItem('participium_all_notifications');
     if (stored) {
@@ -37,11 +77,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     }
     
-    // Check for pending notifications on mount
     checkPendingNotifications();
-  }, []);
 
-  // Save all notifications to localStorage whenever they change
+    refreshNotifications();
+
+    const intervalId = setInterval(() => {
+      refreshNotifications();
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [refreshNotifications]);
+
   useEffect(() => {
     if (allNotifications.length > 0) {
       localStorage.setItem('participium_all_notifications', JSON.stringify(allNotifications));
@@ -56,17 +102,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     
     if (!userId) return;
     
-    // Check for pending notifications for this user
     const pendingStr = localStorage.getItem('participium_pending_notifications');
     if (!pendingStr) return;
     
     try {
       const pending = JSON.parse(pendingStr);
-      // Only get notifications that haven't been processed yet
       const userNotifications = pending.filter((n: any) => n.userId === userId && !n.processed);
       
       if (userNotifications.length > 0) {
-        // Add these notifications to the queue
         const newNotifications = userNotifications.map((n: any) => ({
           id: n.id,
           message: n.message,
@@ -77,7 +120,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         
         setAllNotifications(prev => [...newNotifications, ...prev]);
         
-        // Mark as processed so they don't show again
         const updated = pending.map((n: any) => 
           n.userId === userId && !n.processed ? { ...n, processed: true } : n
         );
@@ -99,13 +141,30 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setAllNotifications((prev) => [notification, ...prev]);
   };
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
+    const notification = allNotifications.find(n => n.id === id);
+    
+    if (notification?.backendId) {
+      try {
+        await markNotificationAsRead(notification.backendId);
+      } catch (error) {
+        console.error('Error marking notification as read on backend:', error);
+      }
+    }
+
     setAllNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    const backendNotifications = allNotifications.filter(n => n.backendId && !n.read);
+    await Promise.all(
+      backendNotifications.map(n => 
+        n.backendId ? markNotificationAsRead(n.backendId).catch(e => console.error('Error marking as read:', e)) : Promise.resolve()
+      )
+    );
+
     setAllNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
@@ -121,6 +180,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       allNotifications,
       unreadCount,
       checkPendingNotifications,
+      refreshNotifications,
       markAsRead,
       markAllAsRead,
       deleteNotification
