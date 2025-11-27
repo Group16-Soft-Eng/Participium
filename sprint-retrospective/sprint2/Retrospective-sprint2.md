@@ -70,20 +70,18 @@ sections:
 ## ASSESSMENT
 
 - What did go wrong in the sprint?
-  + we had less communication within the internal groups so we spent more time in some cases
+  + We had limited communication within the internal groups, which led us to spend more time than expected on some tasks.
 - What caused your errors in estimation (if any)?
-  + not errors directly linked to estimation but to less communication other than scrum meetings
+  + No direct errors in estimation but some bug fixing led us to spend more time than estimated
 - What lessons did you learn (both positive and negative) in this sprint?
-  + We should communicate more with each other and ask more for correctness of stories implemented
-  + Also read better documentation to get all along with the routes and implementation details
+  + We should communicate more between frontend and backend and check more often that the implemented stories are correct.
+  + We also need to read the documentation more carefully so everyone is aligned on routes and implementation details.
 - Which improvement goals set in the previous retrospective were you able to achieve? 
-  + we fixed all issues opened and implemented old and new stories test
-  + we wrote a better and clearer swagger document to follow during implementation
+  + We resolved all the open issues and completed tests for both old and new stories.
+  + We also wrote a clearer and more structured Swagger document to follow during development.
 - Which ones you were not able to achieve? Why?
-  + From the previous sprint we managed to complete all the points we decided to fix
+  + We managed to complete all the points we planned to address from the previous sprint.
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
-  + ask more for teammates approvement in order to continue the implementation and not checking already done stories for bug or doubts
-   
-
+  + We should ask for teammates’ approval more often before moving forward with the implementation, so we avoid checking completed stories again due to doubts or inconsistencies.
 - One thing you are proud of as a Team!!
-  + we all get along with new decision, also we manage to have usually a similar way of approaching tasks estimation and logic implementation. Also with divergent ideas we manage to unify the final decision.
+  + We adapt well to new decisions and tend to share a similar approach to task estimation and implementation logic. Even when opinions differ, we manage to reach a unified and effective final decision.
