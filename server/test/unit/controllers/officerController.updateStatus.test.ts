@@ -31,7 +31,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
       const mockReport = {
         id: 1,
         title: "Test Report",
-        state: ReportState.APPROVED,
+        state: ReportState.ASSIGNED,
         assignedOfficerId: 123,
         category: OfficeType.INFRASTRUCTURE
       };
@@ -127,7 +127,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
       const mockReport = {
         id: 1,
         title: "Test Report",
-        state: ReportState.APPROVED,
+        state: ReportState.ASSIGNED,
         assignedOfficerId: 123, // Different from the officer trying to update
         category: OfficeType.INFRASTRUCTURE
       };
@@ -150,7 +150,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
 
       const mockUpdatedReport = {
         ...mockReport,
-        state: ReportState.APPROVED,
+        state: ReportState.PENDING,
         assignedOfficerId: 123
       };
 
@@ -164,24 +164,24 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
       
       (mapReportDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedReport);
 
-      const result = await reviewDoc(999, 1, ReportState.APPROVED);
+      const result = await reviewDoc(999, 1, ReportState.ASSIGNED);
 
-      expect(mockReportRepo.updateReportState).toHaveBeenCalledWith(1, ReportState.APPROVED, undefined);
-      expect(result.state).toBe(ReportState.APPROVED);
+      expect(mockReportRepo.updateReportState).toHaveBeenCalledWith(1, ReportState.ASSIGNED, undefined);
+      expect(result.state).toBe(ReportState.PENDING);
     });
   });
 
   describe("Status Workflow Validation", () => {
-    it("should validate complete workflow: APPROVED -> IN_PROGRESS -> RESOLVED", async () => {
+    it("should validate complete workflow: ASSIGNED -> IN_PROGRESS -> RESOLVED", async () => {
       const mockReport = {
         id: 1,
         title: "Test Report",
-        state: ReportState.APPROVED,
+        state: ReportState.ASSIGNED,
         assignedOfficerId: 123,
         category: OfficeType.INFRASTRUCTURE
       };
 
-      // Step 1: APPROVED -> IN_PROGRESS
+      // Step 1: ASSIGNED -> IN_PROGRESS
       mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
       mockReportRepo.updateReportState = jest.fn().mockResolvedValue({ ...mockReport, state: ReportState.IN_PROGRESS });
       (mapReportDAOToDTO as jest.Mock).mockReturnValue({ ...mockReport, state: ReportState.IN_PROGRESS });
@@ -198,11 +198,11 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
       expect(result.state).toBe(ReportState.RESOLVED);
     });
 
-    it("should validate workflow with suspension: APPROVED -> IN_PROGRESS -> SUSPENDED -> IN_PROGRESS -> RESOLVED", async () => {
+    it("should validate workflow with suspension: ASSIGNED -> IN_PROGRESS -> SUSPENDED -> IN_PROGRESS -> RESOLVED", async () => {
       const mockReport = {
         id: 1,
         title: "Test Report",
-        state: ReportState.APPROVED,
+        state: ReportState.ASSIGNED,
         assignedOfficerId: 123,
         category: OfficeType.INFRASTRUCTURE
       };

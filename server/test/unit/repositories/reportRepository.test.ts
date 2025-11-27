@@ -79,7 +79,7 @@ describe("ReportRepository Unit Tests", () => {
           date: new Date(),
           category: OfficeType.INFRASTRUCTURE,
           document: { Description: "Approved" },
-          state: ReportState.APPROVED,
+          state: ReportState.ASSIGNED,
           reason: null,
           assignedOfficerId: 1
         }
@@ -91,9 +91,13 @@ describe("ReportRepository Unit Tests", () => {
 
       expect(result).toEqual(mockReports);
       expect(mockRepo.find).toHaveBeenCalledWith({
-        where: { state: ReportState.APPROVED },
-        relations: ["author"],
-        order: { date: "DESC" }
+        where: [
+        { state: ReportState.ASSIGNED },
+        { state: ReportState.IN_PROGRESS },
+        { state: ReportState.SUSPENDED }
+      ],
+      relations: ["author"],
+      order: { date: "DESC" }
       });
     });
   });
@@ -206,7 +210,7 @@ describe("ReportRepository Unit Tests", () => {
           date: new Date(),
           category: OfficeType.INFRASTRUCTURE,
           document: { Description: "Assigned" },
-          state: ReportState.APPROVED,
+          state: ReportState.ASSIGNED,
           reason: null,
           assignedOfficerId: 5
         }
@@ -332,17 +336,17 @@ describe("ReportRepository Unit Tests", () => {
         assignedOfficerId: null
       };
 
-      const updatedReport = { ...mockReport, state: ReportState.APPROVED };
+      const updatedReport = { ...mockReport, state: ReportState.ASSIGNED };
 
       mockRepo.find.mockResolvedValue([mockReport]);
       mockRepo.save.mockResolvedValue(updatedReport);
 
-      const result = await reportRepository.updateReportState(1, ReportState.APPROVED);
+      const result = await reportRepository.updateReportState(1, ReportState.ASSIGNED);
 
-      expect(result.state).toBe(ReportState.APPROVED);
+      expect(result.state).toBe(ReportState.ASSIGNED);
       expect(mockRepo.save).toHaveBeenCalledWith(expect.objectContaining({
         id: 1,
-        state: ReportState.APPROVED
+        state: ReportState.ASSIGNED
       }));
     });
 
@@ -383,7 +387,7 @@ describe("ReportRepository Unit Tests", () => {
     it("dovrebbe lanciare NotFoundError se il report non esiste", async () => {
       mockRepo.find.mockResolvedValue([]);
 
-      await expect(reportRepository.updateReportState(999, ReportState.APPROVED))
+      await expect(reportRepository.updateReportState(999, ReportState.ASSIGNED))
         .rejects
         .toThrow(NotFoundError);
     });
@@ -437,7 +441,7 @@ describe("ReportRepository Unit Tests", () => {
         date: new Date(),
         category: OfficeType.INFRASTRUCTURE,
         document: { Description: "Assign this" },
-        state: ReportState.APPROVED,
+        state: ReportState.ASSIGNED,
         reason: null,
         assignedOfficerId: null
       };
