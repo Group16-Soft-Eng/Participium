@@ -67,6 +67,16 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
             return { success: true }
         }
         catch (error) {
+            
+            if (error instanceof Error && error.message.includes('409')) {
+                setError('Username or email already in use');
+                return { error: 'Username or email already in use' };
+            }
+            if (error instanceof Error && error.message.includes('400')) {
+                setError('Invalid email. Please use a valid email address.');
+                return { error: 'Invalid email. Please use a valid email address.' };
+            }
+            
             setError('Registration failed');
             return { error: error instanceof Error ? error.message : String(error) };
         }

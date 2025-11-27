@@ -97,7 +97,12 @@ async function userRegister(user: User) {
     }
     else {
         const err = await response.text()
-        throw err;
+
+        const match = err.match(/<pre>(.*?)<\/pre>/i);
+
+        const errorType = match ? match[1] : response.statusText;
+        
+        throw new Error(`${response.status} ${errorType}`);
     }
 }
 
@@ -120,7 +125,12 @@ async function officerRegister(officer: Officer) {
     }
     else {
         const err = await response.text()
-        throw err;
+
+        const match = err.match(/<pre>(.*?)<\/pre>/i);
+
+        const errorType = match ? match[1] : response.statusText;
+        
+        throw new Error(`${response.status} ${errorType}`);
     }
 }
 
