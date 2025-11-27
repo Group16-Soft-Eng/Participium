@@ -1,4 +1,4 @@
-import { Box, Button, Container, Grid, Stack, TextField } from "@mui/material";
+import { Alert, Box, Button, Container, Grid, Snackbar, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { Form, useNavigate, useLocation } from "react-router-dom";
 import { useActionState, useState } from "react";
@@ -22,6 +22,10 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
     const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
     const [error, setError] = useState<string | null>(null);
 
+    const [snackOpen, setSnackOpen] = useState(false);
+    const [snackMessage, setSnackMessage] = useState('');
+    const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
+
     async function register(prevData: RegisterState, formData: FormData) {
 
         const user = {
@@ -32,10 +36,16 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
             password: formData.get('password') as string
         }
         if (formData.get('email') !== formData.get('cemail')) {
+            setSnackMessage('Emails do not match');
+            setSnackSeverity('error');
+            setSnackOpen(true);
             setError('Emails do not match');
             return { error: 'Emails do not match' };
         }
         if (formData.get('password') !== formData.get('confirm-password')) {
+            setSnackMessage('Passwords do not match');
+            setSnackSeverity('error');
+            setSnackOpen(true);
             setError('Passwords do not match');
             return { error: 'Passwords do not match' };
         }
@@ -58,14 +68,20 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
         }
         catch (error) {
             if (error instanceof Error && error.message.includes('409')) {
-                setError('Username or email already in use');
+                setSnackMessage('Username or email already in use');
+                setSnackSeverity('error');
+                setSnackOpen(true);
                 return { error: 'Username or email already in use' };
             }
             if (error instanceof Error && error.message.includes('400')) {
-                setError('Invalid email. Please use a valid email address.');
+                setSnackMessage('Invalid email. Please use a valid email address.');
+                setSnackSeverity('error');
+                setSnackOpen(true);
                 return { error: 'Invalid email. Please use a valid email address.' };
             }
-            setError('Registration failed. Please try again.');
+                setSnackMessage('Username or email already in use');
+                setSnackSeverity('error');
+                setSnackOpen(true);
         }
     }
 
@@ -74,25 +90,25 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
             <form action={formAction}>
                 <Grid container spacing={2} maxWidth="sm">
                     <Grid size={6}>
-                        <TextField id="name" name="name" label="Name" variant="outlined" fullWidth required/>
+                        <TextField id="name" name="name" label="Name" variant="outlined" fullWidth required />
                     </Grid>
                     <Grid size={6}>
                         <TextField id="surname" name="surname" label="Surname" variant="outlined" fullWidth />
                     </Grid>
                     <Grid size={12}>
-                        <TextField id="username" name="username" label="Username" variant="outlined" fullWidth required/>
+                        <TextField id="username" name="username" label="Username" variant="outlined" fullWidth required />
                     </Grid>
                     <Grid size={12}>
-                        <TextField id="email" name="email" label="Email" variant="outlined" fullWidth required/>
+                        <TextField id="email" name="email" label="Email" variant="outlined" fullWidth required />
                     </Grid>
                     <Grid size={12}>
-                        <TextField id="cemail" name="cemail" label="Confirm Email" variant="outlined" fullWidth required/>
+                        <TextField id="cemail" name="cemail" label="Confirm Email" variant="outlined" fullWidth required />
                     </Grid>
                     <Grid size={6}>
-                        <TextField id="password" name="password" label="Password" variant="outlined" type="password" fullWidth required/>
+                        <TextField id="password" name="password" label="Password" variant="outlined" type="password" fullWidth required />
                     </Grid>
                     <Grid size={6}>
-                        <TextField id="confirm-password" name="confirm-password" label="Confirm Password" variant="outlined" type="password" fullWidth required/>
+                        <TextField id="confirm-password" name="confirm-password" label="Confirm Password" variant="outlined" type="password" fullWidth required />
                     </Grid>
                     {error && <Grid size={12}><p className="error">{error}</p></Grid>}
                     <Grid size={6}>
@@ -103,6 +119,12 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
                     </Grid>
                 </Grid>
             </form>
+            <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
+                    {snackMessage}
+                </Alert>
+            </Snackbar>
+
         </Container>
     );
 }

@@ -1,4 +1,4 @@
-import { Box, Button, Container, Stack, TextField } from "@mui/material";
+import { Alert, Box, Button, Container, Snackbar, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { useState } from "react";
 import { userLogin, officerLogin, getUserProfile } from "../API/API";
@@ -13,6 +13,11 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const navigate = useNavigate();
+
+    const [snackOpen, setSnackOpen] = useState(false);
+    const [snackMessage, setSnackMessage] = useState('');
+    const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
+
 
     async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -34,7 +39,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             setRole(detected);
             window.dispatchEvent(new Event('authChange'));
             setLoading(false);
-            
+
             // Redirect based on role
             if (detected === 'municipal_administrator') {
                 navigate('/admin');
@@ -58,8 +63,9 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 setLoading(false);
                 navigate('/map');
             } catch (err) {
-                console.error('Both login attempts failed:', err);
-                setError('Login failed. Please check your credentials.');
+                setSnackMessage('Login failed. Please check your credentials.');
+                setSnackSeverity('error');
+                setSnackOpen(true);
                 setLoading(false);
             }
         }
@@ -81,6 +87,11 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                     {error && <Box className="error">{error}</Box>}
                 </Stack>
             </form>
+            <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
+                    {snackMessage}
+                </Alert>
+            </Snackbar>
         </Container>
     );
 }
