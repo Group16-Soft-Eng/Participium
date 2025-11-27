@@ -21,6 +21,7 @@ export class ReportRepository {
   async getApprovedReports(): Promise<ReportDAO[]> {
     return this.repo.find({
       where: [
+        
         { state: ReportState.ASSIGNED },
         { state: ReportState.IN_PROGRESS },
         { state: ReportState.SUSPENDED }
