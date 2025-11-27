@@ -1,4 +1,4 @@
-import { Box, Button, Container, FormControl, Grid, InputLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
+import { Alert, Box, Button, Container, FormControl, Grid, InputLabel, MenuItem, Select, Snackbar, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { Form, useNavigate } from "react-router-dom";
 import { useActionState, useEffect, useState } from "react";
@@ -21,13 +21,17 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
 
     const [role, setRole] = useState("");
 
+    
+    const [snackOpen, setSnackOpen] = useState(false);
+    const [snackMessage, setSnackMessage] = useState('');
+    const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success'); 
+
     useEffect(() => {
         const fetchOfficerTypes = async () => {
             try {
                 const types = await getAvailableOfficerTypes();
                 setOfficeTypes(types.officeTypes || []);
                 setOfficerTypes(types.officerRoles || []);
-                console.log(types);
             } catch (error) {
                 console.error("Error fetching officer types:", error);
             }
@@ -51,24 +55,46 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
             Role: formData.get('role') as string
         }
 
-        if (officer.Role === 'technical_office_staff' || officer.Role === 'municipal_administrator') {
+        if (officer.Role === 'municipal_public_relations_officer' || officer.Role === 'municipal_administrator') {
             officer.Office = 'organization';
         }
         if (formData.get('email') !== formData.get('cemail')) {
-            setError('Emails do not match');
+            setSnackMessage('Emails do not match');
+            setSnackSeverity('error');
+            setSnackOpen(true);
             return { error: 'Emails do not match' };
         }
         if (formData.get('password') !== formData.get('confirm-password')) {
-            setError('Passwords do not match');
+            setSnackMessage('Passwords do not match');
+            setSnackSeverity('error');
+            setSnackOpen(true);
             return { error: 'Passwords do not match' };
         }
         try {
             await officerRegister(officer);
-            setError('Officer registered successfully');
+            setSnackMessage('Officer registered successfully');
+            setSnackSeverity('success');
+            setSnackOpen(true);
             return { success: true }
         }
         catch (error) {
-            setError('Registration failed');
+
+            if (error instanceof Error && error.message.includes('409')) {
+                setSnackMessage('Username or email already in use');
+                setSnackSeverity('error');
+                setSnackOpen(true);
+                return { error: 'Username or email already in use' };
+            }
+            if (error instanceof Error && error.message.includes('400')) {
+                setSnackMessage('Invalid email. Please use a valid email address.');
+                setSnackSeverity('error');
+                setSnackOpen(true);
+                return { error: 'Invalid email. Please use a valid email address.' };
+            }
+
+            setSnackMessage('Registration failed');
+            setSnackSeverity('error');
+            setSnackOpen(true);
             return { error: error instanceof Error ? error.message : String(error) };
         }
     }
@@ -102,24 +128,24 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                         <InputLabel id="role-select-label">Officer Role</InputLabel>
                         <Grid size={12}>
                             <Select id="role" name="role" label="Officer Role" variant="outlined" fullWidth defaultValue={''} required
-                            onChange={(e) => setRole(e.target.value)}> {
-                                officerTypes.map((type) => (<MenuItem key={type} value={type}>{type.replaceAll('_', ' ')}</MenuItem>
-                                ))
-                            }
+                                onChange={(e) => setRole(e.target.value)}> {
+                                    officerTypes.map((type) => (<MenuItem key={type} value={type}>{type.replaceAll('_', ' ')}</MenuItem>
+                                    ))
+                                }
                             </Select>
                         </Grid>
                     </FormControl>
                     {role === 'technical_office_staff' && (
-                    <FormControl fullWidth>
-                        <InputLabel id="office-select-label">Office</InputLabel>
-                        <Grid size={12}>
-                            <Select id="office" name="office" label="Office" variant="outlined" fullWidth defaultValue={''} required> {
-                                officeTypes.map((type) => (<MenuItem key={type} value={type}>{type}</MenuItem>
-                                ))
-                            }
-                            </Select>
-                        </Grid>
-                    </FormControl>
+                        <FormControl fullWidth>
+                            <InputLabel id="office-select-label">Office</InputLabel>
+                            <Grid size={12}>
+                                <Select id="office" name="office" label="Office" variant="outlined" fullWidth defaultValue={''} required> {
+                                    officeTypes.map((type) => (<MenuItem key={type} value={type}>{type}</MenuItem>
+                                    ))
+                                }
+                                </Select>
+                            </Grid>
+                        </FormControl>
                     )}
                     {error && <Grid size={12}><p className="error">{error}</p></Grid>}
                     <Grid size={6}>
@@ -130,6 +156,11 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                     </Grid>
                 </Grid>
             </form>
+            <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
+                    {snackMessage}
+                </Alert>
+            </Snackbar>
         </Container>
     );
 }

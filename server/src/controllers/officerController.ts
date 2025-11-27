@@ -6,11 +6,23 @@ import { OfficerRepository } from "@repositories/OfficerRepository";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
 import { ReportState } from "@models/enums/ReportState";
-
+import { NotificationRepository } from "@repositories/NotificationRepository";
+import { NotificationDAO} from "@models/dao/NotificationDAO"
+import { OfficerRole } from "@models/enums/OfficerRole";
+import { OfficeType } from "@models/enums/OfficeType";
+import { stat } from "fs";
 
 export async function getAllOfficers(): Promise<Officer[]> {
   const officerRepo = new OfficerRepository();
   const officers = await officerRepo.getAllOfficers();
+  return officers.map(mapOfficerDAOToDTO);
+}
+
+export async function getAllOfficersByOfficeType(officeType: string): Promise<Officer[]> {
+  const officerRepo = new OfficerRepository();
+  //converte officeType da string a OfficeType
+  const officeTypeEnum = officeType as OfficeType;
+  const officers = await officerRepo.getOfficersByOffice(officeTypeEnum);
   return officers.map(mapOfficerDAOToDTO);
 }
 
@@ -39,7 +51,6 @@ export async function createOfficer(officerDto: Officer): Promise<Officer> {
 export async function updateOfficer(officerDto: Officer): Promise<Officer> {
   const officerRepo = new OfficerRepository();
   const updatedOfficer = await officerRepo.updateOfficer(
-    
     officerDto.id!,
     officerDto.username!,
     officerDto.name!,
@@ -56,34 +67,39 @@ export async function updateOfficer(officerDto: Officer): Promise<Officer> {
 export async function assignReportToOfficer(reportId: number, officerId: number): Promise<void> {
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
-  
+
   // Verifica che il report sia in stato PENDING
   const report = await reportRepo.getReportById(reportId);
   if (report.state !== ReportState.PENDING) {
     throw new Error("Only PENDING reports can be assigned");
   }
-  
+
   // Verifica che l'officer esista
   const officer = await officerRepo.getOfficerById(officerId);
   if (!officer) {
     throw new Error("Officer not found");
   }
-  
+
   // Assegna il report all'officer
   await reportRepo.assignReportToOfficer(reportId, officerId);
 }
 
 export async function retrieveDocs(officerId: number): Promise<Report[]> {
   const reportRepo = new ReportRepository();
-  const officerRepo = new OfficerRepository();
-  // Get all PENDING reports that need review (not yet assigned or assigned to this officer)
-  const reports = await reportRepo.getReportsByState(ReportState.PENDING);
-  const category = await officerRepo.getOfficerById(officerId);
-  const office = category.office;
-  const reportsCategory = await reportRepo.getReportsByCategory(office)
-  const filteredReports = reports.filter(r => reportsCategory.some(rc => rc.id === r.id));
 
-  return filteredReports.map(mapReportDAOToDTO);
+  // Get all PENDING reports that need review (not yet assigned or assigned to this officer)
+  const allPending = await reportRepo.getReportsByState(ReportState.PENDING);
+  // filter: only unassigned or assigned to this officer
+  const reports = allPending.filter(r => r.assignedOfficerId === null || r.assignedOfficerId === officerId);
+
+  return reports.map(mapReportDAOToDTO);
+}
+
+
+export async function getAssignedReports(officerId: number): Promise<Report[]> {
+  const reportRepo = new ReportRepository();
+  const reports = await reportRepo.getReportsByAssignedOfficer(officerId);
+  return reports.map(mapReportDAOToDTO);
 }
 
 //? added for story 8 (officer can see all assigned reports, also the non-pending ones)
@@ -97,30 +113,40 @@ export async function getAllAssignedReportsOfficer(officerId: number): Promise<R
 export async function reviewDoc(officerId: number, idDoc: number, state: ReportState, reason?: string): Promise<Report> {
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
-  
+  const notificationRepo = new NotificationRepository();
   // Get the report
   const report = await reportRepo.getReportById(idDoc);
-  
+
   // Only check assignment if the report is already assigned
   // PENDING reports that are not assigned can be reviewed by any officer
   if (report.assignedOfficerId !== null && report.assignedOfficerId !== officerId) {
     throw new Error("You can only review reports assigned to you");
   }
-  
+  if (report.state === ReportState.RESOLVED || report.state === ReportState.DECLINED) {
+    const payload = {
+      message: `Report with id '${idDoc}' is already in state '${report.state}' and cannot be reviewed again.`,
+      status: 400
+    };
+    throw new Error(JSON.stringify(payload));
+  }
   // update report state
   let updatedReport = await reportRepo.updateReportState(idDoc, state, reason);
-  
+
   // if approved, assign to an officer
-  if (state === ReportState.APPROVED) {
-    // find an officer in the correct office (based on the report's category)
-    const officers = await officerRepo.getOfficersByOffice(report.category as any);
-    
+  if (state === ReportState.ASSIGNED) {
+    // find officers in the correct office (based on the report's category)
+    const officers = await officerRepo.getOfficersByOffice(report.category as OfficeType);
+
     if (officers.length > 0) {
-      // assign to the first available officer
-      updatedReport = await reportRepo.assignReportToOfficer(idDoc, officers[0].id);
+      // Prefer an officer with the TECHNICAL_OFFICE_STAFF role for assignment
+      const preferred = officers.find(o => o.role === OfficerRole.TECHNICAL_OFFICE_STAFF) || officers[0];
+      updatedReport = await reportRepo.assignReportToOfficer(idDoc, preferred.id);
     }
   }
-  
+
+  // Create notification for status change (only if not anonymous)
+  await notificationRepo.createStatusChangeNotification(updatedReport);
+
   return mapReportDAOToDTO(updatedReport);
 }
 

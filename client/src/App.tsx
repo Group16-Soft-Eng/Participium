@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } f
 import './App.css'
 import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import UserMenu from './components/UserMenu';
+import NotificationBell from './components/NotificationBell';
 import { useEffect, useState } from 'react';
 import { getToken, getRole, getRoleFromToken } from './services/auth';
 import { LoginScreen } from './pages/LoginScreen';
@@ -10,8 +11,12 @@ import { LoginScreen } from './pages/LoginScreen';
 import ReportForm from './Map/MapComponents/ReportForm';
 import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
-import { RequireAdmin, RequireLogin, RequireOfficer } from './components/RequireAuth';
+import OfficerMessagesPage from './pages/OfficerMessagesPage';
+import MessagesPage from './pages/MessagesPage';
+import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePublicRelations } from './components/RequireAuth';
 import { AdminScreen } from './pages/AdminPage';
+import { NotificationProvider } from './contexts/NotificationContext';
+import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
 import { UserPage } from './pages/UserPage';
 
 function App() {
@@ -25,11 +30,13 @@ function App() {
     }, []);
 
   const isLoggedIn = Boolean(auth.token);
-  const isOfficer = auth.role === 'officer';
   const isAdmin = auth.role === 'municipal_administrator';
+  const isPROfficer = auth.role === 'municipal_public_relations_officer' || auth.role === 'municipal_public_relations_officer';
+  const isTechnicalOfficer = auth.role === 'technical_office_staff';
+  const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';
 
     return (
-    <>
+    <NotificationProvider>
       <Router>
         <AppBar position="fixed" color="default" elevation={1} className="app-bar">
           <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -42,7 +49,8 @@ function App() {
                 </svg>
               </Box>
 
-              <Box component={Link} to="/map" sx={{ textDecoration: 'none' }}>
+              
+              <Box id = "app-title" component={Link} to="/map" sx={{ textDecoration: 'none' }}>
                 <Typography variant="h6" component="div" sx={{ color: '#222', fontWeight: 700 }}>
                   Participium
                 </Typography>
@@ -53,26 +61,69 @@ function App() {
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Button component={Link} to="/map" color="inherit">Map</Button>
+              <Button className="flex-mobile" id="map-button" component={Link} to="/map" color="inherit">Map</Button>
+              {isLoggedIn && !isOfficer && !isAdmin && (
+                <Button component={Link} to="/messages" color="inherit">Messages</Button>
+              )}
+              {
+              /*isOfficer && (
+                <Button component={Link} to="/officer/messages" color="inherit">Messages</Button>
+              )*/}
               
               {/* Show different button based on user role */}
               {isOfficer ? (
-                <Button
-                  component={Link}
-                  to="/officer"
-                  variant="contained"
-                  color="primary"
-                  sx={{
-                    px: 2.2,
-                    py: 0.7,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
-                  }}
-                >
-                  Review Reports
-                </Button>
+                isPROfficer ? (
+                  <Button
+                    component={Link}
+                    to="/officer"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    Review Reports
+                  </Button>
+                ) : isTechnicalOfficer ? (
+                  <Button
+                    component={Link}
+                    to="/technical"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    Technical Workspace
+                  </Button>
+                ) : (
+                  <Button
+                    component={Link}
+                    to="/officer"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    Review Reports
+                  </Button>
+                )
               ) : isAdmin ? (
                 <Button
                   component={isLoggedIn ? Link : undefined}
@@ -93,7 +144,7 @@ function App() {
                   Admin Dashboard
                 </Button>
               ) : (
-                <Button
+                <Button id="report-button"
                   component={isLoggedIn ? Link : undefined}
                   to={isLoggedIn ? "/submitReport" : undefined}
                   onClick={!isLoggedIn ? () => setShowLoginDialog(true) : undefined}
@@ -113,7 +164,12 @@ function App() {
                 </Button>)}
               
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
-              {isLoggedIn ? <UserMenu /> : (
+              {isLoggedIn ? (
+                <>
+                  {!isOfficer && !isAdmin && <NotificationBell />}
+                  <UserMenu />
+                </>
+              ) : (
                 <Button variant="contained" color="primary" component={Link} to="/login">Login / Register</Button>
               )}
             </Box>
@@ -124,11 +180,14 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/map" replace />} />
             <Route path="/login" element={<LoginScreen />} />
-            <Route path="/submitReport" element={<RequireLogin><ReportForm /></RequireLogin>} />
+            <Route path="/submitReport" element={<RequireCitizen><ReportForm /></RequireCitizen>} />
             <Route path="/map" element={<MapPage />} />
+            <Route path="/messages" element={<RequireLogin><MessagesPage /></RequireLogin>} />
             <Route path="/admin" element={<RequireAdmin><AdminScreen /></RequireAdmin>} />
-            <Route path="/officer" element={<RequireOfficer><OfficerPage /></RequireOfficer>} />
-            <Route path="/user" element={<RequireLogin><UserPage /></RequireLogin>} />
+            <Route path="/officer" element={<RequirePublicRelations><OfficerPage /></RequirePublicRelations>} />
+            <Route path="/officer/messages" element={<RequireTechnical><OfficerMessagesPage /></RequireTechnical>} />
+            <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
+            <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
           </Routes>
         </Box>
 
@@ -156,7 +215,7 @@ function App() {
           </DialogActions>
         </Dialog>
       </Router>
-    </>
+    </NotificationProvider>
   );
 }
 

@@ -2,6 +2,10 @@ import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { CONFIG } from "@config";
 import {createClient} from "redis";
+import { OfficerRepository } from "@repositories/OfficerRepository";
+import { OfficerDAO } from "@dao/OfficerDAO";
+import { OfficerRole } from "@models/enums/OfficerRole";
+import { OfficeType } from "../../generated";
 export const AppDataSource = new DataSource({
     type: CONFIG.DB_TYPE as any,
     host: CONFIG.DB_HOST,
@@ -17,6 +21,21 @@ export const AppDataSource = new DataSource({
 export async function initializeDatabase() {
     await AppDataSource.initialize();
     console.log("Successfully connected to DB");
+    //search if there is at least one officer, if not create a default one
+    const officerRepo = new OfficerRepository();
+    const officerCount = await officerRepo.getAdminOfficers();
+    if (officerCount === null || officerCount.length === 0) {
+      const adminData = {
+        username : "admin",
+        name: "admin",
+        surname: "admin",
+        email: "admin@admin.com",
+        password: "admin", // In a real app, ensure to hash passwords!
+        role: OfficerRole.MUNICIPAL_ADMINISTRATOR
+      } as OfficerDAO;
+        await officerRepo.createOfficer(adminData.name, adminData.username, adminData.surname, adminData.email, adminData.password, adminData.role, null as any);
+        console.log("Created default officer with badge number 0001 and password 'password'");
+    }
 }
 
 export async function closeDatabase() {

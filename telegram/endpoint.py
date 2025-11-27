@@ -18,13 +18,14 @@ from telegram.ext import (
 # ------------------------------------------------------------------ #
 # Configuration / State
 # ------------------------------------------------------------------ #
-SERVER_URL = "http://localhost:5000/api/v1"
+# Usa la variabile d'ambiente o fallback a localhost per sviluppo locale
+BASE_URL = os.getenv("SERVER_URL", "http://localhost:5000") + "/api/v1"
 
 sessions: Dict[int, str] = {}
 categories: List[str] = []
 
 try:
-    response = requests.get(f"{SERVER_URL}/info-types", timeout=5)
+    response = requests.get(f"{BASE_URL}/info-types", timeout=5)
     data = response.json()
     categories = data.get("officeTypes", []) or []
     print("Loaded categories:", categories)
@@ -93,7 +94,7 @@ async def handle_login(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     chat_id = update.effective_chat.id
     username = update.effective_user.username
     try:
-        response = requests.post(f"{SERVER_URL}/auth/telegram", json={"username": username}, timeout=5)
+        response = requests.post(f"{BASE_URL}/auth/telegram", json={"username": username}, timeout=5)
     except Exception as e:
         await query.edit_message_text(f"Error connecting to server: {e}")
         return
@@ -111,7 +112,7 @@ async def retrieveAccount(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     chat_id = update.effective_chat.id
     username = update.effective_user.username
     try:
-        response = requests.post(f"{SERVER_URL}/auth/telegram", json={"username": username}, timeout=5)
+        response = requests.post(f"{BASE_URL}/auth/telegram", json={"username": username}, timeout=5)
     except Exception as e:
         await update.message.reply_text(f"Error connecting to server: {e}")
         return
@@ -353,7 +354,7 @@ async def receiveAnonymous(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         if os.path.exists(p):
             files.append(("photos", (os.path.basename(p), open(p, "rb"), "image/jpeg")))
     try:
-        response = requests.post(f"{SERVER_URL}/reports", data=report_data, files=files, headers={"Authorization": f"Bearer {token}"})
+        response = requests.post(f"{BASE_URL}/reports", data=report_data, files=files, headers={"Authorization": f"Bearer {token}"})
         if response.status_code in (200, 201):
             await query.edit_message_text(f"✅ Report sent with {len(files)} photo(s)! {'(Anonymous)' if anonymous else ''}")
             # Show main menu after successful report

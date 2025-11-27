@@ -2,6 +2,8 @@
 
 Civic reporting platform for the city of Turin, enabling citizens to report urban issues and allowing municipal officers to review and manage them.
 
+The application also supports report submissions via a Telegram bot: https://t.me/participium_g16_bot
+
 ## Project Structure
 - `api/`: OpenAPI specification (swagger)
 - `client/`: Frontend - React + TypeScript + Vite
@@ -13,107 +15,81 @@ Civic reporting platform for the city of Turin, enabling citizens to report urba
 
 ## Setup Instructions
 
-### 1. Install Dependencies
+### Installation via Docker
 
-#### Server
-```bash
-cd server
-npm install
+Ensure that Docker is running in background, then open the project folder and run:
+
+```powershell
+docker-compose up --build
 ```
-
-#### Client
-```bash
-cd client
-npm install
-```
-
-### 2. Database Setup
-
-The database will be automatically created when you first start the server. To populate it with sample data:
-
-#### Seed the Database with Sample Reports
-```bash
-# From the project root directory
-./seedDatabase.sh
-```
-
-This script will:
-- Clear any existing reports
-- Create 85 sample reports across all categories (infrastructure, environment, safety, sanitation, transport, other)
-- Assign reports to existing users with random anonymity flags
-- Set mixed states (PENDING and APPROVED) for testing
-
-**Note:** Make sure you have at least one user in the database before running the seed script. You can create users through the registration interface or by running the server utilities.
 
 ### 3. Running the Application
 
-#### Start the Backend Server
-```bash
-cd server
-npm run dev
-```
-Server will run on `http://localhost:5000`
-
-#### Start the Frontend Client
-```bash
-cd client
-sudo systemctl start redis-server && sudo systemctl enable redis-server && sudo systemctl status redis-server
-```
-Client will run on `http://localhost:5173`
-
-### Starting the Redis Server
-```bash
-cd server
-npm run redis
+To start the application, run:
+```powershell
+docker-compose up -d
 ```
 
-### Starting the Telegram Bot
-```bash
-cd telegram
-python3 bot_config.py
-```
-## Database Management
+Client, server, redis and the Telegram Bot will start automatically:
 
-### Creating Test Users
-```bash
-cd server
-npx ts-node src/utils/createTestUser.ts
-```
+- Server will run on `http://localhost:5000`
+- Client will run on `http://localhost:5173`
 
-### Creating Officers
-```bash
-cd server
-npx ts-node src/utils/createOfficer.ts
-```
+To stop the application, run:
 
-### Clearing All Reports
-```bash
-cd server
-npx ts-node src/utils/clearReports.ts
+```powershell
+docker-compose down
 ```
 
 ## User Roles
 
 - **Citizen**: Can submit reports, view all approved reports on the map
-- **Officer**: Can review pending reports, approve or reject them with reasons
-- **Municipal Administrator**: Full system access
+- **Municipal Public Relations Officer**: Can review pending reports, assign them to Technical Officers or reject them with reasons
+- **Technical Officer**: Can view assigned reports and change their status
+- **Municipal Administrator**: Can create officers and assign them to offices
 
 ## Features
 
 ### For Citizens
-- Interactive map showing all approved civic reports
-- Submit new reports with photos (up to 3 images)
-- Select location directly on the map
-- Categorize reports (infrastructure, environment, safety, sanitation, transport, other)
-- Anonymous or attributed reporting
+- **Report Visualization**
+  - Interactive map showing all approved civic reports
+  - Reports grouped in clusters, showing more details when zooming
+- **Report Submission**
+  - Select location directly on the map
+  - Submit new reports with photos (up to 3 images)
+  - Categorize reports (infrastructure, environment, safety, sanitation, transport, other)
+  - Submissions available also via Telegram bot: https://t.me/participium_g16_bot
 
-### For Officers
-- Dashboard to review pending reports
-- View report details including photos, location, and description
-- Approve or reject reports with mandatory rejection reasons
-- View reports on map from review interface
+### For Public Relations Officers
+- **Report Review**
+  - Dashboard to review pending reports
+  - View report details including photos, location, and description
+  - Reject reports with mandatory rejection reasons, or assign them to technical officer
+  - View reports on map from review interface
 
-## Sprint 1 - User Stories
+### For Technical Officers
+- **Report Update**
+  - Dashboard to view assigned reports
+  - Update report status
+  - View report details including photos, location, and description
+  - View reports on map from review interface
+
+### For Admin
+- **Officer Creation**
+  - Dashboard to configure officer account
+
+## Implemented Office Types
+The offices included in the application are the following:
+
+- Infrastructure
+- Environment
+- Safety
+- Sanitation
+- Transport
+- Organization
+- Other
+
+## Implemented User Stories
 - PT01: Citizen registration
 - PT02: Setup municipality users
 - PT03: Roles Assignment
@@ -121,7 +97,10 @@ npx ts-node src/utils/clearReports.ts
 - PT05: Report details
 - PT06: Approve/Deny reports
 - PT07: Report visualization on Map
-- PT08: Report list for municipality users
+- PT08/PT10: Report list for municipality users
+- PT09: Account Configuration
+- PT11: Update Report Status
+- PT12: Create Report via Telegram
 
 ## Technologies
 
@@ -138,25 +117,7 @@ npx ts-node src/utils/clearReports.ts
 - SQLite database
 - Multer for file uploads
 - JWT for authentication
-
-## Docker (Development)
-
-Quick instructions to run the backend and Redis via Docker Compose (creates persistent folders `server/uploads` and `server/data`):
-
-```powershell
-# from project root
-docker-compose up --build
-
-# stop
-docker-compose down
-```
-
-Notes:
-- The compose file defines a `redis` service and a `server` service built from `./server`
-- The server uses SQLite by default; the DB file is mounted to `./server/participium.db`.
-- Uploaded files are stored under `./server/uploads` on the host
-- Environment variables (JWT secret, DB type/name, Redis host) can be overridden in your shell or by adapting `docker-compose.yml`
-- Aggiunto il tsconfig.build.json chiamato solo da CI/Docker, in questo modo con npm run dev il percorso "./src" rimane così, ma co docker sarà "."
+- Redis for session token handling
 
 ## License
 See LICENSE file for details

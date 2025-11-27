@@ -1,4 +1,11 @@
 import "reflect-metadata";
+jest.mock('@services/authService', () => {
+  const original = jest.requireActual('@services/authService');
+  return {
+    ...original,
+    saveSession: jest.fn().mockResolvedValue(undefined),
+  };
+});
 import request from "supertest";
 import { app } from "../../../src/app";
 import { initializeTestDatabase, closeTestDatabase, clearDatabase } from "../../setup/test-datasource";
@@ -24,6 +31,7 @@ describe("Auth API Integration Tests", () => {
   beforeEach(async () => {
     await clearDatabase();
   });
+
 
   describe("POST /api/v1/auth/users - Login user", () => {
     it("should login an existing user with correct credentials", async () => {
@@ -58,7 +66,7 @@ describe("Auth API Integration Tests", () => {
           username,
           password: "WrongPassword"
         });
-      expect(res.status).toBe(400); //!TODO change swagger
+      expect(res.status).toBe(401); //!TODO change swagger
     });
 
     it("should fail to login a non-existing user", async () => {
@@ -68,7 +76,7 @@ describe("Auth API Integration Tests", () => {
           username: "nonexistentuser",
           password: "SomePassword"
         });
-      expect(res.status).toBe(400); //!TODO change swagger
+      expect(res.status).toBe(404); //!TODO change swagger
     });
   });
 
@@ -93,7 +101,7 @@ describe("Auth API Integration Tests", () => {
       const res = await request(app)
         .post("/api/v1/auth/officers")
         .send({
-          username,
+          email: email,
           password: plainPassword
         });
       expect(res.status).toBe(200);

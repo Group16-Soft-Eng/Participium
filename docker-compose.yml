@@ -16,9 +16,7 @@ services:
       - participium-network
 
   server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    image: shuba19/participium_g16:server
     environment:
       - NODE_ENV=production
       - PORT=5000
@@ -26,20 +24,50 @@ services:
       - DB_NAME=/usr/src/app/participium.db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=change_me
+      - JWT_SECRET=CHANGE_ME_IN_PRODUCTION
       - REDIS_CONNECT_TIMEOUT=30000
     ports:
       - "5000:5000"
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/v1/info-types"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - ./server/uploads:/usr/src/app/uploads
-      - ./server/participium.db:/usr/src/app/participium.db
+      -  ./server/participium.db:/usr/src/app/participium.db
     restart: unless-stopped
     networks:
       - participium-network
-
+      
+  telegram:
+    image: shuba19/participium_g16:telegram
+    environment:
+      - SERVER_URL=http://server:5000
+    depends_on:
+      server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - participium-network
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - participium-network
 volumes:
   redis-data:
 

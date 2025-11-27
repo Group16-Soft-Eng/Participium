@@ -39,7 +39,10 @@ describe("UserRepository Unit Tests", () => {
           firstName: "First",
           lastName: "User",
           email: "user1@example.com",
-          password: "hash1"
+          password: "hash1",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
         },
         {
           id: 2,
@@ -47,7 +50,10 @@ describe("UserRepository Unit Tests", () => {
           firstName: "Second",
           lastName: "User",
           email: "user2@example.com",
-          password: "hash2"
+          password: "hash2",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
         }
       ];
 
@@ -68,7 +74,10 @@ describe("UserRepository Unit Tests", () => {
         firstName: "Test",
         lastName: "User",
         email: "test@example.com",
-        password: "hashedpassword"
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
       };
 
       mockRepo.find.mockResolvedValue([mockUser]);
@@ -96,7 +105,10 @@ describe("UserRepository Unit Tests", () => {
         firstName: "Test",
         lastName: "User",
         email: "test@example.com",
-        password: "hashedpassword"
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
       };
 
       mockRepo.find.mockResolvedValue([mockUser]);
@@ -124,7 +136,10 @@ describe("UserRepository Unit Tests", () => {
         firstName: "Test",
         lastName: "User",
         email: "test@example.com",
-        password: "hashedpassword"
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
       };
 
       mockRepo.find.mockResolvedValue([mockUser]);
@@ -151,7 +166,10 @@ describe("UserRepository Unit Tests", () => {
         firstName: "New",
         lastName: "User",
         email: "new@example.com",
-        password: "plainpassword"
+        password: "plainpassword",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
       };
 
       const savedUser: UserDAO = {
@@ -203,7 +221,10 @@ describe("UserRepository Unit Tests", () => {
         firstName: "Existing",
         lastName: "User",
         email: "existing@example.com",
-        password: "hash"
+        password: "hash",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
       };
 
       // Username esiste
@@ -225,7 +246,10 @@ describe("UserRepository Unit Tests", () => {
         firstName: "Existing",
         lastName: "User",
         email: "existing@example.com",
-        password: "hash"
+        password: "hash",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
       };
 
       // Username non esiste, ma email esiste
@@ -297,7 +321,10 @@ describe("UserRepository Unit Tests", () => {
         firstName: "Delete",
         lastName: "Me",
         email: "delete@example.com",
-        password: "hash"
+        password: "hash",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
       };
 
       mockRepo.find.mockResolvedValue([mockUser]);

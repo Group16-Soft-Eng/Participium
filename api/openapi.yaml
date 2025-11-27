@@ -17,6 +17,7 @@ tags:
   - name: Reports
     description: Reports Operation
   - name: Telegram
+  - name: Notifications
 paths:
   /auth/users:
     post:
@@ -353,6 +354,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /officers/OfficerByOfficeType/{officeType}:
+    get:
+      tags:
+        - Officers
+      summary: Retrieve reports assigned to the authenticated officer
+      description: Only for admin or Public officers.
+      operationId: getOfficerByOfficeType
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /officers/reviewdocs/{id_doc}:
     patch:
       tags:
@@ -365,6 +388,18 @@ paths:
           required: true
           schema:
             type: integer
+      requestBody:
+        description: Review doc assigned to Officer
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                state:
+                  $ref: "#/components/schemas/State"
+                reason:
+                  type: string
+                  example: "Insufficient evidence"
       responses:
         "200":
           description: successful operation
@@ -378,14 +413,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /officers/assign-docs:
+  /officers/assign-report:
     post:
       tags:
         - Officers
       summary: Admins assign new document to an officer
-      operationId: assignDoc
+      operationId: assignReport
       requestBody:
-        description: Assign doc to Officer
+        description: Assign report to Officer
         content:
           application/json:
             schema:
@@ -506,26 +541,109 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: List user notifications
+      description: Returns notifications for the authenticated user. Use query param unreadOnly=true to filter unread.
+      parameters:
+        - in: query
+          name: unreadOnly
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /notifications/{id}/read:
+    patch:
+      tags:
+        - Notifications
+      summary: Mark notification as read
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  read:
+                    type: boolean
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /reports/{id}/message:
+    post:
+      tags:
+        - Reports
+      summary: Officer sends a message to report author
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "Aggiornamento sul tuo report"
+              required:
+                - message
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     OfficeType:
       type: string
-      enum:
-        - Office 1
-        - Office 2
-        - Office 3
+      enum: [ "infrastructure", "environment","safety", "sanitation","transport","organization","other"]
     OfficerRole:
       type: string
-      enum:
-        - Role 1
-        - Role 2
-        - Role 3
+      enum: ["municipal_public_relations_officer", "municipal_administrator","technical_office_staff"]
     State:
       type: string
-      enum:
-        - PENDING
-        - APPROVED
-        - DECLINED
+      enum: [PENDING, ASSIGNED, IN_PROGRESS, SUSPENDED, REJECTED, RESOLVED]
     User:
       type: object
       properties:
@@ -637,6 +755,27 @@ components:
           example: Message for only denied Reports.
         Officer:
           $ref: "#/components/schemas/Officer"
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        reportId:
+          type: integer
+        type:
+          type: string
+          enum:
+            - STATUS_CHANGE
+            - OFFICER_MESSAGE
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        read:
+          type: boolean
     ApiResponse:
       type: object
       properties:

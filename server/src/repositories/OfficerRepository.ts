@@ -19,7 +19,9 @@ export class OfficerRepository {
   async getAllOfficers(): Promise<OfficerDAO[]> {
     return this.repo.find();
   }
-
+  async getAdminOfficers(): Promise<OfficerDAO[]> {
+    return this.repo.find({ where: { role: OfficerRole.MUNICIPAL_ADMINISTRATOR } });
+  }
   async getOfficerByEmail(email: string): Promise<OfficerDAO> {
     return findOrThrowNotFound(
       await this.repo.find({ where: { email } }),
