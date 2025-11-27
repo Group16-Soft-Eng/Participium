@@ -21,7 +21,7 @@ export class ReportRepository {
   async getApprovedReports(): Promise<ReportDAO[]> {
     return this.repo.find({
       where: [
-        { state: ReportState.APPROVED },
+        { state: ReportState.ASSIGNED },
         { state: ReportState.IN_PROGRESS },
         { state: ReportState.SUSPENDED }
       ],
@@ -116,7 +116,7 @@ export class ReportRepository {
   async assignReportToOfficer(reportId: number, officerId: number): Promise<ReportDAO> {
     const report = await this.getReportById(reportId);
     report.assignedOfficerId = officerId;
-    report.state = ReportState.IN_PROGRESS;
+    report.state = ReportState.ASSIGNED;
     return this.repo.save(report);
   }
 }

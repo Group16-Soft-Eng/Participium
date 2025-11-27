@@ -105,7 +105,7 @@ router.get("/assigned", authenticateToken, requireUserType([OfficerRole.TECHNICA
     }
 });
 
-router.patch("/reviewdocs/:id", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF]), async(req, res, next) =>{
+router.patch("/reviewdocs/:id", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
     try{
         const officerId = (req as any).user?.id;
         const{state,reason} = req.body;

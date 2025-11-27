@@ -114,7 +114,6 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
   const notificationRepo = new NotificationRepository();
-
   // Get the report
   const report = await reportRepo.getReportById(idDoc);
 
@@ -134,7 +133,7 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
   let updatedReport = await reportRepo.updateReportState(idDoc, state, reason);
 
   // if approved, assign to an officer
-  if (state === ReportState.APPROVED) {
+  if (state === ReportState.ASSIGNED) {
     // find officers in the correct office (based on the report's category)
     const officers = await officerRepo.getOfficersByOffice(report.category as OfficeType);
 

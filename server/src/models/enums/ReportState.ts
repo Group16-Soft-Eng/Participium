@@ -1,6 +1,6 @@
 export enum ReportState {
     PENDING = "PENDING",
-    APPROVED = "APPROVED",
+    ASSIGNED = "ASSIGNED",
     DECLINED = "DECLINED",
     IN_PROGRESS = "IN_PROGRESS",
     SUSPENDED = "SUSPENDED",
