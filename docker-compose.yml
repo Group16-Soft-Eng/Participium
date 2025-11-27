@@ -39,7 +39,7 @@ services:
       start_period: 30s
     volumes:
       - ./server/uploads:/usr/src/app/uploads
-      - participium-db:/usr/src/app/participium.db
+      -  ./server/participium.db:/usr/src/app/participium.db
     restart: unless-stopped
     networks:
       - participium-network
@@ -70,7 +70,6 @@ services:
       - participium-network
 volumes:
   redis-data:
-  participium-db:
 
 networks:
   participium-network:
