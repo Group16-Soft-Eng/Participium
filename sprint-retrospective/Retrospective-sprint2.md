@@ -27,13 +27,13 @@ sections:
 
 ### Detailed statistics
 
-    | Story                | # Tasks | Points | Hours est.   | Hours actual |
-    |----------------------|---------|--------|--------------|--------------|
-    | _Uncategorized_      | 19      | //     | 1w 1d 6h 50m | 1w 1d 6h 11m |
-    | PT8: Report overview | 6       | 2      | 5h 50m       | 7h 50m       |
-    | PT9:                 | 7       | 2      | 6h           | 6h           |
-    | PT10:                | 10      | 1      | 1d 6h 50m    | 2d           |
-    | PT11:                | 8       | 5      | 1d 6o 30m    | 1d 4h 55m    |
+    | Story                            | # Tasks | Points | Hours est.   | Hours actual |
+    |----------------------------------|---------|--------|--------------|--------------|
+    | _Uncategorized_                  | 19      | //     | 1w 1d 6h 50m | 1w 1d 6h 11m |
+    | PT8: Report overview             | 6       | 2      | 5h 50m       | 7h 50m       |
+    | PT9: Account config              | 7       | 2      | 6h           | 6h           |
+    | PT11: Update report status       | 10      | 1      | 1d 6h 50m    | 2d           |
+    | PT12: Create report via telegram | 8       | 5      | 1d 6o 30m    | 1d 4h 55m    |
 
 > story `Uncategorized` is for technical tasks, leave out story points (not applicable in this case)
 
@@ -64,8 +64,8 @@ sections:
   - Total hours spent : 
   - Nr of test cases : 
 - Code review 
-  - Total hours estimated : 
-  - Total hours spent : 
+  - Total hours estimated : 8
+  - Total hours spent : 8
   
 ## ASSESSMENT
 
