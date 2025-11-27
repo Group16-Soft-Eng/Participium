@@ -31,7 +31,8 @@ const UserMenu: React.FC = () => {
       <IconButton onClick={handleOpen} size="small" sx={{ p: 0.5 }} aria-controls={open ? 'user-menu' : undefined} aria-haspopup="true">
         <Avatar sx={{ width: 32, height: 32 }}> {
           (picture != null && role == 'citizen') ?
-          <img src={static_ip_address + picture} alt="User Avatar" style={{ width: '100%', height: '100%' }} /> : (displayName || 'U').charAt(0).toUpperCase()}</Avatar>
+          <img src={static_ip_address + picture} alt="User Avatar" style={{ width: '100%', height: '100%' }} />
+          : (displayName || 'U').charAt(0).toUpperCase()}</Avatar>
       </IconButton>
 
       <Menu id="user-menu" anchorEl={anchorEl} open={open} onClose={handleClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>

@@ -3,7 +3,7 @@ import './Forms.css';
 import { Form, useNavigate, useLocation } from "react-router-dom";
 import { useActionState, useState } from "react";
 import { userLogin, userRegister } from "../API/API";
-import { setRole, setToken } from "../services/auth";
+import { clearPicture, setRole, setToken } from "../services/auth";
 
 interface RegisterFormProps {
     setShowRegister: (show: boolean) => void;
@@ -53,6 +53,7 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
             await userRegister(user);
             const token = await userLogin({ username: user.username, password: user.password });
             setToken(token);
+            clearPicture();
             setRole('citizen')
             window.dispatchEvent(new Event('authChange'));
             // If a pending location exists, redirect to the submit report page so the selection is preserved

@@ -23,6 +23,10 @@ export function setPicture(picture: string) {
   else localStorage.removeItem('picture');
 }
 
+export function clearPicture() {
+  localStorage.removeItem('picture');
+}
+
 export function getPicture(): string | null {
   return localStorage.getItem('picture');
 }
