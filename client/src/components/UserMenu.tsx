@@ -27,16 +27,18 @@ const UserMenu: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <Typography variant="body1" sx={{ mr: 1 }}>{displayName}</Typography>
+      <Typography id="user-display-name" variant="body1" sx={{ mr: 1 }}>{displayName}</Typography>
       <IconButton onClick={handleOpen} size="small" sx={{ p: 0.5 }} aria-controls={open ? 'user-menu' : undefined} aria-haspopup="true">
         <Avatar sx={{ width: 32, height: 32 }}> {
           (picture != null && role == 'citizen') ?
-          <img src={static_ip_address + picture} alt="User Avatar" style={{ width: '100%', height: '100%' }} /> : (displayName || 'U').charAt(0).toUpperCase()}</Avatar>
+          <img src={static_ip_address + picture} alt="User Avatar" style={{ width: '100%', height: '100%' }} />
+          : (displayName || 'U').charAt(0).toUpperCase()}</Avatar>
       </IconButton>
 
       <Menu id="user-menu" anchorEl={anchorEl} open={open} onClose={handleClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
         {role == 'citizen' && <MenuItem onClick={() => navigate('/user')}>Account Settings</MenuItem>}
         {/* Role-specific shortcuts */}
+        {/*
         {role === 'technical_office_staff' && (
           <MenuItem onClick={() => { handleClose(); navigate('/technical'); }}>Technical Workspace</MenuItem>
         )}
@@ -45,11 +47,14 @@ const UserMenu: React.FC = () => {
         )}
         {role === 'municipal_administrator' && (
           <MenuItem onClick={() => { handleClose(); navigate('/admin'); }}>Admin Dashboard</MenuItem>
-        )}
+        )} */}
         {/* Citizen shortcut */}
-        {!role && (
+        {
+        /*!role && (
           <MenuItem onClick={() => { handleClose(); navigate('/submitReport'); }}>Write a report</MenuItem>
-        )}
+        )
+          */}
+       
         <MenuItem onClick={handleLogout}>Logout</MenuItem>
       </Menu>
     </Box>

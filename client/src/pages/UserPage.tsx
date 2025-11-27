@@ -45,8 +45,6 @@ export function UserPage() {
         emailNotifications: user?.emailNotifications || false
     }
 
-    console.log("User data:", userData);
-
     return (
         <>
             <Container id="login-screen">

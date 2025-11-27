@@ -50,8 +50,6 @@ export function EditUserForm({ setShowEdit, avatar, telegram, emailNotifications
             avatar: userAvatar instanceof File ? userAvatar : undefined,
         };
 
-        console.log(updatedData);
-
         try {
             const response = await updateUserProfile(updatedData);
             setLoading(false);
