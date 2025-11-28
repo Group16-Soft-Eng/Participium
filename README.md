@@ -44,7 +44,7 @@ docker-compose down
 ### Admin setup
 The database is preloaded with an admin account, with credentials:
 - Username: admin
-- Password: pass
+- Password: admin
 
 ## User Roles
 
