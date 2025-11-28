@@ -8,7 +8,7 @@ From the next sprint, we've decided to split these 15 hours in the following way
 ### Priority
 The highest priority is for the most important user stories: since the Technical Debt handling has started later in the process, the earlier stories must be completed first.
 
-Additionally, the priority for in between the stories is computed in this way, from the highest to the lowest:
+Additionally, the priority for "code smells" in between the stories is handled by category, from the highest to the lowest:
 - Security
 - Reliability
 - Maintainability
