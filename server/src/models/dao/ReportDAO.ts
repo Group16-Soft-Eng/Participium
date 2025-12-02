@@ -60,4 +60,7 @@ export class ReportDAO {
 
   @Column({ type: "integer", nullable: true })
   assignedOfficerId!: number | null;
+
+  @Column({ type: "integer", nullable: true })
+  assignedMaintainerId!: number | null;
 }

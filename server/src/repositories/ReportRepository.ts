@@ -120,4 +120,11 @@ export class ReportRepository {
     report.state = ReportState.ASSIGNED;
     return this.repo.save(report);
   }
+
+  async assignReportToMaintainer(reportId: number, maintainerId: number): Promise<ReportDAO> {
+    const report = await this.getReportById(reportId);
+    report.assignedMaintainerId = maintainerId;
+    report.state = ReportState.ASSIGNED;
+    return this.repo.save(report);
+  }
 }

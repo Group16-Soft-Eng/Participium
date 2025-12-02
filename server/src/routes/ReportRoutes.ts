@@ -8,6 +8,8 @@ import { OfficerRole } from "@models/enums/OfficerRole";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { NotificationRepository } from "@repositories/NotificationRepository";
 import { OfficerRepository } from "@repositories/OfficerRepository";
+import { MaintainerRepository } from "@repositories/MaintainerRepository";
+import { OfficeType } from "@models/enums/OfficeType";
 import { get } from "http";
 
 const router = Router({mergeParams : true});
