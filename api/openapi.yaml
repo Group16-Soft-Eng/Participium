@@ -10,10 +10,14 @@ info:
 tags:
   - name: Auth
   - name: Info
+  - name: Admin
+    description: Admin operations
+  - name: Public Relation Officer
+    description: Public relation operations
+  - name: Technical Officers
+    description: Office personnel
   - name: Users
     description: Operations about user
-  - name: Officers
-    description: Office personnel
   - name: Reports
     description: Reports Operation
   - name: Telegram
@@ -280,7 +284,7 @@ paths:
   /officers:
     post:
       tags:
-        - Officers
+        - Admin
       summary: Admins create new Officer
       operationId: createOfficer
       requestBody:
@@ -314,7 +318,7 @@ paths:
   /officers/retrievedocs:
     get:
       tags:
-        - Officers
+        - Public Relation Officer
       summary: Retrieve Reports assigned to him, only the pending ones
       description: Using the session key, the officer is able to retrieve the docs assigned to him.
       operationId: retrieveDocs
@@ -324,7 +328,7 @@ paths:
           description: successful operation
           content:
             application/json:
-              schema:
+              schema: 
                 $ref: "#/components/schemas/Report"
         default:
           description: Unexpected error
@@ -335,7 +339,7 @@ paths:
   /officers/assigned:
     get:
       tags:
-        - Officers
+        - Technical Officers
       summary: Retrieve reports assigned to the authenticated officer
       description: Returns all reports whose `assignedOfficerId` equals the authenticated officer id.
       operationId: getAssignedReports
@@ -357,7 +361,7 @@ paths:
   /officers/OfficerByOfficeType/{officeType}:
     get:
       tags:
-        - Officers
+        - Technical Officers
       summary: Retrieve reports assigned to the authenticated officer
       description: Only for admin or Public officers.
       operationId: getOfficerByOfficeType
@@ -379,7 +383,7 @@ paths:
   /officers/reviewdocs/{id_doc}:
     patch:
       tags:
-        - Officers
+        - Technical Officers
       summary: Update Report assigned to him
       operationId: reviewDoc
       parameters:
@@ -416,8 +420,8 @@ paths:
   /officers/assign-report:
     post:
       tags:
-        - Officers
-      summary: Admins assign new document to an officer
+        - Public Relation Officer
+      summary: Public Relation Officer assign new document to an officer
       operationId: assignReport
       requestBody:
         description: Assign report to Officer

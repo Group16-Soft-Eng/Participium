@@ -44,6 +44,16 @@ router.get("/OfficerByOfficeType/:officeType", authenticateToken, requireUserTyp
     }
 });
 
+router.post("/assign-report", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async (req, res, next) => {
+    try {
+        const { reportId, officerId } = req.body;
+        await assignReportToOfficer(reportId, officerId);
+        res.status(200).json({ message: "Report assigned successfully" });
+    } catch (error) {
+        next(error);
+    }
+});
+
 
 router.get("/admin",authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR]), async(req, res, next) =>{
     try{
@@ -67,16 +77,6 @@ router.patch("/", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMI
     }
     catch(error)
     {
-        next(error);
-    }
-});
-
-router.post("/assign-report", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async (req, res, next) => {
-    try {
-        const { reportId, officerId } = req.body;
-        await assignReportToOfficer(reportId, officerId);
-        res.status(200).json({ message: "Report assigned successfully" });
-    } catch (error) {
         next(error);
     }
 });
