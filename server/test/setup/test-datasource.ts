@@ -3,13 +3,17 @@ import { DataSource } from "typeorm";
 import { UserDAO } from "../../src/models/dao/UserDAO";
 import { OfficerDAO } from "../../src/models/dao/OfficerDAO";
 import { ReportDAO } from "../../src/models/dao/ReportDAO";
+import { OfficerRole } from "../../src/models/enums/OfficerRole";
+import { OfficeType } from "../../src/models/enums/OfficeType";
+import { RoleDAO } from "../../src/models/dao/RoleDAO";
+import { MaintainerDAO } from "../../src/models/dao/MaintainerDAO";
 
 // Database in memoria SQLite per i test
 export const TestDataSource = new DataSource({
   type: "sqlite",
   database: ":memory:",
   dropSchema: true,
-  entities: [UserDAO, OfficerDAO, ReportDAO],
+  entities: [UserDAO, OfficerDAO, ReportDAO, RoleDAO, MaintainerDAO],
   synchronize: true,
   logging: false // Abilito per vedere cosa succede
 });
