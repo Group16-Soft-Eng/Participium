@@ -30,13 +30,15 @@ export class MaintainerRepository {
         );
     
         const userRepo = new UserRepository();
-        const existingUser = await userRepo.getUserByEmail(email).catch(() => null);
+        // const existingUser = await userRepo.getUserByEmail(email).catch(() => null);
+        const existingUser = await userRepo.getUserByEmail(email);
         if (existingUser) {
             throw new Error(`Email '${email}' is already used.`);
         }
 
         const officerRepo = new OfficerRepository();
-        const existingOfficer = await officerRepo.getOfficerByEmail(email).catch(() => null);
+        // const existingOfficer = await officerRepo.getOfficerByEmail(email).catch(() => null);
+        const existingOfficer = await officerRepo.getOfficerByEmail(email);
         if (existingOfficer) {
             throw new Error(`Email '${email}' is already used.`);
         }
