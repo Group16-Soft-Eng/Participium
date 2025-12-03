@@ -25,6 +25,42 @@ const getTurinBounds = () => {
 
 const TURIN_BOUNDS = getTurinBounds();
 
+// Create mask data to dim area outside Turin
+const getTurinMask = () => {
+  const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
+  if (!cityBoundary?.geojson) return null;
+
+  const geo = cityBoundary.geojson;
+  
+  // Larger bounding box covering area around Turin [Lon, Lat]
+  const outerCoords = [
+    [6.50, 46.60], // Top Left
+    [9.30, 46.60], // Top Right
+    [9.30, 44.00], // Bottom Right
+    [6.50, 44.00], // Bottom Left
+    [6.50, 46.60]  // Close the polygon
+  ];
+
+  let cityCoords: any[] = [];
+
+  // Extract coordinates based on geometry type
+  if (geo.type === 'Polygon') {
+    cityCoords = (geo.coordinates as any)[0];
+  } else if (geo.type === 'MultiPolygon') {
+    // Take the main polygon (first one)
+    cityCoords = (geo.coordinates as any)[0][0];
+  }
+
+  // Create mask: outer box with Turin boundary as a hole
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [outerCoords, cityCoords]
+    }
+  };
+};
+
 const createClusterIcon = (count: number) => {
   return L.divIcon({
     html: `<div class="cluster-marker">${count}</div>`,
@@ -84,10 +120,10 @@ const isPointInTurin = (lat: number, lng: number): boolean => {
 
   // Extract coordinates based on geometry type
   if (geo.type === 'Polygon') {
-    coords = geo.coordinates;
+    return isPointInPolygon([lng, lat], geo.coordinates as any);
   } else if (geo.type === 'MultiPolygon') {
     // Check all polygons in the multipolygon
-    for (const polygon of geo.coordinates) {
+    for (const polygon of geo.coordinates as any) {
       if (isPointInPolygon([lng, lat], polygon)) {
         return true;
       }
@@ -373,6 +409,14 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
   
   // Get the city boundary for rendering
   const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
+  const maskData = getTurinMask();
+  
+  const maskStyle = {
+    color: 'transparent',
+    fillColor: '#001c50',
+    fillOpacity: 0.2,
+    interactive: false
+  };
   
   const boundaryStyle = {
     color: '#0a2c6bff',
@@ -396,6 +440,13 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {maskData && (
+          <GeoJSON 
+            key="turin-mask"
+            data={maskData as any} 
+            style={maskStyle}
+          />
+        )}
         {cityBoundary && (
           <GeoJSON 
             key={cityBoundary.osm_id} 
