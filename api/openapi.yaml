@@ -436,7 +436,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /officers:
+  /admin:
     post:
       tags:
         - Admin
@@ -470,7 +470,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /officers/retrievedocs:
+  /publics/retrievedocs:
     get:
       tags:
         - Public Relation Officer
@@ -572,7 +572,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /officers/assign-report:
+  /publics/assign-report:
     post:
       tags:
         - Public Relation Officer
@@ -786,6 +786,127 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Notification"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /admin/role/add:
+    patch:
+      tags:
+        - Admin
+      summary: Admin updates officer roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                officerId:
+                  type: integer
+                roles:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      officerRole:
+                        $ref: '#/components/schemas/OfficerRole'
+                      officeType:
+                        $ref: '#/components/schemas/OfficeType'
+              required:
+                - officerId
+                - roles
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /admin/role/remove:
+    patch:
+      tags:
+        - Admin
+      summary: Admin updates officer roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                officerId:
+                  type: integer
+                roles:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      officerRole:
+                        $ref: '#/components/schemas/OfficerRole'
+                      officeType:
+                        $ref: '#/components/schemas/OfficeType'
+              required:
+                - officerId
+                - roles
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /admin/officers:
+    get:
+      tags:
+        - Admin
+      summary: Admin lists all officers
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      tags:
+        - Admin
+      summary: Admin updates officer info
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Officer"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Officer"
         default:
           description: Unexpected error
           content:

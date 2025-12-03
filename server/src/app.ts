@@ -5,6 +5,8 @@ import { CONFIG } from "@config";
 import { authRouter } from "@routes/AuthRoutes";
 import { userRouter } from "@routes/UserRoutes";
 import { reportRouter } from "@routes/ReportRoutes";
+import {AdminRouter} from "@routes/AdminRoutes";
+import {PublicRelationRoutes} from "@routes/PublicRelationRoutes";
 import {officerRouter} from "@routes/OfficerRoutes";
 import { infoTypeRouter } from "@routes/InfoType";
 import { notificationRouter } from "@routes/NotificationRoutes";
@@ -30,7 +32,8 @@ app.use(routes.V1_OFFICERS, officerRouter);
 app.use(routes.V1_MAINTAINERS, maintainerRouter);
 app.use(routes.V1_INFO_TYPES, infoTypeRouter);
 app.use(routes.V1_NOTIFICATIONS, notificationRouter);
-
+app.use(routes.V1_ADMIN, AdminRouter);
+app.use(routes.V1_PUBLICS, PublicRelationRoutes);
 // static files
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
