@@ -13,20 +13,27 @@
  */
 
 import { mapValues } from '../../../generated/runtime';
-import type { OfficerRole } from './OfficerRole';
 import {
     OfficerRoleFromJSON,
-    OfficerRoleFromJSONTyped,
     OfficerRoleToJSON,
-    OfficerRoleToJSONTyped,
 } from './OfficerRole';
+import type { OfficerRole } from './OfficerRole';
 import type { OfficeType } from './OfficeType';
 import {
     OfficeTypeFromJSON,
-    OfficeTypeFromJSONTyped,
     OfficeTypeToJSON,
-    OfficeTypeToJSONTyped,
 } from './OfficeType';
+
+
+/**
+ * Entry per ruolo e ufficio dell'Officer
+ * @export
+ * @interface RoleEntry
+ */
+export interface RoleEntry {
+    role: OfficerRole;
+    office: OfficeType | null; // consenti null per compatibilità con repository
+}
 
 /**
  * 
@@ -34,55 +41,16 @@ import {
  * @interface Officer
  */
 export interface Officer {
-    /**
-     * 
-     * @type {number}
-     * @memberof Officer
-     */
     id?: number;
-
-    /**
-     * 
-     * @type {string}
-     * @memberof Officer
-     */
     username?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof Officer
-     */
     name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof Officer
-     */
     surname?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof Officer
-     */
     email?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof Officer
-     */
     password?: string;
     /**
-     * 
-     * @type {OfficerRole}
-     * @memberof Officer
+     * Lista di ruoli associati all'Officer
      */
-    role?: OfficerRole;
-    /**
-     * 
-     * @type {OfficeType}
-     * @memberof Officer
-     */
-    office?: OfficeType;
+    roles?: RoleEntry[];
 }
 
 
@@ -102,15 +70,27 @@ export function OfficerFromJSONTyped(json: any, ignoreDiscriminator: boolean): O
     if (json == null) {
         return json;
     }
+
+    // Supporto input legacy con singolo Role/Office
+    const legacyRole = json['Role'] == null ? undefined : OfficerRoleFromJSON(json['Role']);
+    const legacyOffice = json['Office'] == null ? undefined : OfficeTypeFromJSON(json['Office']);
+
+    // Supporto input moderno con array "roles"
+    const roles = Array.isArray(json['roles'])
+        ? json['roles'].map((r: any) => ({
+            role: OfficerRoleFromJSON(r.role),
+            office: r.office == null ? null : OfficeTypeFromJSON(r.office),
+        }))
+        : [];
+
     return {
-        'username': json['username'] == null ? undefined : json['username'],
         'id': json['id'] == null ? undefined : json['id'],
+        'username': json['username'] == null ? undefined : json['username'],
         'name': json['name'] == null ? undefined : json['name'],
         'surname': json['surname'] == null ? undefined : json['surname'],
         'email': json['email'] == null ? undefined : json['email'],
         'password': json['password'] == null ? undefined : json['password'],
-        'role': json['Role'] == null ? undefined : OfficerRoleFromJSON(json['Role']),
-        'office': json['Office'] == null ? undefined : OfficeTypeFromJSON(json['Office']),
+        'roles': roles ?? (legacyRole != null && legacyOffice != null ? [{ role: legacyRole, office: legacyOffice }] : undefined),
     };
 }
 
@@ -119,19 +99,22 @@ export function OfficerToJSON(json: any): Officer {
 }
 
 export function OfficerToJSONTyped(value?: Officer | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
-
+    if (value == null) return value;
     return {
-        
         'id': value['id'],
+        'username': value['username'],
         'name': value['name'],
         'surname': value['surname'],
         'email': value['email'],
         'password': value['password'],
-        'Role': OfficerRoleToJSON(value['role']),
-        'Office': OfficeTypeToJSON(value['office']),
+        // output moderno: array roles
+        roles: value.roles?.map(r => ({
+          role: OfficerRoleToJSON(r.role),
+          office: r.office == null ? null : OfficeTypeToJSON(r.office),
+        })),
+        // opzionale: se serve compatibilità con API legacy, puoi anche mantenere:
+        // 'Role': value['roles']?.[0] ? OfficerRoleToJSON(value['roles'][0].role) : undefined,
+        // 'Office': value['roles']?.[0] ? OfficeTypeToJSON(value['roles'][0].office) : undefined,
     };
 }
 

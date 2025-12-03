@@ -3,9 +3,8 @@ import { DataSource } from "typeorm";
 import { CONFIG } from "@config";
 import {createClient} from "redis";
 import { OfficerRepository } from "@repositories/OfficerRepository";
-import { OfficerDAO } from "@dao/OfficerDAO";
 import { OfficerRole } from "@models/enums/OfficerRole";
-import { OfficeType } from "../../generated";
+import { OfficeType } from "@models/enums/OfficeType";
 export const AppDataSource = new DataSource({
     type: CONFIG.DB_TYPE as any,
     host: CONFIG.DB_HOST,
@@ -14,27 +13,39 @@ export const AppDataSource = new DataSource({
     password: CONFIG.DB_PASSWORD,
     database: CONFIG.DB_NAME,
     entities: CONFIG.DB_ENTITIES,
-    synchronize: true, // SOLO in dev!
+    synchronize: true,
     logging: false
 });
 
 export async function initializeDatabase() {
     await AppDataSource.initialize();
     console.log("Successfully connected to DB");
-    //search if there is at least one officer, if not create a default one
+
     const officerRepo = new OfficerRepository();
     const officerCount = await officerRepo.getAdminOfficers();
-    if (officerCount === null || officerCount.length === 0) {
-      const adminData = {
-        username : "admin",
-        name: "admin",
-        surname: "admin",
-        email: "admin@admin.com",
-        password: "admin", // In a real app, ensure to hash passwords!
-        role: OfficerRole.MUNICIPAL_ADMINISTRATOR
-      } as OfficerDAO;
-        await officerRepo.createOfficer(adminData.name, adminData.username, adminData.surname, adminData.email, adminData.password, adminData.role, null as any);
-        console.log("Created default officer with badge number 0001 and password 'password'");
+
+    if (!officerCount || officerCount.length === 0) {
+        const username = "admin";
+        const name = "admin";
+        const surname = "admin";
+        const email = "admin@admin.com";
+        const password = "admin";
+
+        // usa il tipo richiesto da OfficerRepository.createOfficer
+        const roles: { role: OfficerRole; office: OfficeType | null }[] = [
+          { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null }
+        ];
+
+        await officerRepo.createOfficer(
+            username,
+            name,
+            surname,
+            email,
+            password,
+            roles
+        );
+
+        console.log("Created default admin officer (username 'admin')");
     }
 }
 

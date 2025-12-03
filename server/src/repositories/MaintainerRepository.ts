@@ -18,6 +18,7 @@ export class MaintainerRepository {
     async createMaintainer(
     name: string,
     email: string,
+    plainPassword: string,
     categories: OfficeType[],
     active: boolean = true
     ): Promise<MaintainerDAO> {
@@ -66,6 +67,8 @@ export class MaintainerRepository {
     async getMaintainerByEmail(email: string): Promise<MaintainerDAO> {
         return findOrThrowNotFound(
             await this.repo.find({ where: { email } }),
+            () => true,
+            `Maintainer with email '${email}' not found`
         );
     }
 

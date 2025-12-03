@@ -2,7 +2,7 @@
 import { MaintainerRepository } from "@repositories/MaintainerRepository";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { OfficeType } from "@models/enums/OfficeType";
-
+import { ReportState } from "@models/enums/ReportState";
 export async function createMaintainer(name: string, email: string, password: string,  categories: OfficeType[], active: boolean = true) {
   const repo = new MaintainerRepository();
   const maintainer = await repo.createMaintainer(name, email, password, categories, active);

@@ -1,25 +1,21 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
+import { OfficerDAO } from "./OfficerDAO";
+import { OfficerRole } from "@models/enums/OfficerRole";
+import { OfficeType } from "@models/enums/OfficeType";
 
 @Entity("role")
-export class NotificationDAO {
+export class RoleDAO {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ type: "integer" })
-  userId!: number;
+  @ManyToOne(() => OfficerDAO, (officer) => officer.roles)
+  @JoinColumn({ name: "officerID" })
+  officer!: OfficerDAO;
 
-  @Column({ type: "integer", nullable: true })
-  reportId!: number | null;
+  // SQLite: store enum as text
+  @Column({ type: "text", nullable: false })
+  officerRole!: OfficerRole;
 
-  @Column({ type: "text" })
-  type!: string; // STATUS_CHANGE | OFFICER_MESSAGE
-
-  @Column({ type: "text" })
-  message!: string;
-
-  @Column({ type: "datetime", default: () => "CURRENT_TIMESTAMP" })
-  createdAt!: Date;
-
-  @Column({ type: "boolean", default: false })
-  read!: boolean;
+  @Column({ type: "text", nullable: true })
+  officeType!: OfficeType | null;
 }
