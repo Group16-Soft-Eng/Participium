@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
-import { createMaintainer, getAllMaintainers, getMaintainersByCategory, updateMaintainer, assignReportToMaintainer } from "@controllers/maintainerController";
+import { createMaintainer, getAllMaintainers, getMaintainersByCategory, updateMaintainer, assignReportToMaintainer, updateReportStatusByMaintainer } from "@controllers/maintainerController";
 
 const router = Router({ mergeParams: true });
 
@@ -60,6 +60,27 @@ router.post("/assign-report", authenticateToken, requireUserType([OfficerRole.MU
     const { reportId, maintainerId } = req.body;
     await assignReportToMaintainer(Number(reportId), Number(maintainerId));
     res.status(200).json({ message: "Report assigned to maintainer" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+//? PT-25: maintainer update report status (come per l'officer, ma per il maintainer)
+router.patch("/reports/:id/status", authenticateToken, async (req, res, next) => {
+  try {
+    const reportId = Number(req.params.id);
+    const maintainerId = (req as any).user?.id;
+    const { state, reason } = req.body;
+
+    if (!maintainerId) return res.status(401).json({ error: "Unauthorized" });
+    if (!state) return res.status(400).json({ error: "state is required" });
+
+    const updated = await updateReportStatusByMaintainer(maintainerId, reportId, state, reason);+
+    
+    res.status(200).json({
+      id: updated.id,
+      state: updated.state
+    });
   } catch (err) {
     next(err);
   }

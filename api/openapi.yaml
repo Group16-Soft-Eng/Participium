@@ -306,6 +306,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /maintainers/reports/{id}/status:
+    patch:
+      tags:
+        - Maintainers
+      summary: Maintainer updates the status of an assigned report
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                state:
+                  $ref: "#/components/schemas/State"
+                reason:
+                  type: string
+              required:
+                - state
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  state:
+                    $ref: "#/components/schemas/State"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /info-types:
     get:
       tags:

@@ -3,6 +3,8 @@ import { MaintainerRepository } from "@repositories/MaintainerRepository";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { OfficeType } from "@models/enums/OfficeType";
 import { ReportState } from "@models/enums/ReportState";
+import { NotificationRepository } from "@repositories/NotificationRepository";
+import { mapReportDAOToDTO } from "@services/mapperService";
 export async function createMaintainer(name: string, email: string, password: string,  categories: OfficeType[], active: boolean = true) {
   const repo = new MaintainerRepository();
   const maintainer = await repo.createMaintainer(name, email, password, categories, active);
@@ -56,4 +58,53 @@ export async function assignReportToMaintainer(reportId: number, maintainerId: n
     }
 
     await reportRepo.assignReportToMaintainer(reportId, maintainerId);
+}
+
+// PT-25: Il maintainer aggiorna lo stato di un report assegnato a lui
+export async function updateReportStatusByMaintainer(
+  maintainerId: number,
+  reportId: number,
+  nextState: ReportState,
+  reason?: string
+) : Promise<Report> {
+  const reportRepo = new ReportRepository();
+  const notificationRepo = new NotificationRepository();
+  
+  const report = await reportRepo.getReportById(reportId);
+
+  // Consentito solo se il report è assegnato a questo maintainer
+  if (report.assignedMaintainerId !== maintainerId) {
+    throw new Error("You can only update reports assigned to you as maintainer");
+  }
+
+  // Blocca doppie chiusure o declini
+  if (report.state === ReportState.RESOLVED || report.state === ReportState.DECLINED) {
+    const payload = {
+      message: `Report with id '${reportId}' is already in state '${report.state}' and cannot be reviewed again.`,
+      status: 400
+    };
+    throw new Error(JSON.stringify(payload));
+  }
+
+  // Consenti transizioni operative parallele al technical officer: IN_PROGRESS, SUSPENDED, RESOLVED
+  const allowedTargets = [ReportState.IN_PROGRESS, ReportState.SUSPENDED, ReportState.RESOLVED];
+  if (!allowedTargets.includes(nextState)) {
+    throw new Error("Invalid target state for maintainer");
+  }
+
+  // Stato corrente deve essere operativo (ASSIGNED/IN_PROGRESS/SUSPENDED)
+  const operational = [ReportState.ASSIGNED, ReportState.IN_PROGRESS, ReportState.SUSPENDED];
+  if (!operational.includes(report.state)) {
+    throw new Error("Report is not in an operational state");
+  }
+
+  // Applica reason solo per SUSPENDED
+  let updatedReport = await reportRepo.updateReportState(reportId, nextState, nextState === ReportState.SUSPENDED ? reason : undefined);
+
+  // Per il maintainer non si riassegna, si opera solo sugli stati
+
+  // Notifica cambio stato al cittadino (e agli attori interessati) come per officer
+  await notificationRepo.createStatusChangeNotification(updatedReport);
+
+  return mapReportDAOToDTO(updatedReport);
 }
