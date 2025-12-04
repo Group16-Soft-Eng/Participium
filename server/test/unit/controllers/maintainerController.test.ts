@@ -7,6 +7,9 @@ import { ReportState } from "../../../src/models/enums/ReportState";
 // Mock delle repository
 jest.mock("../../../src/repositories/MaintainerRepository");
 jest.mock("../../../src/repositories/ReportRepository");
+jest.mock("../../../src/services/mapperService", () => ({
+  mapReportDAOToDTO: jest.fn()
+}));
 
 describe("maintainerController", () => {
   const maintainerMock = {
@@ -132,6 +135,83 @@ describe("maintainerController", () => {
       await expect(maintainerController.assignReportToMaintainer(10, 1))
         .rejects
         .toThrow("Maintainer not found");
+    });
+  });
+
+  describe("updateReportStatusByMaintainer", () => {
+    const reportMock = {
+      id: 10,
+      assignedMaintainerId: 1,
+      state: ReportState.ASSIGNED,
+      body: "body",
+      type: "type",
+      url: "url"
+    };
+    const updatedReportMock = {
+      ...reportMock,
+      state: ReportState.IN_PROGRESS
+    };
+    const notificationMock = { id: 99, message: "Stato cambiato" };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("should update report status and return mapped DTO", async () => {
+      (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue(reportMock);
+      (ReportRepository.prototype.updateReportState as jest.Mock).mockResolvedValue(updatedReportMock);
+      const notificationRepo = require("../../../src/repositories/NotificationRepository");
+      notificationRepo.NotificationRepository.prototype.createStatusChangeNotification = jest.fn().mockResolvedValue(notificationMock);
+
+      const { mapReportDAOToDTO } = require("../../../src/services/mapperService");
+      mapReportDAOToDTO.mockReturnValue({ ...updatedReportMock, mapped: true });
+
+      const result = await maintainerController.updateReportStatusByMaintainer(
+        1, 10, ReportState.IN_PROGRESS
+      );
+      expect(ReportRepository.prototype.getReportById).toHaveBeenCalledWith(10);
+      expect(ReportRepository.prototype.updateReportState).toHaveBeenCalledWith(10, ReportState.IN_PROGRESS, undefined);
+      expect(notificationRepo.NotificationRepository.prototype.createStatusChangeNotification).toHaveBeenCalledWith(updatedReportMock);
+      expect(result).toEqual({ ...updatedReportMock, mapped: true });
+    });
+
+    it("should throw error if report is not assigned to maintainer", async () => {
+      (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue({ ...reportMock, assignedMaintainerId: 2 });
+      await expect(
+        maintainerController.updateReportStatusByMaintainer(1, 10, ReportState.IN_PROGRESS)
+      ).rejects.toThrow("You can only update reports assigned to you as maintainer");
+    });
+
+    it("should throw error if nextState is not allowed", async () => {
+      (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue(reportMock);
+      await expect(
+        maintainerController.updateReportStatusByMaintainer(1, 10, ReportState.PENDING)
+      ).rejects.toThrow("Invalid target state for maintainer");
+    });
+
+    it("should throw error if report is not in operational state", async () => {
+      (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue({ ...reportMock, state: ReportState.PENDING });
+      await expect(
+        maintainerController.updateReportStatusByMaintainer(1, 10, ReportState.IN_PROGRESS)
+      ).rejects.toThrow("Report is not in an operational state");
+    });
+
+    it("should throw error if report is already resolved or declined", async () => {
+      (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue({ ...reportMock, state: ReportState.RESOLVED });
+      await expect(
+        maintainerController.updateReportStatusByMaintainer(1, 10, ReportState.IN_PROGRESS)
+      ).rejects.toThrow(/already in state 'RESOLVED'/);
+    });
+
+    it("should throw error if notification creation fails", async () => {
+      (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue(reportMock);
+      (ReportRepository.prototype.updateReportState as jest.Mock).mockResolvedValue(updatedReportMock);
+      const notificationRepo = require("../../../src/repositories/NotificationRepository");
+      notificationRepo.NotificationRepository.prototype.createStatusChangeNotification = jest.fn().mockResolvedValue(null);
+
+      await expect(
+        maintainerController.updateReportStatusByMaintainer(1, 10, ReportState.IN_PROGRESS)
+      ).rejects.toThrow("Failed to create notification for report status change");
     });
   });
 });

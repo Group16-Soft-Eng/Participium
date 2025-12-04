@@ -5,6 +5,7 @@ import { OfficeType } from "@models/enums/OfficeType";
 import { ReportState } from "@models/enums/ReportState";
 import { NotificationRepository } from "@repositories/NotificationRepository";
 import { mapReportDAOToDTO } from "@services/mapperService";
+import { Report } from "@models/dto/Report";
 export async function createMaintainer(name: string, email: string, password: string,  categories: OfficeType[], active: boolean = true) {
   const repo = new MaintainerRepository();
   const maintainer = await repo.createMaintainer(name, email, password, categories, active);
@@ -104,7 +105,12 @@ export async function updateReportStatusByMaintainer(
   // Per il maintainer non si riassegna, si opera solo sugli stati
 
   // Notifica cambio stato al cittadino (e agli attori interessati) come per officer
-  await notificationRepo.createStatusChangeNotification(updatedReport);
+  const notification = await notificationRepo.createStatusChangeNotification(updatedReport);
 
-  return mapReportDAOToDTO(updatedReport);
+  if(!notification) {
+    throw new Error("Failed to create notification for report status change");
+  }
+
+   return mapReportDAOToDTO(updatedReport);
+  
 }

@@ -21,9 +21,9 @@ jest.mock("../../../src/middlewares/authMiddleware", () => ({
     if (!req.headers.authorization) return res.status(401).json({ error: "Unauthorized" });
     // Se il token contiene "pr", imposta il ruolo PR Officer
     if (req.headers.authorization.includes("pr")) {
-      req.user = { type: "officer", role: require("../../../src/models/enums/OfficerRole").OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER };
+      req.user = { id: 2, type: "officer", role: require("../../../src/models/enums/OfficerRole").OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER };
     } else {
-      req.user = { type: "officer", role: require("../../../src/models/enums/OfficerRole").OfficerRole.MUNICIPAL_ADMINISTRATOR };
+      req.user = { id: 1, type: "officer", role: require("../../../src/models/enums/OfficerRole").OfficerRole.MUNICIPAL_ADMINISTRATOR };
     }
     next();
   },
@@ -289,5 +289,56 @@ describe("MaintainerRoutes Integration", () => {
       expect(res.body).toHaveProperty("message");
       expect(assignReportMock).toHaveBeenCalledWith(2, 2);
     });
+  });
+
+  describe("PATCH /maintainers/reports/:id/status", () => {
+    it("dovrebbe aggiornare lo stato di un report assegnato al maintainer", async () => {
+      // Mock della funzione controller PRIMA di importare router/app
+      const controller = require("../../../src/controllers/maintainerController");
+      controller.updateReportStatusByMaintainer = jest.fn().mockResolvedValue({ id: 1, state: "RESOLVED" });
+
+      // Crea un'app e router locale dopo il mock
+      const express = require("express");
+      const { maintainerRouter } = require("../../../src/routes/MaintainerRoutes");
+      const appLocal = express();
+      appLocal.use(express.json());
+      appLocal.use("/maintainers", maintainerRouter);
+
+      const maintainerToken = generateToken({
+        id: 1,
+        username: "maintainer1",
+        type: "officer",
+        sessionType: "web"
+      });
+
+      const res = await request(appLocal)
+        .patch("/maintainers/reports/1/status")
+        .set("Authorization", `Bearer ${maintainerToken}`)
+        .send({ id: 1, state: "RESOLVED", reason: "SOMETHING" });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ id: 1, state: "RESOLVED" });
+      expect(controller.updateReportStatusByMaintainer).toHaveBeenCalledWith(1, 1, "RESOLVED", "SOMETHING");
+    });
+
+    it("dovrebbe restituire errore 401 se non autenticato", async () => {
+      const res = await request(app)
+        .patch("/maintainers/reports/1/status")
+        .send({ state: "IN_PROGRESS" });
+
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("dovrebbe restituire errore 400 se manca lo stato", async () => {
+      const res = await request(app)
+        .patch("/maintainers/reports/1/status")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty("error");
+    });
+
   });
 });

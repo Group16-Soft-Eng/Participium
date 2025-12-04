@@ -94,4 +94,58 @@ describe("MaintainerRoutes", () => {
       expect(maintainerController.assignReportToMaintainer).toHaveBeenCalledWith(10, 1);
     });
   });
+
+  // describe("PATCH /maintainers/reports/:id/status", () => {
+    
+  //   it("should update report status and return 200", async () => {
+  //     (maintainerController.updateReportStatusByMaintainer as jest.Mock).mockResolvedValue({ id: 1, state: "RESOLVED" });
+
+  //     // App locale con req.user come maintainer
+  //     const appWithMaintainer = express();
+  //     appWithMaintainer.use(express.json());
+  //     appWithMaintainer.use("/maintainers", (req: any, res: any, next: any) => {
+  //       req.user = { id: 1, type: "officer", role: OfficerRole.TECHNICAL_OFFICE_STAFF };
+  //       next();
+  //     }, maintainerRouter);
+
+  //     const res = await request(appWithMaintainer)
+  //       .patch("/maintainers/reports/1/status")
+  //       .send({ state: "RESOLVED" });
+
+  //     expect(res.status).toBe(200);
+  //     expect(res.body).toEqual({ id: 1, state: "RESOLVED" });
+  //     expect(maintainerController.updateReportStatusByMaintainer).toHaveBeenCalledWith(1, 1, "RESOLVED", undefined);
+  //   });
+
+  //   it("should return 401 if user is not authenticated", async () => {
+  //     // Crea un'app locale con un middleware che NON imposta req.user
+  //     const appNoAuth = express();
+  //     appNoAuth.use(express.json());
+  //     appNoAuth.use("/maintainers", (req: any, res: any, next: any) => { next(); }, maintainerRouter);
+
+  //     const res = await request(appNoAuth)
+  //       .patch("/maintainers/reports/1/status")
+  //       .send({ state: "IN_PROGRESS" });
+
+  //     expect(res.status).toBe(401);
+  //     expect(res.body).toHaveProperty("error");
+  //   });
+
+  //   it("should return 400 if state is missing", async () => {
+  //     // Simula req.user con id
+  //     const appWithUserId = express();
+  //     appWithUserId.use(express.json());
+  //     appWithUserId.use("/maintainers", (req: any, res: any, next: any) => {
+  //       req.user = { id: 1, type: "officer", role: OfficerRole.MUNICIPAL_ADMINISTRATOR };
+  //       next();
+  //     }, maintainerRouter);
+
+  //     const res = await request(appWithUserId)
+  //       .patch("/maintainers/reports/1/status")
+  //       .send({});
+
+  //     expect(res.status).toBe(400);
+  //     expect(res.body).toHaveProperty("error");
+  //   });
+  // });
 });
