@@ -143,11 +143,10 @@ function App() {
                 >
                   Admin Dashboard
                 </Button>
-              ) : (
+              ) : isLoggedIn ? (
                 <Button id="report-button"
-                  component={isLoggedIn ? Link : undefined}
-                  to={isLoggedIn ? "/submitReport" : undefined}
-                  onClick={!isLoggedIn ? () => setShowLoginDialog(true) : undefined}
+                  component={Link}
+                  to="/submitReport"
                   variant="contained"
                   color="secondary"
                   sx={{
@@ -161,7 +160,8 @@ function App() {
                   }}
                 >
                   Write a report
-                </Button>)}
+                </Button>
+              ) : null}
               
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
               {isLoggedIn ? (
