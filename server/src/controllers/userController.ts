@@ -85,7 +85,15 @@ export async function deleteUser(username: string): Promise<void> {
   await userRepo.deleteUser(username);
 }
 
-
+export async function activateAccount(email: string): Promise<void> {
+  const userRepo = new UserRepository();
+  await userRepo.activateUser(email);
+}
+export async function isActive(email: string): Promise<boolean> {
+  const userRepo = new UserRepository();
+  const user =  await userRepo.getUserByEmail(email);
+  return user.isActive;
+}
 export async function logoutUser(): Promise<void> {
   // In a JWT-based system, logout is typically handled client-side
   // by removing the token

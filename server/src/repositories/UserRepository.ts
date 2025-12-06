@@ -109,4 +109,11 @@ export class UserRepository {
     if (data.avatarPath !== undefined) user.avatar = data.avatarPath;
     return this.repo.save(user);
   }
+
+  async activateUser(email: string): Promise<UserDAO> {
+    const user = await this.getUserByEmail(email);
+    
+    user.isActive = true;
+    return this.repo.save(user);
+  }
 }

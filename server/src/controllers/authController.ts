@@ -14,7 +14,9 @@ export async function loginUserByUsername(username: string, password: string): P
   if (!user.password) {
     throw new UnauthorizedError("Invalid username or password");
   }
-
+  if(!user.isActive) {
+    throw new UnauthorizedError("User account is not active");
+  }
   const isValid = await verifyPassword(password, user.password);
   if (!isValid) {
     throw new UnauthorizedError("Invalid username or password");
@@ -39,7 +41,9 @@ export async function loginUserByMail(email: string, password: string): Promise<
   if (!user.password) {
     throw new UnauthorizedError("Invalid email or password");
   }
-
+  if(!user.isActive) {
+    throw new UnauthorizedError("User account is not active");
+  }
   const isValid = await verifyPassword(password, user.password);
   if (!isValid) {
     throw new UnauthorizedError("Invalid email or password");

@@ -490,6 +490,82 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /users/generateotp:
+    post:
+      tags:
+        - Users
+      summary: Generate OTP for user
+      description: Generate a One-Time Password (OTP) for the user to enhance security during sensitive operations.
+      operationId: generateOtp
+      requestBody:
+        description: User information for OTP generation
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+              required:
+                - email
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  otp:
+                    type: string
+                    example: "123456"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"    
+
+
+  /users/verifyotp:
+    post:
+      tags:
+        - Users
+      summary: Verify OTP for user
+      description: Verify the One-Time Password (OTP) provided by the user to confirm their identity.
+      operationId: verifyOtp
+      requestBody:
+        description: User information for OTP verification
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                otp:
+                  type: string
+                  example: "123456"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified:
+                    type: boolean
+                    example: true
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /users/me:
     get:
       tags:
