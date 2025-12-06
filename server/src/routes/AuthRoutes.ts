@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {loginOfficer, loginUser, getUserByTelegramUsername} from "@controllers/authController"
+import {loginOfficer, loginUser,loginMaintainer, getUserByTelegramUsername} from "@controllers/authController"
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware";
 import { deleteSession } from "@services/authService";
 const router = Router({mergeParams : true});
@@ -55,6 +55,25 @@ router.post("/telegram", async(req, res, next) =>{
         }
         const user = await getUserByTelegramUsername(identifier);
         res.status(200).json(user);
+    }
+    catch(error)
+    {
+        next(error);
+    }
+});
+
+router.post("/maintainers", async(req, res, next) =>{
+    try{
+        const { email, password } = req.body;
+        
+        if (!email || !password) {
+            return res.status(400).json({ error: "Email and password are required" });
+        }
+        
+        const isEmail = emailRegex.test(email);
+        const result = await loginMaintainer(email, password, isEmail);
+            
+        res.status(200).json(result);
     }
     catch(error)
     {

@@ -1,6 +1,7 @@
 //! AUTH CONTROLELR
 import { UserRepository } from "@repositories/UserRepository";
 import { OfficerRepository } from "@repositories/OfficerRepository";
+import { MaintainerRepository } from "@repositories/MaintainerRepository";
 import { verifyPassword, generateToken, saveSession } from "@services/authService";
 import { UnauthorizedError } from "@utils/utils";
 import { OfficerRole } from "@models/enums/OfficerRole";
@@ -140,4 +141,60 @@ export async function getUserByTelegramUsername(telegramUsername: string) {
 
   await saveSession(user.id, token, "telegram");
   return token;
+}
+
+
+export async function loginMaintainerByMail(email: string, password: string) {
+  const maintainerRepo = new MaintainerRepository();
+  const maintainer = await maintainerRepo.getMaintainerByEmail(email);
+
+  if (!maintainer.password) {
+    throw new UnauthorizedError("Invalid email or password");
+  }
+  
+  const isValid = await verifyPassword(password, maintainer.password);
+  if (!isValid) {
+    throw new UnauthorizedError("Invalid email or password");
+  }
+
+  // maintainer: isStaff=true, type=array di ruoli
+  const token = generateToken({
+    id: maintainer.id!,
+    username: maintainer.name!,
+    isStaff: true,
+    type: ["MAINTAINER"],           // sempre array
+    sessionType: "web"
+  });
+  await saveSession(maintainer.id!, token, "web");
+  return token;
+}
+
+export async function loginMaintainerByUsername(username: string, password: string) {
+  const maintainerRepo = new MaintainerRepository();
+  const maintainers = await maintainerRepo.getMaintainersByUsername(username);
+  const maintainer = maintainers[0];
+
+  if (!maintainer || !maintainer.password) {
+    throw new UnauthorizedError("Invalid username or password");
+  }
+  
+  const isValid = await verifyPassword(password, maintainer.password);
+  if (!isValid) {
+    throw new UnauthorizedError("Invalid username or password");
+  }
+  const token = generateToken({
+    id: maintainer.id!,
+    username: maintainer.name!,
+    isStaff: true,
+    type: ["MAINTAINER"],           // sempre array
+    sessionType: "web"
+  });
+  await saveSession(maintainer.id!, token, "web");
+  return token;
+}
+
+export async function loginMaintainer(identifier: string, password: string, isEmail: boolean): Promise<string> {
+  return isEmail 
+    ? loginMaintainerByMail(identifier, password)
+    : loginMaintainerByUsername(identifier, password);
 }

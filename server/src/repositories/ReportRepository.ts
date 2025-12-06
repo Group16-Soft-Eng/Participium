@@ -63,6 +63,14 @@ export class ReportRepository {
       relations: ["author"]
     });
   }
+  async getReportsByMaintainerId(maintainerId: number): Promise<ReportDAO[]> {
+    return this.repo.find({
+      where: { 
+        assignedMaintainerId: maintainerId
+      },
+      relations: ["author"]
+    });
+  }
 
 
   async createReport(

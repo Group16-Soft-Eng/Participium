@@ -53,6 +53,9 @@ export class MaintainerRepository {
         });
     }
 
+    async getMaintainersByUsername(username: string): Promise<MaintainerDAO[]> {
+        return this.repo.find({ where: { name: username } });
+    }
     async getMaintainerById(id: number): Promise<MaintainerDAO | null> {
         return this.repo.findOne({ where: { id } });
     }

@@ -61,6 +61,12 @@ export async function assignReportToMaintainer(reportId: number, maintainerId: n
     await reportRepo.assignReportToMaintainer(reportId, maintainerId);
 }
 
+export async function getAssignedReportsForMaintainer(maintainerId: number) {
+  const reportRepo = new ReportRepository();
+  const reports = await reportRepo.getReportsByMaintainerId(maintainerId);
+  return reports.map(mapReportDAOToDTO);
+}
+
 // PT-25: Il maintainer aggiorna lo stato di un report assegnato a lui
 export async function updateReportStatusByMaintainer(
   maintainerId: number,

@@ -16,14 +16,14 @@ tags:
     description: Public relation operations
   - name: Technical Officers
     description: Office personnel
+  - name: Maintainers
+    description: External maintainers
   - name: Users
     description: Operations about user
   - name: Reports
     description: Reports Operation
   - name: Telegram
   - name: Notifications
-  - name: Maintainers
-    description: External maintainers
 paths:
   /auth/users:
     post:
@@ -88,10 +88,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /maintainers:
+  /admin/maintainers:
       post:
         tags:
-          - Maintainers
+          - Admin
         summary: Admin creates a maintainer
         requestBody:
           required: true
@@ -130,11 +130,11 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/Error"
-  /maintainers/admin:
+  /maintainers/list:
       get:
         tags:
           - Maintainers
-        summary: Admin lists all maintainers
+        summary: Officers lists all maintainers
         responses:
           "200":
             description: successful operation
@@ -176,10 +176,10 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/Error"
-  /maintainers/{id}:
+  /admin/maintainers/{id}:
       patch:
         tags:
-          - Maintainers
+          - Admin
         summary: Admin updates a maintainer
         parameters:
           - in: path
@@ -206,10 +206,10 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/Error"
-  /maintainers/assign-report:
+  /officers/assign-report:
       post:
         tags:
-          - Maintainers
+          - Technical Officers
         summary: Assign a report to a maintainer
         requestBody:
           required: true
@@ -300,6 +300,88 @@ paths:
                 example: token
         "400":
           description: Invalid username/password supplied
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  
+  
+  /auth/maintainers:
+    post:
+      tags:
+        - Auth
+      summary: Logs maintainer into the system.
+      description: Log into the system.
+      operationId: loginMaintainer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: maintainer@example.com
+                password:
+                  type: string
+                  format: password
+                  example: secure_word
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string    
+      responses:
+        "200":
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/xml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Invalid email/password supplied
+        default:
+          description: Unexpected error
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+  /maintainers/assigned:
+    get:
+      tags:
+        - Maintainers
+      summary: Maintainer retrieves assigned reports
+      description: Returns all reports assigned to the authenticated maintainer.
+      operationId: getAssignedReportsMaintainer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
         default:
           description: Unexpected error
           content:
@@ -742,6 +824,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+                 
   /notifications:
     get:
       tags:

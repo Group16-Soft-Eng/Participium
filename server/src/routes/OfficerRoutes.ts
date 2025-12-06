@@ -3,6 +3,7 @@ import {createOfficer,retrieveDocs,reviewDoc, getAllOfficers, updateOfficer, ass
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import {OfficerFromJSON,OfficerToJSON} from "@dto/Officer";
 import { OfficerRole } from "@models/enums/OfficerRole";
+import { assignReportToMaintainer } from "@controllers/maintainerController";
 const router = Router({mergeParams : true});
 
 
@@ -48,4 +49,17 @@ router.patch("/reviewdocs/:id", authenticateToken, requireUserType([OfficerRole.
     }
 });
 
+
+
+
+// Assign report to a maintainer (coerente con OfficerRoutes)
+router.post("/assign-report", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF]), async (req, res, next) => {
+  try {
+    const { reportId, maintainerId } = req.body;
+    await assignReportToMaintainer(Number(reportId), Number(maintainerId));
+    res.status(200).json({ message: "Report assigned to maintainer" });
+  } catch (err) {
+    next(err);
+  }
+});
 export {router as officerRouter};

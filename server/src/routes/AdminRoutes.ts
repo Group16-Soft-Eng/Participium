@@ -10,6 +10,7 @@ import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import { OfficerFromJSON, OfficerToJSON } from "@dto/Officer";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
+import { createMaintainer, getAllMaintainers, getMaintainersByCategory, updateMaintainer, assignReportToMaintainer, updateReportStatusByMaintainer } from "@controllers/maintainerController";
 
 const router = Router({ mergeParams: true });
 
@@ -73,4 +74,31 @@ router.patch("/role/remove", authenticateToken, requireUserType([OfficerRole.MUN
   }
 }
 );
+
+//Maintainer management 
+
+
+//? admin create maintainer
+router.post("/maintainers", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR]), async (req, res, next) => {
+  try {
+    const { name, email, password, categories, active } = req.body;
+    if (!name || !email || !password || !categories) return res.status(400).json({ error: "name, email, password, categories are required" });
+    const result = await createMaintainer(name, email, password, categories as OfficeType[], active ?? true);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+//? come per officer, anche qui ho messo una patch per update maintainer
+router.patch("/maintainers/:id", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR]), async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    // req.body è passato come Partial<MaintainerDAO> nel controller
+    const result = await updateMaintainer(id, req.body);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 export { router as AdminRouter };
