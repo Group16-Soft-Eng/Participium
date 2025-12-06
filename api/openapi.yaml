@@ -520,6 +520,16 @@ paths:
                   otp:
                     type: string
                     example: "123456"
+        "403":
+          description: Account is already active
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Account is already active"
         default:
           description: Unexpected error
           content:
@@ -559,6 +569,16 @@ paths:
                   verified:
                     type: boolean
                     example: true
+        "401":
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid or expired OTP"
         default:
           description: Unexpected error
           content:
