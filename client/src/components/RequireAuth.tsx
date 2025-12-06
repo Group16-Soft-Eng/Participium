@@ -79,4 +79,17 @@ const RequireAdmin: React.FC<RequireAuthProps> = ({ children }) => {
   return children;
 };
 
-export { RequireCitizen, RequireLogin, RequireTechnical, RequirePublicRelations, RequireAdmin };
+const RequireExternalMaintainer: React.FC<RequireAuthProps> = ({ children }) => {
+  const role = getRole();
+  const token = getToken();
+  const location = useLocation();
+
+  // require that a token exists and role is 'external_maintainer'
+  if (!token || role !== 'external_maintainer') {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+
+export { RequireCitizen, RequireLogin, RequireTechnical, RequirePublicRelations, RequireAdmin, RequireExternalMaintainer };

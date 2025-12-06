@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup } from '@mui/material';
 import ReportDetailDialog from '../components/ReportDetailDialog';
 import { getMyAssignedReports, updateReportStatus } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
@@ -18,16 +18,13 @@ const getCategoryColor = (category?: string): string => {
   return (category && CATEGORY_COLORS[category.toLowerCase()]) || '#6b7280';
 };
 
-const TechnicalOfficerPage: React.FC = () => {
+const ExternalMaintainersPage: React.FC = () => {
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selected, setSelected] = useState<OfficerReport | null>(null);
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState('');
   const [snackSeverity, setSnackSeverity] = useState<'success'|'error'|'info'>('success');
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [selectedReportForAssignment, setSelectedReportForAssignment] = useState<OfficerReport | null>(null);
-  const [selectedMaintainer, setSelectedMaintainer] = useState('');
   
 
   useEffect(() => {
@@ -56,34 +53,6 @@ const TechnicalOfficerPage: React.FC = () => {
       setSnackOpen(true);
     }
   };
-
-  const handleOpenAssignDialog = (report: OfficerReport) => {
-    setSelectedReportForAssignment(report);
-    setSelectedMaintainer('');
-    setAssignDialogOpen(true);
-  };
-
-  const handleCloseAssignDialog = () => {
-    setAssignDialogOpen(false);
-    setSelectedReportForAssignment(null);
-    setSelectedMaintainer('');
-  };
-
-  const handleAssignToMaintainer = () => {
-    // TODO: API call will be implemented here
-    console.log('Assigning report', selectedReportForAssignment?.id, 'to maintainer', selectedMaintainer);
-    setSnackMessage('Assignment functionality will be implemented with API');
-    setSnackSeverity('info');
-    setSnackOpen(true);
-    handleCloseAssignDialog();
-  };
-
-  // Mock data for external maintainers - will be replaced with API call
-  const externalMaintainers = [
-    { id: 1, email: 'maintainer1@example.com' },
-    { id: 2, email: 'maintainer2@example.com' },
-    { id: 3, email: 'maintainer3@example.com' },
-  ];
 
   // group reports by category for a compact overview
   const grouped = reports.reduce((acc: Record<string, OfficerReport[]>, r) => {
@@ -142,7 +111,6 @@ const TechnicalOfficerPage: React.FC = () => {
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                           <TableCell align="right">
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                            <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
                             <ButtonGroup size="small" variant="contained">
                               <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                               <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
@@ -190,7 +158,6 @@ const TechnicalOfficerPage: React.FC = () => {
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
                               <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                              <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
                               <ButtonGroup size="small" variant="contained">
                                 <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                                 <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
@@ -215,47 +182,8 @@ const TechnicalOfficerPage: React.FC = () => {
       </Snackbar>
 
       <ReportDetailDialog open={selected !== null} report={selected} onClose={() => setSelected(null)} />
-
-      <Dialog open={assignDialogOpen} onClose={handleCloseAssignDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          Choose the officer to assign the report to
-          {selectedReportForAssignment && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {selectedReportForAssignment.title}
-            </Typography>
-          )}
-        </DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
-          <Typography variant="body2" gutterBottom>
-            Available Officers for {selectedReportForAssignment?.category || 'unknown'} office:
-          </Typography>
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel id="maintainer-select-label">Select an officer</InputLabel>
-            <Select
-              labelId="maintainer-select-label"
-              value={selectedMaintainer}
-              label="Select an officer"
-              onChange={(e) => setSelectedMaintainer(e.target.value)}
-            >
-              {externalMaintainers.map((maintainer) => (
-                <MenuItem key={maintainer.id} value={maintainer.email}>
-                  {maintainer.email}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleAssignToMaintainer} variant="contained" disabled={!selectedMaintainer}>
-            ASSIGN
-          </Button>
-          <Button onClick={handleCloseAssignDialog} variant="outlined">
-            CLOSE
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };
 
-export default TechnicalOfficerPage;
+export default ExternalMaintainersPage;

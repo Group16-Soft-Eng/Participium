@@ -66,6 +66,35 @@ async function officerLogin(credentials: Credentials) {
     }
 }
 
+async function maintainerLogin(credentials: Credentials) {
+
+    const bodyObject = {
+        email: credentials.username, // Backend expects 'email' field for maintainers
+        password: credentials.password
+    }
+
+    try {
+        const response = await fetch(URI + `/auth/maintainers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(bodyObject)
+        })
+        
+        if (response.ok) {
+            const token = await response.json();
+            return token;
+        } else {
+            const err = await response.text()
+            console.error('maintainerLogin - Error response:', err);
+            throw new Error(err || 'Maintainer login failed');
+        }
+    } catch (error) {
+        console.error('maintainerLogin - Network or parse error:', error);
+        throw error;
+    }
+}
+
 type User = {
     username: string;
     firstName: string;
@@ -344,5 +373,5 @@ async function markNotificationAsRead(notificationId: number): Promise<{ id: num
 }
 
 
-export { static_ip_address, userLogin, userRegister, officerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead };
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead };
 export type { Notification };

@@ -13,10 +13,11 @@ import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
 import OfficerMessagesPage from './pages/OfficerMessagesPage';
 import MessagesPage from './pages/MessagesPage';
-import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePublicRelations } from './components/RequireAuth';
+import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePublicRelations, RequireExternalMaintainer } from './components/RequireAuth';
 import { AdminScreen } from './pages/AdminPage';
 import { NotificationProvider } from './contexts/NotificationContext';
 import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
+import ExternalMaintainersPage from './pages/ExternalMaintainersPage';
 import { UserPage } from './pages/UserPage';
 
 function App() {
@@ -33,7 +34,8 @@ function App() {
   const isAdmin = auth.role === 'municipal_administrator';
   const isPROfficer = auth.role === 'municipal_public_relations_officer' || auth.role === 'municipal_public_relations_officer';
   const isTechnicalOfficer = auth.role === 'technical_office_staff';
-  const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';
+  const isExternalMaintainer = auth.role === 'external_maintainer';
+  const isOfficer = isPROfficer || isTechnicalOfficer || isExternalMaintainer || auth.role === 'officer';
 
     return (
     <NotificationProvider>
@@ -105,6 +107,23 @@ function App() {
                     }}
                   >
                     Technical Workspace
+                  </Button>
+                ) : isExternalMaintainer ? (
+                  <Button
+                    component={Link}
+                    to="/external-maintainer"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    Maintainer Workspace
                   </Button>
                 ) : (
                   <Button
@@ -188,6 +207,7 @@ function App() {
             <Route path="/officer/messages" element={<RequireTechnical><OfficerMessagesPage /></RequireTechnical>} />
             <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
             <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
+            <Route path="/external-maintainer" element={<RequireExternalMaintainer><ExternalMaintainersPage /></RequireExternalMaintainer>} />
           </Routes>
         </Box>
 
