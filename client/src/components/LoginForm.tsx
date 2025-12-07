@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Container, Snackbar, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { useState } from "react";
-import { userLogin, officerLogin, getUserProfile } from "../API/API";
+import { userLogin, officerLogin, maintainerLogin, getUserProfile } from "../API/API";
 import { setToken, setRole, getRoleFromToken, setPicture } from '../services/auth';
 import { useNavigate } from 'react-router-dom';
 
@@ -51,22 +51,33 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 navigate('/technical'); // default fallback
             }
         } catch (e) {
-            // if officer login failed, try user login
+            // if officer login failed, try maintainer login
             try {
-                const token = await userLogin(user);
+                const token = await maintainerLogin(user);
                 setToken(token);
                 const detected = getRoleFromToken(token);
-                const details = await getUserProfile();
-                setPicture(details.avatar);
-                setRole('citizen');
+                setRole(detected || 'maintainer');
                 window.dispatchEvent(new Event('authChange'));
                 setLoading(false);
-                navigate('/map');
-            } catch (err) {
-                setSnackMessage('Login failed. Please check your credentials.');
-                setSnackSeverity('error');
-                setSnackOpen(true);
-                setLoading(false);
+                navigate('/maintainer');
+            } catch (maintainerErr) {
+                // if maintainer login failed, try user login
+                try {
+                    const token = await userLogin(user);
+                    setToken(token);
+                    const detected = getRoleFromToken(token);
+                    const details = await getUserProfile();
+                    setPicture(details.avatar);
+                    setRole('citizen');
+                    window.dispatchEvent(new Event('authChange'));
+                    setLoading(false);
+                    navigate('/map');
+                } catch (err) {
+                    setSnackMessage('Login failed. Please check your credentials.');
+                    setSnackSeverity('error');
+                    setSnackOpen(true);
+                    setLoading(false);
+                }
             }
         }
     }

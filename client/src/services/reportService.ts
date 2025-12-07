@@ -142,3 +142,53 @@ export function getOfficeForCategory(category?: string) {
   if (c.includes('green') || c.includes('park')) return 'Office 3';
   return 'Office 3';
 }
+
+export interface Maintainer {
+  id: number;
+  name: string;
+  email: string;
+  categories: string[];
+  active: boolean;
+}
+
+export async function getMaintainersByCategory(category: string): Promise<Maintainer[]> {
+  try {
+    // Normalize category to lowercase to match OfficeType enum values
+    const normalizedCategory = category.toLowerCase();
+    const res = await api.get<Maintainer[]>(`/maintainers/by-category/${normalizedCategory}`);
+    return res.data;
+  } catch (e) {
+    console.error('Error fetching maintainers by category:', e);
+    return [];
+  }
+}
+
+export async function assignReportToMaintainer(reportId: number, maintainerId: number): Promise<boolean> {
+  try {
+    await api.post('/officers/assign-report', { reportId, maintainerId });
+    return true;
+  } catch (e) {
+    console.error('Error assigning report to maintainer:', e);
+    return false;
+  }
+}
+
+export async function getMaintainerAssignedReports(): Promise<OfficerReport[]> {
+  try {
+    const res = await api.get<OfficerReport[]>('/maintainers/assigned');
+    return res.data;
+  } catch (e) {
+    console.error('Error fetching maintainer assigned reports:', e);
+    return [];
+  }
+}
+
+export async function updateReportStatusByMaintainer(reportId: number, status: ReportState, reason?: string): Promise<boolean> {
+  try {
+    await api.patch(`/maintainers/reports/${reportId}/status`, { state: status, reason });
+    return true;
+  } catch (e) {
+    console.error('Error updating report status by maintainer:', e);
+    return false;
+  }
+}
