@@ -54,7 +54,7 @@ router.patch("/reviewdocs/:id", authenticateToken, requireUserType([OfficerRole.
 
 // Assign report to a maintainer (coerente con OfficerRoutes)
 router.post("/assign-report", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF]), async (req, res, next) => {
-  try {
+    try {
     const { reportId, maintainerId } = req.body;
     await assignReportToMaintainer(Number(reportId), Number(maintainerId));
     res.status(200).json({ message: "Report assigned to maintainer" });

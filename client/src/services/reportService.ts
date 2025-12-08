@@ -27,7 +27,7 @@ export interface OfficerReport {
 
 export async function getAssignedReports(): Promise<OfficerReport[]> {
   try {
-    const res = await api.get<OfficerReport[]>('/officers/retrievedocs');
+    const res = await api.get<OfficerReport[]>('/publics/retrievedocs');
     return res.data;
   } catch (e) {
     console.error('Error fetching assigned reports:', e);

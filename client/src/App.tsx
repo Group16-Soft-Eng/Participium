@@ -167,11 +167,11 @@ function App() {
               {/* Show different button based on user role */}
               {isOfficer ? (
                 isPROfficer ? (
-                  <PROfficerButton />
+                  <PublicRelationsButton/>
                 ) : isTechnicalOfficer ? (
-                  <TechnicalOfficerButton />
+                  <OfficerButton technical={true} />
                 ) : (
-                  <PublicRelationsButton />
+                  <OfficerButton technical={false} />
                 )
               ) : isMaintainer ? (
                 <Button

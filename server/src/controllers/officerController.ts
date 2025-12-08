@@ -7,7 +7,7 @@ import { ReportRepository } from "@repositories/ReportRepository";
 import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
 import { ReportState } from "@models/enums/ReportState";
 import { NotificationRepository } from "@repositories/NotificationRepository";
-import { NotificationDAO} from "@models/dao/NotificationDAO"
+import { NotificationDAO } from "@models/dao/NotificationDAO"
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
 import { stat } from "fs";
@@ -46,6 +46,10 @@ export async function createOfficer(officerDto: Officer): Promise<Officer> {
     officerDto.email!,
     officerDto.password!, // plain qui
   );
+
+  await officerRepo.updateOfficerRoles(createdOfficer.id, [
+    { role: firstRole.role as OfficerRole, office: (firstRole.office as OfficeType) ?? null }
+  ]);
 
   const extraRoles = (officerDto.roles ?? []).slice(1).map(r => ({
     role: r.role as OfficerRole,
