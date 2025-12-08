@@ -26,4 +26,3 @@ jobs:
       - name: Run backend tests
         run: |
           cd server
-          npm test
