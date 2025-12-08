@@ -17,8 +17,22 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: Install server deps
+        working-directory: server
         run: npm ci
+
+      - name: Install client deps
+        working-directory: client
+        run: npm ci
+
+      # Genera coverage prima dello scan (adatta i comandi)
+      - name: Test server (with coverage)
+        working-directory: server
+        run: npm run test:coverage || npm test || true
+
+      - name: Test client (with coverage)
+        working-directory: client
+        run: npm run test:coverage || npm test || true
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
