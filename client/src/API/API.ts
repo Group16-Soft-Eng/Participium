@@ -10,7 +10,13 @@ type Credentials = {
     password: string;
 };
 
-async function userLogin(credentials: Credentials) {
+
+type UserCredentials = {
+    username: string;
+    password: string;
+};
+
+async function userLogin(credentials: UserCredentials) {
 
     const bodyObject = {
         username: credentials.username,
@@ -121,6 +127,51 @@ async function userRegister(user: User) {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(user)
+    });
+    if (response.ok) {
+        return true;
+    }
+    else {
+        const err = await response.text()
+
+        const match = err.match(/<pre>(.*?)<\/pre>/i);
+
+        const errorType = match ? match[1] : response.statusText;
+        
+        throw new Error(`${response.status} ${errorType}`);
+    }
+}
+
+async function generateOtp(email: string) {
+
+    const response = await fetch(URI + `/users/generateotp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email })
+    });
+    if (response.ok) {
+        return true;
+    }
+    else {
+        const err = await response.text()
+
+        const match = err.match(/<pre>(.*?)<\/pre>/i);
+
+        const errorType = match ? match[1] : response.statusText;
+        
+        throw new Error(`${response.status} ${errorType}`);
+    }
+}
+
+
+async function verifyOtp(code: string, email: string) {
+
+    const response = await fetch(URI + `/users/verifyotp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ code, email })
     });
     if (response.ok) {
         return true;
@@ -374,5 +425,5 @@ async function markNotificationAsRead(notificationId: number): Promise<{ id: num
 }
 
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead };
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp };
 export type { Notification };

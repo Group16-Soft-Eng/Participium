@@ -45,10 +45,7 @@ function App() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {/* small inline logo */}
               <Box className="app-logo" component={Link} to="/map" sx={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                  <circle cx="12" cy="12" r="10" fill="#1976d2" />
-                  <text x="12" y="16" textAnchor="middle" fontSize="12" fontFamily="Poppins, sans-serif" fill="#fff" fontWeight="600">P</text>
-                </svg>
+                <img src="/assets/StemmaTorino.svg" width="34" height="34" alt="Participium logo" />
               </Box>
 
               
