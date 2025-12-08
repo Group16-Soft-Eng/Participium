@@ -1,19 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, GeoJSON } from 'react-leaflet';
 import L, { LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Report } from '../types/report';
 import '../CssMap/MapWithPin.css';
 import { useNavigate } from 'react-router-dom';
 import { getRole, getToken } from '../../services/auth';
+// @ts-ignore
+import turinData from '../../data/turin_boundaries.json';
 
 const TURIN_COORDINATES: [number, number] = [45.0703, 7.6600];
 
-// Torino main city boundaries (tighter bounds)
-const TURIN_BOUNDS = new LatLngBounds(
-  [45.0100, 7.6200],  // Southwest corner
-  [45.1300, 7.7500]   // Northeast corner
-);
+// Get Turin bounds from the actual boundary data
+const getTurinBounds = () => {
+  const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
+  if (cityBoundary?.boundingbox) {
+    const [minLat, maxLat, minLon, maxLon] = cityBoundary.boundingbox.map(Number);
+    return new LatLngBounds(
+      [minLat, minLon],  // Southwest corner
+      [maxLat, maxLon]   // Northeast corner
+    );
+  }
+};
+
+const TURIN_BOUNDS = getTurinBounds();
+
+// Create mask data to dim area outside Turin
+const getTurinMask = () => {
+  const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
+  if (!cityBoundary?.geojson) return null;
+
+  const geo = cityBoundary.geojson;
+  
+  // Larger bounding box covering area around Turin [Lon, Lat]
+  const outerCoords = [
+    [6.50, 46.60], // Top Left
+    [9.30, 46.60], // Top Right
+    [9.30, 44.00], // Bottom Right
+    [6.50, 44.00], // Bottom Left
+    [6.50, 46.60]  // Close the polygon
+  ];
+
+  let cityCoords: any[] = [];
+
+  // Extract coordinates based on geometry type
+  if (geo.type === 'Polygon') {
+    cityCoords = (geo.coordinates as any)[0];
+  } else if (geo.type === 'MultiPolygon') {
+    // Take the main polygon (first one)
+    cityCoords = (geo.coordinates as any)[0][0];
+  }
+
+  // Create mask: outer box with Turin boundary as a hole
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [outerCoords, cityCoords]
+    }
+  };
+};
 
 const createClusterIcon = (count: number) => {
   return L.divIcon({
@@ -64,7 +110,46 @@ const createHighlightPinIcon = () => {
   });
 };
 
+// Check if a point is within Turin's boundaries
+const isPointInTurin = (lat: number, lng: number): boolean => {
+  const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
+  if (!cityBoundary?.geojson) return false;
 
+  const geo = cityBoundary.geojson;
+  let coords: number[][][] = [];
+
+  // Extract coordinates based on geometry type
+  if (geo.type === 'Polygon') {
+    return isPointInPolygon([lng, lat], geo.coordinates as any);
+  } else if (geo.type === 'MultiPolygon') {
+    // Check all polygons in the multipolygon
+    for (const polygon of geo.coordinates as any) {
+      if (isPointInPolygon([lng, lat], polygon)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  return coords.length > 0 ? isPointInPolygon([lng, lat], coords) : false;
+};
+
+// Helper function to check if point is in polygon using ray casting algorithm
+const isPointInPolygon = (point: number[], polygon: number[][][]): boolean => {
+  const [x, y] = point;
+  const ring = polygon[0]; // Use outer ring
+  let inside = false;
+
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1];
+    const xj = ring[j][0], yj = ring[j][1];
+
+    const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+};
 
 function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedId?: string | null }) {
   const map = useMap();
@@ -78,6 +163,16 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
   useMapEvents({
     click(e) {
       const p = { lat: e.latlng.lat, lng: e.latlng.lng };
+      
+      // Check if the point is within Turin boundaries
+      if (!isPointInTurin(p.lat, p.lng)) {
+        L.popup()
+          .setLatLng(e.latlng)
+          .setContent('<div style="text-align: center; padding: 8px;"><strong>⚠️ Invalid Location</strong><br/>You have to choose a location within the city of Turin</div>')
+          .openOn(map);
+        return;
+      }
+      
       setPinned(p);
       try {
         localStorage.setItem('pendingReportLocation', JSON.stringify([p.lat, p.lng]));
@@ -312,6 +407,25 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
   const center = initialCenter || TURIN_COORDINATES;
   const zoom = initialZoom || 13;
   
+  // Get the city boundary for rendering
+  const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
+  const maskData = getTurinMask();
+  
+  const maskStyle = {
+    color: 'transparent',
+    fillColor: '#001c50',
+    fillOpacity: 0.2,
+    interactive: false
+  };
+  
+  const boundaryStyle = {
+    color: '#0a2c6bff',
+    weight: 3,
+    opacity: 1,
+    fillOpacity: 0,
+    interactive: false
+  };
+  
   return (
     <div style={{ height: 'calc(100vh - 64px)', width: '100%' }}>
       <MapContainer 
@@ -319,13 +433,27 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
         zoom={zoom}
         maxBounds={TURIN_BOUNDS}
         maxBoundsViscosity={1.0}
-        minZoom={14}
-        maxZoom={18}
+        minZoom={13.2}
+        maxZoom={20}
         style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {maskData && (
+          <GeoJSON 
+            key="turin-mask"
+            data={maskData as any} 
+            style={maskStyle}
+          />
+        )}
+        {cityBoundary && (
+          <GeoJSON 
+            key={cityBoundary.osm_id} 
+            data={cityBoundary.geojson as any} 
+            style={boundaryStyle}
+          />
+        )}
         {initialCenter && initialZoom && <MapController center={initialCenter} zoom={initialZoom} />}
         <ClusteringLayer reports={reports} selectedId={selectedId} />
         {highlightLocation && (

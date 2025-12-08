@@ -1,18 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, GeoJSON } from 'react-leaflet';
 import { LatLng, LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import '../CssMap/MapWithPin.css';
 import type { Report } from '../types/report';
+// @ts-ignore
+import turinData from '../../data/turin_boundaries.json';
 
 const TURIN_COORDINATES: [number, number] = [45.0703, 7.6600];
 
-// Torino main city boundaries (tighter bounds)
-const TURIN_BOUNDS = new LatLngBounds(
-  [45.0100, 7.6200],  // Southwest corner
-  [45.1300, 7.7500]   // Northeast corner
-);
+// Get Turin bounds from the actual boundary data
+const getTurinBounds = () => {
+  const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
+  if (cityBoundary?.boundingbox) {
+    const [minLat, maxLat, minLon, maxLon] = cityBoundary.boundingbox.map(Number);
+    return new LatLngBounds(
+      [minLat, minLon],  // Southwest corner
+      [maxLat, maxLon]   // Northeast corner
+    );
+  }
+};
+
+const TURIN_BOUNDS = getTurinBounds();
+
+// Create mask data to dim area outside Turin
+const getTurinMask = () => {
+  const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
+  if (!cityBoundary?.geojson) return null;
+
+  const geo = cityBoundary.geojson;
+  
+  // Larger bounding box covering area around Turin [Lon, Lat]
+  const outerCoords = [
+    [6.50, 46.60], // Top Left
+    [9.30, 46.60], // Top Right
+    [9.30, 44.00], // Bottom Right
+    [6.50, 44.00], // Bottom Left
+    [6.50, 46.60]  // Close the polygon
+  ];
+
+  let cityCoords: any[] = [];
+
+  // Extract coordinates based on geometry type
+  if (geo.type === 'Polygon') {
+    cityCoords = (geo.coordinates as any)[0];
+  } else if (geo.type === 'MultiPolygon') {
+    // Take the main polygon (first one)
+    cityCoords = (geo.coordinates as any)[0][0];
+  }
+
+  // Create mask: outer box with Turin boundary as a hole
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [outerCoords, cityCoords]
+    }
+  };
+};
 
 const CATEGORY_COLORS: Record<string, string> = {
   infrastructure: '#8b5cf6',
@@ -36,6 +82,46 @@ const createCustomIcon = (category: string | undefined, status?: 'pending' | 'in
   });
 };
 
+// Check if a point is within Turin's boundaries
+const isPointInTurin = (lat: number, lng: number): boolean => {
+  const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
+  if (!cityBoundary?.geojson) return false;
+
+  const geo = cityBoundary.geojson;
+
+  // Extract coordinates based on geometry type
+  if (geo.type === 'Polygon') {
+    return isPointInPolygon([lng, lat], geo.coordinates as any);
+  } else if (geo.type === 'MultiPolygon') {
+    // Check all polygons in the multipolygon
+    for (const polygon of geo.coordinates as any) {
+      if (isPointInPolygon([lng, lat], polygon)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  return false;
+};
+
+// Helper function to check if point is in polygon using ray casting algorithm
+const isPointInPolygon = (point: number[], polygon: number[][][]): boolean => {
+  const [x, y] = point;
+  const ring = polygon[0]; // Use outer ring
+  let inside = false;
+
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1];
+    const xj = ring[j][0], yj = ring[j][1];
+
+    const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+};
+
 interface MapWithPinProps {
   onLocationSelect: (lat: number, lng: number) => void;
   initialPosition?: [number, number];
@@ -51,19 +137,62 @@ function LocationMarker({
   selectedPosition?: [number, number] | null;
 }) {
   const [position, setPosition] = useState<LatLng | null>(null);
+  const [address, setAddress] = useState<string>('Loading address...');
+  const markerRef = React.useRef<L.Marker>(null);
 
   // Sync with external selectedPosition
   useEffect(() => {
     if (selectedPosition) {
       setPosition({ lat: selectedPosition[0], lng: selectedPosition[1] } as LatLng);
+      fetchAddress(selectedPosition[0], selectedPosition[1]);
     }
   }, [selectedPosition]);
+
+  // Open popup automatically when marker is created or position changes
+  useEffect(() => {
+    if (markerRef.current && position) {
+      markerRef.current.openPopup();
+    }
+  }, [position, address]);
+
+  const fetchAddress = async (lat: number, lng: number) => {
+    try {
+      setAddress('Loading address...');
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+      );
+      const data = await response.json();
+      
+      if (data.address) {
+        const street = data.address.road || '';
+        const houseNumber = data.address.house_number || '';
+        const addressLine = houseNumber && street ? `${street}, ${houseNumber}` : street || data.display_name;
+        setAddress(addressLine);
+      } else {
+        setAddress(data.display_name || 'Address not found');
+      }
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      setAddress('Unable to fetch address');
+    }
+  };
 
   const map = useMapEvents({
     click: (e) => {
       const { lat, lng } = e.latlng;
+      
+      // Check if the point is within Turin boundaries
+      if (!isPointInTurin(lat, lng)) {
+        L.popup()
+          .setLatLng(e.latlng)
+          .setContent('<div style="text-align: center; padding: 8px;"><strong>⚠️ Invalid Location</strong><br/>You have to choose a location within the city of Turin</div>')
+          .openOn(map);
+        return;
+      }
+      
       setPosition(e.latlng);
       onLocationSelect(lat, lng);
+      fetchAddress(lat, lng);
       try {
         localStorage.setItem('pendingReportLocation', JSON.stringify([lat, lng]));
       } catch (err) {
@@ -74,12 +203,12 @@ function LocationMarker({
   });
 
   return position === null ? null : (
-    <Marker position={position}>
-      <Popup>
+    <Marker position={position} ref={markerRef}>
+      <Popup autoClose={false} closeOnClick={false} closeButton={false}>
         <div className="location-popup">
           <strong>📍 Selected Location</strong><br />
-          Latitude: {position.lat.toFixed(6)}<br />
-          Longitude: {position.lng.toFixed(6)}<br />
+          <strong>Address:</strong> {address}<br />
+          <strong>Coordinates:</strong> {position.lat.toFixed(6)}, {position.lng.toFixed(6)}<br />
           <em>Fill out the form to complete your report</em>
         </div>
       </Popup>
@@ -89,7 +218,6 @@ function LocationMarker({
 
 const MapWithPin: React.FC<MapWithPinProps> = ({ 
   onLocationSelect, 
-  initialPosition = TURIN_COORDINATES,
   reports = [],
   selectedPosition
 }) => {
@@ -103,21 +231,55 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
     });
   };
 
+  // Get the city boundary for rendering
+  const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
+  const maskData = getTurinMask();
+  
+  const maskStyle = {
+    color: 'transparent',
+    fillColor: '#001c50',
+    fillOpacity: 0.2,
+    interactive: false
+  };
+  
+  const boundaryStyle = {
+    color: '#0a2c6bff',
+    weight: 3,
+    opacity: 1,
+    fillOpacity: 0,
+    interactive: false
+  };
+
   return (
     <div className="map-container">
       <MapContainer
-        center={selectedPosition || initialPosition}
-        zoom={14}
+        center={TURIN_COORDINATES}
+        zoom={13}
         maxBounds={TURIN_BOUNDS}
         maxBoundsViscosity={1.0}
-        minZoom={14}
-        maxZoom={18}
+        minZoom={13.2}
+        maxZoom={20}
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        
+        {maskData && (
+          <GeoJSON 
+            key="turin-mask"
+            data={maskData as any} 
+            style={maskStyle}
+          />
+        )}
+        {cityBoundary && (
+          <GeoJSON 
+            key={cityBoundary.osm_id} 
+            data={cityBoundary.geojson as any} 
+            style={boundaryStyle}
+          />
+        )}
         
         <LocationMarker onLocationSelect={onLocationSelect} selectedPosition={selectedPosition} />
         
