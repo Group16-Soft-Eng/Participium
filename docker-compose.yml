@@ -21,7 +21,7 @@ services:
       - NODE_ENV=production
       - PORT=5000
       - DB_TYPE=sqlite
-      - DB_NAME=/usr/src/app/participium.db
+      - DB_NAME=/usr/src/app/db/participium.db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=CHANGE_ME_IN_PRODUCTION
@@ -39,7 +39,7 @@ services:
       start_period: 30s
     volumes:
       - ./server/uploads:/usr/src/app/uploads
-      -  ./server/participium.db:/usr/src/app/participium.db
+      - ./server/db:/usr/src/app/db
     restart: unless-stopped
     networks:
       - participium-network
