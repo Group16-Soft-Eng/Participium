@@ -23,7 +23,7 @@ Ensure that Docker is running in background, then open the project folder and ru
 docker-compose up --build
 ```
 
-### 3. Running the Application
+### Running the Application
 
 To start the application, run:
 ```powershell
@@ -40,6 +40,11 @@ To stop the application, run:
 ```powershell
 docker-compose down
 ```
+
+### Admin setup
+The database is preloaded with an admin account, with credentials:
+- Username: admin
+- Password: admin
 
 ## User Roles
 

@@ -21,6 +21,7 @@ export class ReportRepository {
   async getApprovedReports(): Promise<ReportDAO[]> {
     return this.repo.find({
       where: [
+        
         { state: ReportState.ASSIGNED },
         { state: ReportState.IN_PROGRESS },
         { state: ReportState.SUSPENDED }
@@ -58,6 +59,14 @@ export class ReportRepository {
     return this.repo.find({
       where: { 
         assignedOfficerId: officerId
+      },
+      relations: ["author"]
+    });
+  }
+  async getReportsByMaintainerId(maintainerId: number): Promise<ReportDAO[]> {
+    return this.repo.find({
+      where: { 
+        assignedMaintainerId: maintainerId
       },
       relations: ["author"]
     });
@@ -116,6 +125,13 @@ export class ReportRepository {
   async assignReportToOfficer(reportId: number, officerId: number): Promise<ReportDAO> {
     const report = await this.getReportById(reportId);
     report.assignedOfficerId = officerId;
+    report.state = ReportState.ASSIGNED;
+    return this.repo.save(report);
+  }
+
+  async assignReportToMaintainer(reportId: number, maintainerId: number): Promise<ReportDAO> {
+    const report = await this.getReportById(reportId);
+    report.assignedMaintainerId = maintainerId;
     report.state = ReportState.ASSIGNED;
     return this.repo.save(report);
   }

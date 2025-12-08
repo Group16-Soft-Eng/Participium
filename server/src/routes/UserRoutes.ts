@@ -1,9 +1,11 @@
 import {Router} from "express";
-import {loginOfficer} from "@controllers/authController"
-import {createUser,logoutUser, getMyProfile, updateMyProfile} from "@controllers/userController"
+import {createUser,logoutUser, getMyProfile, updateMyProfile, activateAccount, isActive} from "@controllers/userController"
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import { UserFromJSON } from "@dto/User";
 import { uploadAvatar } from "@middlewares/uploadMiddleware";
+import { sendMail } from "@services/mailService";
+import { generateOtp, verifyOtp, clearOtp } from "@services/otpService";
+
 const router = Router({mergeParams : true});
 
 
@@ -72,5 +74,46 @@ router.get("/me/info", authenticateToken, async (req, res, next) => {
     next(err);
   }
 });
+
+router.post("/generateotp", async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Provide email" });
+    }
+    const active = await isActive(email);
+    if (active) {
+      return res.status(400).json({ error: "Account is already active" });
+    }
+    const code = await generateOtp(email);
+    await sendMail({
+      to: email,
+      subject: "Your Participium OTP code",
+      text: `OTP code: ${code} (valid for 5 minutes)`,
+      html: `<p>OTP code: <b>${code}</b></p><p>Valid for 5 minutes.</p>`,
+    });
+
+    return res.status(200).json({ sent: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/verifyotp", async (req, res, next) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ error: "Provide email and code" });
+    }
+
+    const ok = await verifyOtp(email, code);
+    if (!ok) return res.status(401).json({ valid: false, error: "Invalid or expired OTP" });
+    await activateAccount(email);
+    return res.status(200).json({ valid: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 export {router as userRouter};

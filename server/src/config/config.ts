@@ -26,20 +26,32 @@ export const CONFIG = {
     .map(
       (file) =>
         require(path.join(DB_ENTITIES_PATH, file))[
-          Object.keys(require(path.join(DB_ENTITIES_PATH, file)))[0]
+        Object.keys(require(path.join(DB_ENTITIES_PATH, file)))[0]
         ]
     ),
 
   SWAGGER_FILE_PATH: path.resolve(__dirname, "../../api/openapi.json"),
+  SMTP_CONFIG: {
+    HOST: "smtp.gmail.com",
+    PORT: 587, // STARTTLS
+    USER: "participium.g16@gmail.com",
+    PASS: "dipbicxsehqbzedo ",
+    ALLOW_SELF_SIGNED: false
+  },
+
+
 
   ROUTES: {
     V1_SWAGGER: APP_V1_BASE_URL + "/doc",
     V1_AUTH: APP_V1_BASE_URL + "/auth",
     V1_USERS: APP_V1_BASE_URL + "/users",
     V1_OFFICERS: APP_V1_BASE_URL + "/officers",
+    V1_MAINTAINERS: APP_V1_BASE_URL + "/maintainers",
     V1_REPORTS: APP_V1_BASE_URL + "/reports",
     V1_INFO_TYPES: APP_V1_BASE_URL + "/info-types",
     V1_NOTIFICATIONS: APP_V1_BASE_URL + "/notifications",
+    V1_PUBLICS: APP_V1_BASE_URL + "/publics",
+    V1_ADMIN: APP_V1_BASE_URL + "/admin"
   },
 
   REDIS_HOST: process.env.REDIS_HOST || "localhost",

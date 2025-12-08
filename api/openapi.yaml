@@ -10,10 +10,16 @@ info:
 tags:
   - name: Auth
   - name: Info
+  - name: Admin
+    description: Admin operations
+  - name: Public Relation Officer
+    description: Public relation operations
+  - name: Technical Officers
+    description: Office personnel
+  - name: Maintainers
+    description: External maintainers
   - name: Users
     description: Operations about user
-  - name: Officers
-    description: Office personnel
   - name: Reports
     description: Reports Operation
   - name: Telegram
@@ -82,6 +88,159 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /admin/maintainers:
+      post:
+        tags:
+          - Admin
+        summary: Admin creates a maintainer
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  password:
+                    type: string
+                  categories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OfficeType"
+                  active:
+                    type: boolean
+                required:
+                  - name
+                  - email
+                  - password
+                  - categories
+        responses:
+          "200":
+            description: successful operation
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Maintainer"
+          default:
+            description: Unexpected error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+  /maintainers/list:
+      get:
+        tags:
+          - Maintainers
+        summary: Officers lists all maintainers
+        responses:
+          "200":
+            description: successful operation
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Maintainer"
+          default:
+            description: Unexpected error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+  /maintainers/by-category/{officeType}:
+      get:
+        tags:
+          - Maintainers
+        summary: List maintainers by office type
+        parameters:
+          - in: path
+            name: officeType
+            required: true
+            schema:
+              $ref: "#/components/schemas/OfficeType"
+        responses:
+          "200":
+            description: successful operation
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Maintainer"
+          default:
+            description: Unexpected error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+  /admin/maintainers/{id}:
+      patch:
+        tags:
+          - Admin
+        summary: Admin updates a maintainer
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: integer
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Maintainer"
+        responses:
+          "200":
+            description: successful operation
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Maintainer"
+          default:
+            description: Unexpected error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+  /officers/assign-report:
+      post:
+        tags:
+          - Technical Officers
+        summary: Assign a report to a maintainer
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reportId:
+                    type: integer
+                  maintainerId:
+                    type: integer
+                required:
+                  - reportId
+                  - maintainerId
+        responses:
+          "200":
+            description: successful operation
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+          default:
+            description: Unexpected error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
   /auth/officers:
     post:
       tags:
@@ -141,6 +300,130 @@ paths:
                 example: token
         "400":
           description: Invalid username/password supplied
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  
+  
+  /auth/maintainers:
+    post:
+      tags:
+        - Auth
+      summary: Logs maintainer into the system.
+      description: Log into the system.
+      operationId: loginMaintainer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: maintainer@example.com
+                password:
+                  type: string
+                  format: password
+                  example: secure_word
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string    
+      responses:
+        "200":
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/xml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+        "401":
+          description: Invalid email/password supplied
+        default:
+          description: Unexpected error
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+  /maintainers/assigned:
+    get:
+      tags:
+        - Maintainers
+      summary: Maintainer retrieves assigned reports
+      description: Returns all reports assigned to the authenticated maintainer.
+      operationId: getAssignedReportsMaintainer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /maintainers/reports/{id}/status:
+    patch:
+      tags:
+        - Maintainers
+      summary: Maintainer updates the status of an assigned report
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                state:
+                  $ref: "#/components/schemas/State"
+                reason:
+                  type: string
+              required:
+                - state
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  state:
+                    $ref: "#/components/schemas/State"
         default:
           description: Unexpected error
           content:
@@ -207,6 +490,102 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /users/generateotp:
+    post:
+      tags:
+        - Users
+      summary: Generate OTP for user
+      description: Generate a One-Time Password (OTP) for the user to enhance security during sensitive operations.
+      operationId: generateOtp
+      requestBody:
+        description: User information for OTP generation
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+              required:
+                - email
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  otp:
+                    type: string
+                    example: "123456"
+        "403":
+          description: Account is already active
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Account is already active"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"    
+
+
+  /users/verifyotp:
+    post:
+      tags:
+        - Users
+      summary: Verify OTP for user
+      description: Verify the One-Time Password (OTP) provided by the user to confirm their identity.
+      operationId: verifyOtp
+      requestBody:
+        description: User information for OTP verification
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                otp:
+                  type: string
+                  example: "123456"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified:
+                    type: boolean
+                    example: true
+        "401":
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid or expired OTP"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /users/me:
     get:
       tags:
@@ -277,10 +656,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /officers:
+  /admin:
     post:
       tags:
-        - Officers
+        - Admin
       summary: Admins create new Officer
       operationId: createOfficer
       requestBody:
@@ -311,10 +690,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /officers/retrievedocs:
+  /publics/retrievedocs:
     get:
       tags:
-        - Officers
+        - Public Relation Officer
       summary: Retrieve Reports assigned to him, only the pending ones
       description: Using the session key, the officer is able to retrieve the docs assigned to him.
       operationId: retrieveDocs
@@ -324,7 +703,7 @@ paths:
           description: successful operation
           content:
             application/json:
-              schema:
+              schema: 
                 $ref: "#/components/schemas/Report"
         default:
           description: Unexpected error
@@ -335,7 +714,7 @@ paths:
   /officers/assigned:
     get:
       tags:
-        - Officers
+        - Technical Officers
       summary: Retrieve reports assigned to the authenticated officer
       description: Returns all reports whose `assignedOfficerId` equals the authenticated officer id.
       operationId: getAssignedReports
@@ -357,7 +736,7 @@ paths:
   /officers/OfficerByOfficeType/{officeType}:
     get:
       tags:
-        - Officers
+        - Technical Officers
       summary: Retrieve reports assigned to the authenticated officer
       description: Only for admin or Public officers.
       operationId: getOfficerByOfficeType
@@ -379,7 +758,7 @@ paths:
   /officers/reviewdocs/{id_doc}:
     patch:
       tags:
-        - Officers
+        - Technical Officers
       summary: Update Report assigned to him
       operationId: reviewDoc
       parameters:
@@ -413,11 +792,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /officers/assign-report:
+  /publics/assign-report:
     post:
       tags:
-        - Officers
-      summary: Admins assign new document to an officer
+        - Public Relation Officer
+      summary: Public Relation Officer assign new document to an officer
       operationId: assignReport
       requestBody:
         description: Assign report to Officer
@@ -541,6 +920,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+                 
   /notifications:
     get:
       tags:
@@ -633,6 +1013,127 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /admin/role/add:
+    patch:
+      tags:
+        - Admin
+      summary: Admin updates officer roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                officerId:
+                  type: integer
+                roles:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      officerRole:
+                        $ref: '#/components/schemas/OfficerRole'
+                      officeType:
+                        $ref: '#/components/schemas/OfficeType'
+              required:
+                - officerId
+                - roles
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /admin/role/remove:
+    patch:
+      tags:
+        - Admin
+      summary: Admin updates officer roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                officerId:
+                  type: integer
+                roles:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      officerRole:
+                        $ref: '#/components/schemas/OfficerRole'
+                      officeType:
+                        $ref: '#/components/schemas/OfficeType'
+              required:
+                - officerId
+                - roles
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /admin/officers:
+    get:
+      tags:
+        - Admin
+      summary: Admin lists all officers
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      tags:
+        - Admin
+      summary: Admin updates officer info
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Officer"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     OfficeType:
@@ -682,22 +1183,23 @@ components:
       properties:
         id:
           type: integer
-          format: int64
+        username:
+          type: string
         name:
           type: string
         surname:
           type: string
         email:
           type: string
-          format: mail
-        password:
-          type: string
-          minLength: 6
-          maxLength: 15
-        Role:
-          $ref: "#/components/schemas/OfficerRole"
-        Office:
-          $ref: "#/components/schemas/OfficeType"
+        roles:  # Array invece di singolo
+          type: array
+          items:
+            type: object
+            properties:
+              officerRole:
+                $ref: '#/components/schemas/OfficerRole'
+              officeType:
+                $ref: '#/components/schemas/OfficeType'
     Location:
       type: object
       properties:
@@ -742,6 +1244,9 @@ components:
                 type: string
               minItems: 1
               maxItems: 3
+        assignedMaintainerId:
+          type: integer
+          nullable: true
     ReportState:
       type: object
       properties:
@@ -775,6 +1280,23 @@ components:
           type: string
           format: date-time
         read:
+          type: boolean
+    Maintainer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/OfficeType"
+        active:
           type: boolean
     ApiResponse:
       type: object

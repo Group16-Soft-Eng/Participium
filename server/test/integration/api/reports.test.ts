@@ -239,7 +239,7 @@ describe("Reports API Integration Tests", () => {
       expect(Array.isArray(response.body)).toBe(true);
       // Tutti i report restituiti devono essere APPROVED
       if (response.body.length > 0) {
-        expect(response.body.every((r: any) => r.state === ReportState.APPROVED)).toBe(true);
+        expect(response.body.every((r: any) => r.state === ReportState.ASSIGNED)).toBe(true);
       }
     });
 

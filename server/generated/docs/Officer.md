@@ -1,6 +1,4 @@
-
 # Officer
-
 
 ## Properties
 
@@ -8,12 +6,11 @@ Name | Type
 ------------ | -------------
 `id` | number
 `username` | string
-`firstname` | string
-`lastname` | string
+`name` | string
+`surname` | string
 `email` | string
 `password` | string
-`role` | [OfficerRole](OfficerRole.md)
-`office` | [OfficeType](OfficeType.md)
+`roles` | Array<{ role: OfficerRole; office: OfficeType }>
 
 ## Example
 
@@ -21,26 +18,20 @@ Name | Type
 import type { Officer } from ''
 
 // TODO: Update the object below with actual values
-const example = {
-  "id": null,
-  "username": null,
-  "name": null,
-  "surname": null,
-  "email": null,
-  "password": null,
-  "role": null,
-  "office": null,
-} satisfies Officer
+const example: Officer = {
+  id: 1,
+  username: "m.rossi",
+  name: "Mario",
+  surname: "Rossi",
+  email: "mario.rossi@example.com",
+  password: undefined, // nel DTO non esponiamo la password
+  roles: [
+    { role: "technical_office_staff", office: "infrastructure" },
+    { role: "municipal_public_relations_officer", office: "organization" }
+  ],
+};
 
-console.log(example)
-
-// Convert the instance to a JSON string
-const exampleJSON: string = JSON.stringify(example)
-console.log(exampleJSON)
-
-// Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as Officer
-console.log(exampleParsed)
+console.log(JSON.stringify(example))
 ```
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

@@ -3,7 +3,7 @@
 **/.env
 **/.vite/
 **/uploads/
-/server/participium.db
 /telegram/photos
 __pycache__/
 venv/
+**/participium.db

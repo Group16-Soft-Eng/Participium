@@ -20,6 +20,9 @@ export class UserDAO {
   @Column({ unique: true, nullable: false })
   email!: string;
 
+  @Column({type: "boolean", default: false })
+  isActive!: boolean;
+
   @Column({ type: "text", nullable: true })
   avatar!: string | null;
 

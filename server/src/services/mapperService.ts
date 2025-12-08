@@ -6,6 +6,12 @@ import { ReportDAO } from "@dao/ReportDAO";
 import { User } from "@dto/User";
 import { Officer } from "@dto/Officer";
 import { Report } from "@dto/Report";
+import { OfficerRole as ModelOfficerRole } from "@models/enums/OfficerRole";
+import { OfficeType as ModelOfficeType } from "@models/enums/OfficeType";
+
+// Usa gli enum del DTO per tipizzare il risultato
+import { OfficerRole as DtoOfficerRole } from "@dto/OfficerRole";
+import { OfficeType as DtoOfficeType } from "@dto/OfficeType";
 
 /**
  * DAO -> DTO: User
@@ -35,9 +41,13 @@ export function mapOfficerDAOToDTO(dao: OfficerDAO): Officer {
     name: dao.name,
     surname: dao.surname,
     email: dao.email,
-    role: dao.role as any,
-    office: dao.office as any,
-    // Non restituiamo mai la password in DTO!
+    roles: (dao.roles ?? []).map(r => ({
+      // converte tra enum di model -> enum di dto
+      role: (r.officerRole as unknown as DtoOfficerRole) as DtoOfficerRole,
+      office: r.officeType == null
+        ? null
+        : ((r.officeType as unknown as DtoOfficeType) as DtoOfficeType)
+    })),
     password: undefined
   };
 }
@@ -57,8 +67,7 @@ export function mapReportDAOToDTO(dao: ReportDAO): Report {
     document: {
       description: dao.document?.Description,
       photos: dao.document?.Photos
-    }
-    ,
+    },
     state: dao.state,
     assignedOfficerId: dao.assignedOfficerId ?? undefined,
     reason: dao.reason ?? undefined

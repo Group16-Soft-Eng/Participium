@@ -8,6 +8,9 @@ import { OfficerRole } from "@models/enums/OfficerRole";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { NotificationRepository } from "@repositories/NotificationRepository";
 import { OfficerRepository } from "@repositories/OfficerRepository";
+import { MaintainerRepository } from "@repositories/MaintainerRepository";
+import { OfficeType } from "@models/enums/OfficeType";
+import { get } from "http";
 
 const router = Router({mergeParams : true});
 
@@ -39,12 +42,12 @@ router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, asy
     }
 });
 
-router.get("/", async(req, res, next) =>{
+router.get("/",authenticateToken, async(req, res, next) =>{
     try{
         // Check if user is authenticated
         const authHeader = req.headers.authorization;
         let result;
-        
+        /*
         if (authHeader && authHeader.startsWith('Bearer ')) {
             // User is authenticated - check if it's an officer
             try {
@@ -69,8 +72,8 @@ router.get("/", async(req, res, next) =>{
         } else {
             // No authentication - show all approved reports (public)
             result = await getReports();
-        }
-        
+        }*/
+        result = await getReports();
         res.status(200).json(result);
     }
     catch(error)

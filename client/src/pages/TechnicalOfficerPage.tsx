@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import ReportDetailDialog from '../components/ReportDetailDialog';
-import { getMyAssignedReports, updateReportStatus } from '../services/reportService';
-import type { OfficerReport } from '../services/reportService';
+import { getMyAssignedReports, updateReportStatus, getMaintainersByCategory, assignReportToMaintainer } from '../services/reportService';
+import type { OfficerReport, Maintainer } from '../services/reportService';
 
 // Category colors matching the map (kept small and consistent)
 const CATEGORY_COLORS: Record<string, string> = {
@@ -25,6 +25,11 @@ const TechnicalOfficerPage: React.FC = () => {
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState('');
   const [snackSeverity, setSnackSeverity] = useState<'success'|'error'|'info'>('success');
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedReportForAssignment, setSelectedReportForAssignment] = useState<OfficerReport | null>(null);
+  const [selectedMaintainerId, setSelectedMaintainerId] = useState<number | null>(null);
+  const [maintainers, setMaintainers] = useState<Maintainer[]>([]);
+  const [loadingMaintainers, setLoadingMaintainers] = useState(false);
   
 
   useEffect(() => {
@@ -52,6 +57,44 @@ const TechnicalOfficerPage: React.FC = () => {
       setSnackSeverity('error');
       setSnackOpen(true);
     }
+  };
+
+  const handleOpenAssignDialog = async (report: OfficerReport) => {
+    setSelectedReportForAssignment(report);
+    setSelectedMaintainerId(null);
+    setAssignDialogOpen(true);
+    
+    // Fetch maintainers for this report's category
+    if (report.category) {
+      setLoadingMaintainers(true);
+      const fetchedMaintainers = await getMaintainersByCategory(report.category);
+      setMaintainers(fetchedMaintainers);
+      setLoadingMaintainers(false);
+    }
+  };
+
+  const handleCloseAssignDialog = () => {
+    setAssignDialogOpen(false);
+    setSelectedReportForAssignment(null);
+    setSelectedMaintainerId(null);
+    setMaintainers([]);
+  };
+
+  const handleAssignToMaintainer = async () => {
+    if (!selectedReportForAssignment || !selectedMaintainerId) return;
+    
+    const success = await assignReportToMaintainer(selectedReportForAssignment.id, selectedMaintainerId);
+    if (success) {
+      setSnackMessage('Report successfully assigned to external maintainer');
+      setSnackSeverity('success');
+      setSnackOpen(true);
+      fetchAssigned(); // Refresh the list
+    } else {
+      setSnackMessage('Failed to assign report to maintainer');
+      setSnackSeverity('error');
+      setSnackOpen(true);
+    }
+    handleCloseAssignDialog();
   };
 
   // group reports by category for a compact overview
@@ -111,6 +154,7 @@ const TechnicalOfficerPage: React.FC = () => {
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                           <TableCell align="right">
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                            <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
                             <ButtonGroup size="small" variant="contained">
                               <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                               <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
@@ -158,6 +202,7 @@ const TechnicalOfficerPage: React.FC = () => {
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
                               <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                              <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
                               <ButtonGroup size="small" variant="contained">
                                 <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                                 <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
@@ -182,6 +227,55 @@ const TechnicalOfficerPage: React.FC = () => {
       </Snackbar>
 
       <ReportDetailDialog open={selected !== null} report={selected} onClose={() => setSelected(null)} />
+
+      <Dialog open={assignDialogOpen} onClose={handleCloseAssignDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Assign to External Maintainer
+          {selectedReportForAssignment && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Report: {selectedReportForAssignment.title}
+            </Typography>
+          )}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Typography variant="body2" gutterBottom>
+            Available External Maintainers for {selectedReportForAssignment?.category || 'unknown'} category:
+          </Typography>
+          {loadingMaintainers ? (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              Loading maintainers...
+            </Typography>
+          ) : maintainers.length === 0 ? (
+            <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+              No maintainers available for this category
+            </Typography>
+          ) : (
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel id="maintainer-select-label">Select a maintainer</InputLabel>
+              <Select
+                labelId="maintainer-select-label"
+                value={selectedMaintainerId || ''}
+                label="Select a maintainer"
+                onChange={(e) => setSelectedMaintainerId(Number(e.target.value))}
+              >
+                {maintainers.map((maintainer) => (
+                  <MenuItem key={maintainer.id} value={maintainer.id}>
+                    {maintainer.name} ({maintainer.email})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleAssignToMaintainer} variant="contained" disabled={!selectedMaintainerId || loadingMaintainers}>
+            ASSIGN
+          </Button>
+          <Button onClick={handleCloseAssignDialog} variant="outlined">
+            CLOSE
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

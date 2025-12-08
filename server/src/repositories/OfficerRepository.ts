@@ -3,6 +3,7 @@
 import { AppDataSource } from "@database";
 import { Repository } from "typeorm";
 import { OfficerDAO } from "@dao/OfficerDAO";
+import { RoleDAO } from "@dao/RoleDAO";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
 import { findOrThrowNotFound, throwConflictIfFound } from "@utils/utils";
@@ -11,20 +12,28 @@ import { hashPassword } from "@services/authService";
 
 export class OfficerRepository {
   private repo: Repository<OfficerDAO>;
+  private roleRepo: Repository<RoleDAO>;
 
   constructor() {
     this.repo = AppDataSource.getRepository(OfficerDAO);
+    this.roleRepo = AppDataSource.getRepository(RoleDAO);
   }
 
   async getAllOfficers(): Promise<OfficerDAO[]> {
-    return this.repo.find();
+    return this.repo.find({ relations: ["roles"] });
   }
+
   async getAdminOfficers(): Promise<OfficerDAO[]> {
-    return this.repo.find({ where: { role: OfficerRole.MUNICIPAL_ADMINISTRATOR } });
+    return this.repo
+      .createQueryBuilder("officer")
+      .leftJoinAndSelect("officer.roles", "role")
+      .where("role.officerRole = :admin", { admin: OfficerRole.MUNICIPAL_ADMINISTRATOR })
+      .getMany();
   }
+
   async getOfficerByEmail(email: string): Promise<OfficerDAO> {
     return findOrThrowNotFound(
-      await this.repo.find({ where: { email } }),
+      await this.repo.find({ where: { email }, relations: ["roles"] }),
       () => true,
       `Officer with email '${email}' not found`
     );
@@ -32,20 +41,22 @@ export class OfficerRepository {
 
   async getOfficerById(id: number): Promise<OfficerDAO> {
     return findOrThrowNotFound(
-      await this.repo.find({ where: { id } }),
+      await this.repo.find({ where: { id }, relations: ["roles"] }),
       () => true,
       `Officer with id '${id}' not found`
     );
   }
 
   async getOfficersByUsername(username: string): Promise<OfficerDAO[]> { 
-    return this.repo.find({ where: { username } });
+    return this.repo.find({ where: { username }, relations: ["roles"] });
   }
-  
-
 
   async getOfficersByOffice(office: OfficeType): Promise<OfficerDAO[]> {
-    return this.repo.find({ where: { office } });
+    return this.repo
+      .createQueryBuilder("officer")
+      .leftJoinAndSelect("officer.roles", "role")
+      .where("role.officeType = :office", { office })
+      .getMany();
   }
 
   async createOfficer(
@@ -54,8 +65,7 @@ export class OfficerRepository {
     surname: string,
     email: string,
     plainPassword: string,
-    role: OfficerRole,
-    office: OfficeType
+    roles?: { role: OfficerRole; office: OfficeType | null }[], // nuovo parametro opzionale
   ): Promise<OfficerDAO> {
     // Check if email already exists
     throwConflictIfFound(
@@ -71,17 +81,34 @@ export class OfficerRepository {
     }
     const hashedPassword = await hashPassword(plainPassword);
 
-    return this.repo.save({
+    const officer = this.repo.create({
       username,
       name,
       surname,
       email,
-      password: hashedPassword,
-      role,
-      office
+      password: hashedPassword
     });
-  }
 
+    const savedOfficer = await this.repo.save(officer);
+
+    // Crea tutti i ruoli se forniti
+    if (roles && roles.length > 0) {
+      const roleDAOs = roles
+        .filter(r => r.role != null) // office può essere null, role no
+        .map(r =>
+          this.roleRepo.create({
+            officer: savedOfficer,
+            officerRole: r.role,
+            officeType: r.office ?? null,
+          })
+        );
+      if (roleDAOs.length > 0) {
+        await this.roleRepo.save(roleDAOs);
+      }
+    }
+
+    return this.getOfficerById(savedOfficer.id);
+  }
 
   async updateOfficer(
     id: number,
@@ -89,21 +116,65 @@ export class OfficerRepository {
     name: string,
     surname: string,
     email: string,
-    role: OfficerRole,
-    office: OfficeType
+    role?: OfficerRole,
+    office?: OfficeType
   ): Promise<OfficerDAO> {
     const officerToUpdate = await this.getOfficerById(id);
-
 
     officerToUpdate.username = username;
     officerToUpdate.name = name;
     officerToUpdate.surname = surname;
     officerToUpdate.email = email;
-    officerToUpdate.password = officerToUpdate.password; // keep existing password
-    officerToUpdate.role = role;
-    officerToUpdate.office = office;
 
-    return this.repo.save(officerToUpdate);
+    await this.repo.save(officerToUpdate);
+
+    // Se è stato passato un ruolo/ufficio, rimpiazza i ruoli con quello
+    if (role != null && office != null) {
+      await this.roleRepo
+        .createQueryBuilder()
+        .delete()
+        .from(RoleDAO)
+        .where("officerID = :id", { id })
+        .execute();
+
+      const roleDAO = this.roleRepo.create({
+        officer: officerToUpdate,
+        officerRole: role,
+        officeType: office
+      });
+
+      await this.roleRepo.save(roleDAO);
+    }
+
+    return this.getOfficerById(id);
+  }
+
+  // Variante opzionale per aggiornare multi-ruolo
+  async updateOfficerRoles(
+    id: number,
+    roles: { role: OfficerRole; office: OfficeType | null }[]
+  ): Promise<OfficerDAO> {
+    const officer = await this.getOfficerById(id);
+
+    await this.roleRepo
+      .createQueryBuilder()
+      .delete()
+      .from(RoleDAO)
+      .where("officerID = :id", { id })
+      .execute();
+
+    if (roles?.length) {
+      const roleDAOs = roles.map(r =>
+        this.roleRepo.create({
+          officer,
+          officerRole: r.role,
+          officeType: r.office ?? null,
+        })
+      );
+      await this.roleRepo.save(roleDAOs);
+    }
+
+    return this.getOfficerById(id);
   }
 
   async deleteOfficer(email: string): Promise<void> {

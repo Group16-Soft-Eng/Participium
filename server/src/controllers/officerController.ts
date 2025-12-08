@@ -20,7 +20,6 @@ export async function getAllOfficers(): Promise<Officer[]> {
 
 export async function getAllOfficersByOfficeType(officeType: string): Promise<Officer[]> {
   const officerRepo = new OfficerRepository();
-  //converte officeType da string a OfficeType
   const officeTypeEnum = officeType as OfficeType;
   const officers = await officerRepo.getOfficersByOffice(officeTypeEnum);
   return officers.map(mapOfficerDAOToDTO);
@@ -32,69 +31,141 @@ export async function getOfficer(email: string): Promise<Officer> {
   return mapOfficerDAOToDTO(officer);
 }
 
-
 export async function createOfficer(officerDto: Officer): Promise<Officer> {
   const officerRepo = new OfficerRepository();
+
+  const firstRole = officerDto.roles?.[0];
+  if (!firstRole) {
+    throw new Error("At least one role is required to create an officer");
+  }
+
   const createdOfficer = await officerRepo.createOfficer(
     officerDto.username!,
     officerDto.name!,
     officerDto.surname!,
     officerDto.email!,
-    officerDto.password!, // come per user, plain password qui, poi hashed
-    officerDto.role as any,
-    officerDto.office as any
+    officerDto.password!, // plain qui
   );
-  return mapOfficerDAOToDTO(createdOfficer);
-}
 
+  const extraRoles = (officerDto.roles ?? []).slice(1).map(r => ({
+    role: r.role as OfficerRole,
+    office: (r.office as OfficeType) ?? null, // forza null se non presente
+  }));
+  if (extraRoles.length > 0) {
+    await officerRepo.updateOfficerRoles(createdOfficer.id, [
+      { role: firstRole.role as OfficerRole, office: (firstRole.office as OfficeType) ?? null },
+      ...extraRoles,
+    ]);
+  }
+
+  const finalOfficer = await officerRepo.getOfficerById(createdOfficer.id);
+  return mapOfficerDAOToDTO(finalOfficer);
+}
 
 export async function updateOfficer(officerDto: Officer): Promise<Officer> {
   const officerRepo = new OfficerRepository();
-  const updatedOfficer = await officerRepo.updateOfficer(
+
+  const officer = await officerRepo.updateOfficer(
     officerDto.id!,
     officerDto.username!,
     officerDto.name!,
     officerDto.surname!,
     officerDto.email!,
-    officerDto.role as any,
-    officerDto.office as any
+    (officerDto.roles?.[0]?.role as OfficerRole) ?? OfficerRole.TECHNICAL_OFFICE_STAFF,
+    ((officerDto.roles?.[0]?.office as OfficeType) ?? null) // passa null se assente
   );
-  return mapOfficerDAOToDTO(updatedOfficer);
+
+  if (officerDto.roles && officerDto.roles.length > 0) {
+    await officerRepo.updateOfficerRoles(officer.id, officerDto.roles.map(r => ({
+      role: r.role as OfficerRole,
+      office: (r.office as OfficeType) ?? null, // passa null
+    })));
+  }
+
+  const refreshed = await officerRepo.getOfficerById(officer.id);
+  return mapOfficerDAOToDTO(refreshed);
 }
 
+/**
+ * Aggiunge un ruolo all'officer senza rimuovere gli altri.
+ */
+export async function addRoleToOfficer(
+  officerId: number,
+  role: OfficerRole,
+  office?: OfficeType
+): Promise<Officer> {
+  const officerRepo = new OfficerRepository();
+  const current = await officerRepo.getOfficerById(officerId);
 
+  // Tipizza office come OfficeType | null
+  const currentRoles: { role: OfficerRole; office: OfficeType | null }[] =
+    (current.roles ?? []).map(r => ({
+      role: r.officerRole as OfficerRole,
+      office: (r.officeType as OfficeType) ?? null, // normalizza a null
+    }));
+
+  const normalizedOffice: OfficeType | null = office ?? null;
+  const exists = currentRoles.some(r => r.role === role && r.office === normalizedOffice);
+  if (!exists) {
+    currentRoles.push({ role, office: normalizedOffice }); // usa null se non fornito
+    await officerRepo.updateOfficerRoles(officerId, currentRoles);
+  }
+
+  const refreshed = await officerRepo.getOfficerById(officerId);
+  return mapOfficerDAOToDTO(refreshed);
+}
+
+/**
+ * Rimuove un ruolo specifico (coppia role+office) dall'officer.
+ */
+export async function removeRoleFromOfficer(
+  officerId: number,
+  role: OfficerRole,
+  office: OfficeType
+): Promise<Officer> {
+  const officerRepo = new OfficerRepository();
+  const current = await officerRepo.getOfficerById(officerId);
+
+  // Tipizza office come OfficeType | null per compatibilità
+  const filtered: { role: OfficerRole; office: OfficeType | null }[] =
+    (current.roles ?? [])
+      .map(r => ({
+        role: r.officerRole as OfficerRole,
+        office: (r.officeType as OfficeType) ?? null
+      }))
+      .filter(r => !(r.role === role && r.office === office));
+
+  await officerRepo.updateOfficerRoles(officerId, filtered);
+
+  const refreshed = await officerRepo.getOfficerById(officerId);
+  return mapOfficerDAOToDTO(refreshed);
+}
 
 export async function assignReportToOfficer(reportId: number, officerId: number): Promise<void> {
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
 
-  // Verifica che il report sia in stato PENDING
   const report = await reportRepo.getReportById(reportId);
   if (report.state !== ReportState.PENDING) {
     throw new Error("Only PENDING reports can be assigned");
   }
 
-  // Verifica che l'officer esista
   const officer = await officerRepo.getOfficerById(officerId);
   if (!officer) {
     throw new Error("Officer not found");
   }
 
-  // Assegna il report all'officer
   await reportRepo.assignReportToOfficer(reportId, officerId);
 }
 
 export async function retrieveDocs(officerId: number): Promise<Report[]> {
   const reportRepo = new ReportRepository();
 
-  // Get all PENDING reports that need review (not yet assigned or assigned to this officer)
   const allPending = await reportRepo.getReportsByState(ReportState.PENDING);
-  // filter: only unassigned or assigned to this officer
   const reports = allPending.filter(r => r.assignedOfficerId === null || r.assignedOfficerId === officerId);
 
   return reports.map(mapReportDAOToDTO);
 }
-
 
 export async function getAssignedReports(officerId: number): Promise<Report[]> {
   const reportRepo = new ReportRepository();
@@ -109,16 +180,13 @@ export async function getAllAssignedReportsOfficer(officerId: number): Promise<R
   return reports.map(mapReportDAOToDTO);
 }
 
-
 export async function reviewDoc(officerId: number, idDoc: number, state: ReportState, reason?: string): Promise<Report> {
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
   const notificationRepo = new NotificationRepository();
-  // Get the report
+
   const report = await reportRepo.getReportById(idDoc);
 
-  // Only check assignment if the report is already assigned
-  // PENDING reports that are not assigned can be reviewed by any officer
   if (report.assignedOfficerId !== null && report.assignedOfficerId !== officerId) {
     throw new Error("You can only review reports assigned to you");
   }
@@ -129,22 +197,20 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
     };
     throw new Error(JSON.stringify(payload));
   }
-  // update report state
+
   let updatedReport = await reportRepo.updateReportState(idDoc, state, reason);
 
-  // if approved, assign to an officer
+  // Se stato ASSIGNED, scegli un officer dell'ufficio della categoria
   if (state === ReportState.ASSIGNED) {
-    // find officers in the correct office (based on the report's category)
     const officers = await officerRepo.getOfficersByOffice(report.category as OfficeType);
 
     if (officers.length > 0) {
-      // Prefer an officer with the TECHNICAL_OFFICE_STAFF role for assignment
-      const preferred = officers.find(o => o.role === OfficerRole.TECHNICAL_OFFICE_STAFF) || officers[0];
+      // preferisci officer con almeno un ruolo TECHNICAL_OFFICE_STAFF
+      const preferred = officers.find(o => (o.roles ?? []).some(r => r.officerRole === OfficerRole.TECHNICAL_OFFICE_STAFF)) || officers[0];
       updatedReport = await reportRepo.assignReportToOfficer(idDoc, preferred.id);
     }
   }
 
-  // Create notification for status change (only if not anonymous)
   await notificationRepo.createStatusChangeNotification(updatedReport);
 
   return mapReportDAOToDTO(updatedReport);
