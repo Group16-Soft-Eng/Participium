@@ -301,8 +301,8 @@ const router = Router({mergeParams : true});
 router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, <span class="fstat-no" title="function not covered" >async(</span>req, res, next) =&gt;{
 <span class="cstat-no" title="statement not covered" >    try{</span>
         // Build DTO from multipart/form-data fields directly to avoid mismatches
-        const lat = <span class="cstat-no" title="statement not covered" >req.body.latitude ? parseFloat(req.body.latitude as string) : undefined;</span>
-        const lng = <span class="cstat-no" title="statement not covered" >req.body.longitude ? parseFloat(req.body.longitude as string) : undefined;</span>
+        const lat = <span class="cstat-no" title="statement not covered" >req.body.latitude ? Number.parseFloat(req.body.latitude as string) : undefined;</span>
+        const lng = <span class="cstat-no" title="statement not covered" >req.body.longitude ? Number.parseFloat(req.body.longitude as string) : undefined;</span>
 &nbsp;
         const reportData: any = <span class="cstat-no" title="statement not covered" >{</span>
             title: req.body.title || undefined,

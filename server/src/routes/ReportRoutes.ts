@@ -14,8 +14,8 @@ const router = Router({mergeParams : true});
 router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, async(req, res, next) =>{
     try{
         // Build DTO from multipart/form-data fields directly to avoid mismatches
-        const lat = req.body.latitude ? parseFloat(req.body.latitude as string) : undefined;
-        const lng = req.body.longitude ? parseFloat(req.body.longitude as string) : undefined;
+        const lat = req.body.latitude ? Number.parseFloat(req.body.latitude as string) : undefined;
+        const lng = req.body.longitude ? Number.parseFloat(req.body.longitude as string) : undefined;
 
         const reportData: any = {
             title: req.body.title || undefined,

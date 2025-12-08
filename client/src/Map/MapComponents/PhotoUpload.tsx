@@ -8,10 +8,10 @@ interface PhotoUploadProps {
   maxPhotos?: number;
 }
 
-const PhotoUpload: React.FC<PhotoUploadProps> = ({ 
-  photos, 
-  onPhotosChange, 
-  maxPhotos = 3 
+const PhotoUpload: React.FC<PhotoUploadProps> = ({
+  photos,
+  onPhotosChange,
+  maxPhotos = 3
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -29,11 +29,11 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
     }
     const remainingSlots = maxPhotos - photos.length;
     const filesToAdd = imageFiles.slice(0, remainingSlots);
-    
+
     if (filesToAdd.length > 0) {
       onPhotosChange([...photos, ...filesToAdd]);
     }
-    
+
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -61,7 +61,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     const remainingSlots = maxPhotos - photos.length;
     const filesToAdd = imageFiles.slice(0, remainingSlots);
-    
+
     if (filesToAdd.length > 0) {
       onPhotosChange([...photos, ...filesToAdd]);
     }
@@ -74,9 +74,16 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
       <label className="photo-upload-label">
         Photos ({photos.length}/{maxPhotos})
       </label>
-      
+
       {canAddMore && (
         <div
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              fileInputRef.current?.click();
+            }
+          }}
           className={`upload-area ${isDragOver ? 'upload-area-dragover' : ''}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}

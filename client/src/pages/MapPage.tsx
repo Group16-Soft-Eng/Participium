@@ -68,9 +68,9 @@ const MapPage: React.FC = () => {
     const zoom = searchParams.get('zoom');
 
     if (lat && lng) {
-      const location: [number, number] = [parseFloat(lat), parseFloat(lng)];
+      const location: [number, number] = [Number.parseFloat(lat), Number.parseFloat(lng)];
       setInitialCenter(location);
-      setInitialZoom(zoom ? parseInt(zoom) : 16);
+      setInitialZoom(zoom ? Number.parseInt(zoom) : 16);
       setHighlightLocation(location);
     }
   }, [searchParams]);

@@ -102,6 +102,6 @@ export function getUserIdFromToken(token: string | null): number | null {
   // Try common claim names for user ID
   if (data.userId) return Number(data.userId);
   if (data.id) return Number(data.id);
-  if (data.sub && !isNaN(Number(data.sub))) return Number(data.sub);
+  if (data.sub && !Number.isNaN(Number(data.sub))) return Number(data.sub);
   return null;
 }
