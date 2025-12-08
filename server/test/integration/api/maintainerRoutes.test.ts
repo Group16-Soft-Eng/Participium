@@ -224,7 +224,8 @@ describe("MaintainerRoutes Integration", () => {
     });
   });
 
-  describe("POST /maintainers/assign-report", () => {
+  //TODO: capire come cambiare la route da maintainers/assign-report a officers/assign-report (nello swagger è officers/assign-report) [cambiare quindi anche tutti i casi di test]
+  describe("POST /officers/assign-report", () => {
     it("dovrebbe assegnare un report a un maintainer", async () => {
       (MaintainerRepository.prototype.getMaintainerById as jest.Mock).mockResolvedValue({
         id: 1,
@@ -246,7 +247,7 @@ describe("MaintainerRoutes Integration", () => {
       }));
 
       const res = await request(app)
-        .post("/maintainers/assign-report")
+        .post("/officers/assign-report")
         .set("Authorization", `Bearer ${adminToken}`)
         .send({ reportId: 1, maintainerId: 1 });
 
@@ -256,10 +257,55 @@ describe("MaintainerRoutes Integration", () => {
 
     it("dovrebbe restituire errore 401 senza autenticazione", async () => {
       const res = await request(app)
-        .post("/maintainers/assign-report")
+        .post("/officers/assign-report")
         .send({ reportId: 1, maintainerId: 1 });
 
       expect(res.status).toBe(401);
+    });
+
+    //? PT-24: test per report non PENDING
+    it("dovrebbe restituire errore 400 se il report non è PENDING", async () => {
+      (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue({
+        id: 1, assignedMaintainerId: null, state: "ASSIGNED"
+      });
+      (MaintainerRepository.prototype.getMaintainerById as jest.Mock).mockResolvedValue({
+        id: 1, name: "Mario", categories: [OfficeType.INFRASTRUCTURE], active: true
+      });
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ reportId: 1, maintainerId: 1 });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    //? PT-24: test per maintainer non esistente
+    it("dovrebbe restituire errore 404 se il maintainer non esiste", async () => {
+      (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue({
+        id: 1, assignedMaintainerId: null, state: "PENDING"
+      });
+      (MaintainerRepository.prototype.getMaintainerById as jest.Mock).mockResolvedValue(null);
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ reportId: 1, maintainerId: 999 });
+
+      expect(res.status).toBe(404);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    //? PT-24: test per payload invalido
+    it("dovrebbe restituire errore 400 se il payload è invalido", async () => {
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ reportId: "not-a-number" });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty("error");
     });
 
     it("dovrebbe permettere anche a PR Officer di assegnare", async () => {
@@ -281,7 +327,7 @@ describe("MaintainerRoutes Integration", () => {
         });
 
       const res = await request(app)
-        .post("/maintainers/assign-report")
+        .post("/officers/assign-report")
         .set("Authorization", `Bearer ${prToken}`)
         .send({ reportId: 2, maintainerId: 2 });
 
