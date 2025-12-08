@@ -37,6 +37,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             // try to read role from token if available
             const detected = getRoleFromToken(token);
             setRole(detected);
+            console.log(token);
             window.dispatchEvent(new Event('authChange'));
             setLoading(false);
 

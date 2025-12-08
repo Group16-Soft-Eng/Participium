@@ -2,7 +2,7 @@ import { Alert, Box, Button, Container, FormControl, Grid, InputLabel, MenuItem,
 import './Forms.css';
 import { Form, useNavigate } from "react-router-dom";
 import { useActionState, useEffect, useState } from "react";
-import { getAvailableOfficerTypes, officerRegister, userLogin, userRegister } from "../API/API";
+import { getAvailableOfficerTypes, maintainerRegister, officerRegister, userLogin, userRegister } from "../API/API";
 import { setRole, setToken } from "../services/auth";
 
 interface AdminFormProps {
@@ -21,10 +21,10 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
 
     const [role, setRole] = useState("");
 
-    
+
     const [snackOpen, setSnackOpen] = useState(false);
     const [snackMessage, setSnackMessage] = useState('');
-    const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success'); 
+    const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
 
     useEffect(() => {
         const fetchOfficerTypes = async () => {
@@ -44,20 +44,39 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
     const [error, setError] = useState<string | null>(null);
 
     async function register(prevData: RegisterState, formData: FormData) {
+        let officer, maintainer;
+        const role = formData.get('role');
 
-        const officer = {
-            name: formData.get('name') as string,
-            surname: formData.get('surname') as string,
-            username: formData.get('username') as string,
-            email: formData.get('email') as string,
-            password: formData.get('password') as string,
-            Office: formData.get('office') as string,
-            Role: formData.get('role') as string
+        if (role === 'external_maintainer') {
+            maintainer = {
+                name: formData.get('name') as string,
+                email: formData.get('email') as string,
+                password: formData.get('password') as string,
+                categories: [
+                    formData.get('office') as string
+                ],
+                active: true
+            }
+        } else {
+            officer = {
+                name: formData.get('name') as string,
+                surname: formData.get('surname') as string,
+                username: formData.get('username') as string,
+                email: formData.get('email') as string,
+                password: formData.get('password') as string,
+                roles: [
+                    {
+                        office: formData.get('office') as string,
+                        role: formData.get('role') as string
+                    }
+                ] as { office: string; role: string }[]
+            }
+
+            if (officer.roles[0].role === 'municipal_public_relations_officer' || officer.roles[0].role === 'municipal_administrator') {
+                officer.roles[0].office = 'organization';
+            }
         }
 
-        if (officer.Role === 'municipal_public_relations_officer' || officer.Role === 'municipal_administrator') {
-            officer.Office = 'organization';
-        }
         if (formData.get('email') !== formData.get('cemail')) {
             setSnackMessage('Emails do not match');
             setSnackSeverity('error');
@@ -71,7 +90,11 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
             return { error: 'Passwords do not match' };
         }
         try {
-            await officerRegister(officer);
+            if (role === 'external_maintainer') {
+                await maintainerRegister(maintainer);
+            } else {
+                await officerRegister(officer);
+            }
             setSnackMessage('Officer registered successfully');
             setSnackSeverity('success');
             setSnackOpen(true);
@@ -135,11 +158,11 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                             </Select>
                         </Grid>
                     </FormControl>
-                    {role === 'technical_office_staff' && (
+                    {(role === 'technical_office_staff' || role === 'external_maintainer') && (
                         <FormControl fullWidth>
-                            <InputLabel id="office-select-label">Office</InputLabel>
+                            <InputLabel id="office-select-label">{role === 'technical_office_staff' ? 'Office' : 'Category'}</InputLabel>
                             <Grid size={12}>
-                                <Select id="office" name="office" label="Office" variant="outlined" fullWidth defaultValue={''} required> {
+                                <Select id="office" name="office" label={role === 'technical_office_staff' ? 'Office' : 'Category'} variant="outlined" fullWidth defaultValue={''} required> {
                                     officeTypes.map((type) => (<MenuItem key={type} value={type}>{type}</MenuItem>
                                     ))
                                 }

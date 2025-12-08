@@ -31,7 +31,7 @@ router.get("/by-category/:officeType", authenticateToken, requireUserType([Offic
   }
 });
 
-router.get("/assigned", authenticateToken, requireUserType(["MAINTAINER"]), async (req, res, next) => {
+router.get("/assigned", authenticateToken, requireUserType([OfficerRole.MAINTAINER]), async (req, res, next) => {
   try {
     const maintainerId = (req as any).user?.id;
     if (!maintainerId) return res.status(401).json({ error: "Unauthorized" });
@@ -43,7 +43,7 @@ router.get("/assigned", authenticateToken, requireUserType(["MAINTAINER"]), asyn
   }
 });
 
-router.patch("/reports/:id/status", authenticateToken, requireUserType(["MAINTAINER"]), async (req, res, next) => {
+router.patch("/reports/:id/status", authenticateToken, requireUserType([OfficerRole.MAINTAINER]), async (req, res, next) => {
   try {
     const reportId = Number(req.params.id);
     const maintainerId = (req as any).user?.id;

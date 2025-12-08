@@ -22,7 +22,7 @@ async function userLogin(credentials: UserCredentials) {
         username: credentials.username,
         password: credentials.password
     }
-    
+
     try {
         const response = await fetch(URI + `/auth/users`, {
             method: 'POST',
@@ -30,7 +30,7 @@ async function userLogin(credentials: UserCredentials) {
             credentials: 'include',
             body: JSON.stringify(bodyObject)
         })
-                
+
         if (response.ok) {
             const token = await response.json();
             return token;
@@ -58,7 +58,7 @@ async function officerLogin(credentials: Credentials) {
             credentials: 'include',
             body: JSON.stringify(bodyObject)
         })
-        
+
         if (response.ok) {
             const token = await response.json();
             return token;
@@ -87,7 +87,7 @@ async function maintainerLogin(credentials: Credentials) {
             credentials: 'include',
             body: JSON.stringify(bodyObject)
         })
-        
+
         if (response.ok) {
             const token = await response.json();
             return token;
@@ -115,8 +115,11 @@ type Officer = {
     name: string;
     surname: string;
     password: string;
-    Office: string;
-    Role: string;
+    roles:
+        {
+            office: string;
+            role: string;
+        }[];
 }
 
 
@@ -137,7 +140,7 @@ async function userRegister(user: User) {
         const match = err.match(/<pre>(.*?)<\/pre>/i);
 
         const errorType = match ? match[1] : response.statusText;
-        
+
         throw new Error(`${response.status} ${errorType}`);
     }
 }
@@ -159,7 +162,7 @@ async function generateOtp(email: string) {
         const match = err.match(/<pre>(.*?)<\/pre>/i);
 
         const errorType = match ? match[1] : response.statusText;
-        
+
         throw new Error(`${response.status} ${errorType}`);
     }
 }
@@ -182,12 +185,12 @@ async function verifyOtp(code: string, email: string) {
         const match = err.match(/<pre>(.*?)<\/pre>/i);
 
         const errorType = match ? match[1] : response.statusText;
-        
+
         throw new Error(`${response.status} ${errorType}`);
     }
 }
 
-async function officerRegister(officer: Officer) {
+async function officerRegister(officer: Officer | any) {
     const token = getToken();
 
     const headers: HeadersInit = {};
@@ -196,7 +199,7 @@ async function officerRegister(officer: Officer) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/officers`, {
+    const response = await fetch(URI + `/admin`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(officer)
@@ -210,7 +213,44 @@ async function officerRegister(officer: Officer) {
         const match = err.match(/<pre>(.*?)<\/pre>/i);
 
         const errorType = match ? match[1] : response.statusText;
-        
+
+        throw new Error(`${response.status} ${errorType}`);
+    }
+}
+
+type Maintainer = {
+    name: string;
+    email: string;
+    password: string;
+    categories:
+        string[];
+    active: boolean
+}
+
+async function maintainerRegister(maintainer: Maintainer | any) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/admin/maintainers`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(maintainer)
+    });
+    if (response.ok) {
+        return true;
+    }
+    else {
+        const err = await response.text()
+
+        const match = err.match(/<pre>(.*?)<\/pre>/i);
+
+        const errorType = match ? match[1] : response.statusText;
+
         throw new Error(`${response.status} ${errorType}`);
     }
 }
@@ -224,7 +264,7 @@ async function getAssignedReports() {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/officers/retrievedocs`, {
+    const response = await fetch(URI + `/publics/retrievedocs`, {
         method: 'GET',
         headers: headers,
     });
@@ -240,7 +280,7 @@ async function getAssignedReports() {
 
 async function getAvailableOfficerTypes() {
     const token = getToken();
-    
+
     const headers: HeadersInit = {};
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -306,7 +346,7 @@ async function updateUserProfile(updatedData: UpdatedData) {
     if (updatedData.avatar instanceof File) {
         formData.append("avatar", updatedData.avatar);
     }
-    
+
     const response = await fetch(URI + `/users/me`, {
         method: 'PATCH',
         headers: {
@@ -354,12 +394,12 @@ async function assignOfficer(reportId: number, officerId: number) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/officers/assign-report`, {
+    const response = await fetch(URI + `/publics/assign-report`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({ reportId, officerId }),
     });
-    
+
     if (response.ok) {
         return true;
     }
@@ -425,5 +465,5 @@ async function markNotificationAsRead(notificationId: number): Promise<{ id: num
 }
 
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp };
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister };
 export type { Notification };
