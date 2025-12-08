@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { getAssignedReports, reviewReport } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
 import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Snackbar, Alert, Dialog, DialogContent } from '@mui/material';
 import ReportDetailDialog from './ReportDetailDialog';
 import AssignOfficerDialog from './AssignOfficerDialog';
 import { Select, Container, Stack } from '@mui/material';
+import { CategoryFilter } from './filters';
+import type { ReportCategory } from './filters';
 
 interface RejectState {
   open: boolean;
@@ -37,6 +39,8 @@ const OfficerReview: React.FC = () => {
   const [snackMessage, setSnackMessage] = useState('');
   const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
   const [showingAssign, setShowingAssign] = useState(false);
+  // Filter state
+  const [categoryFilter, setCategoryFilter] = useState<ReportCategory | 'all' | null>('all');
 
   useEffect(() => {
     fetchReports();
@@ -105,6 +109,17 @@ const OfficerReview: React.FC = () => {
     setReject({ open: false, reportId: null, reason: '' });
   };
 
+  // Filtered reports based on category only
+  const filteredReports = useMemo(() => {
+    return reports.filter(report => {
+      // Category filter
+      if (categoryFilter && categoryFilter !== 'all' && report.category !== categoryFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [reports, categoryFilter]);
+
   return (
     <Box>
       <Typography variant="h5" gutterBottom>Pending Reports for Review</Typography>
@@ -116,6 +131,17 @@ const OfficerReview: React.FC = () => {
       )}
 
       {!loading && reports.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <CategoryFilter
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            variant="chips"
+            size="small"
+          />
+        </Box>
+      )}
+
+      {!loading && filteredReports.length > 0 && (
         <Paper elevation={1} sx={{ p: 2 }}>
           <TableContainer>
             <Table sx={{ minWidth: 650 }} size="medium">
@@ -130,7 +156,7 @@ const OfficerReview: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {reports.map((r) => (
+                {filteredReports.map((r) => (
                   <TableRow key={r.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell sx={{ width: 60, fontWeight: 'bold' }}>{r.id}</TableCell>
                     <TableCell>
@@ -165,6 +191,12 @@ const OfficerReview: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+        </Paper>
+      )}
+
+      {!loading && reports.length > 0 && filteredReports.length === 0 && (
+        <Paper elevation={1} sx={{ p: 3 }}>
+          <Typography variant="body1" color="text.secondary">No reports match the selected filters.</Typography>
         </Paper>
       )}
 

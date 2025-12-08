@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup, Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup, Dialog, DialogTitle, DialogContent, FormControl, InputLabel, Select, MenuItem, DialogActions } from '@mui/material';
 import ReportDetailDialog from '../components/ReportDetailDialog';
-import { getMyAssignedReports, updateReportStatus, getMaintainersByCategory, assignReportToMaintainer } from '../services/reportService';
-import type { OfficerReport, Maintainer } from '../services/reportService';
+import { assignReportToMaintainer, getMaintainersByCategory, getMyAssignedReports, updateReportStatus } from '../services/reportService';
+import type { Maintainer, OfficerReport } from '../services/reportService';
+import { CategoryFilter, StatusFilter, TECHNICAL_STATUSES } from '../components/filters';
+import type { ReportCategory, ReportStatus } from '../components/filters';
 
 // Category colors matching the map (kept small and consistent)
 const CATEGORY_COLORS: Record<string, string> = {
@@ -24,13 +26,16 @@ const TechnicalOfficerPage: React.FC = () => {
   const [selected, setSelected] = useState<OfficerReport | null>(null);
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState('');
-  const [snackSeverity, setSnackSeverity] = useState<'success'|'error'|'info'>('success');
+  const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedReportForAssignment, setSelectedReportForAssignment] = useState<OfficerReport | null>(null);
   const [selectedMaintainerId, setSelectedMaintainerId] = useState<number | null>(null);
   const [maintainers, setMaintainers] = useState<Maintainer[]>([]);
   const [loadingMaintainers, setLoadingMaintainers] = useState(false);
-  
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState<ReportStatus | 'all'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<ReportCategory | 'all' | null>('all');
+
 
   useEffect(() => {
     fetchAssigned();
@@ -63,7 +68,7 @@ const TechnicalOfficerPage: React.FC = () => {
     setSelectedReportForAssignment(report);
     setSelectedMaintainerId(null);
     setAssignDialogOpen(true);
-    
+
     // Fetch maintainers for this report's category
     if (report.category) {
       setLoadingMaintainers(true);
@@ -82,7 +87,7 @@ const TechnicalOfficerPage: React.FC = () => {
 
   const handleAssignToMaintainer = async () => {
     if (!selectedReportForAssignment || !selectedMaintainerId) return;
-    
+
     const success = await assignReportToMaintainer(selectedReportForAssignment.id, selectedMaintainerId);
     if (success) {
       setSnackMessage('Report successfully assigned to external maintainer');
@@ -97,8 +102,34 @@ const TechnicalOfficerPage: React.FC = () => {
     handleCloseAssignDialog();
   };
 
-  // group reports by category for a compact overview
-  const grouped = reports.reduce((acc: Record<string, OfficerReport[]>, r) => {
+  // Extract unique categories from officer's assigned reports (dynamic filtering)
+  const availableCategories = useMemo(() => {
+    const cats = new Set<ReportCategory>();
+    reports.forEach(r => {
+      if (r.category) {
+        cats.add(r.category as ReportCategory);
+      }
+    });
+    return Array.from(cats);
+  }, [reports]);
+
+  // Filtered reports based on status and category
+  const filteredReports = useMemo(() => {
+    return reports.filter(report => {
+      // Status filter
+      if (statusFilter !== 'all' && report.state !== statusFilter) {
+        return false;
+      }
+      // Category filter
+      if (categoryFilter && categoryFilter !== 'all' && report.category !== categoryFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [reports, statusFilter, categoryFilter]);
+
+  // group filtered reports by category for a compact overview
+  const grouped = filteredReports.reduce((acc: Record<string, OfficerReport[]>, r) => {
     const key = (r.category || 'other').toString();
     if (!acc[key]) acc[key] = [];
     acc[key].push(r);
@@ -119,6 +150,26 @@ const TechnicalOfficerPage: React.FC = () => {
         {!loading && reports.length === 0 && <Typography>No reports assigned to you.</Typography>}
 
         {!loading && reports.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: 2 }}>
+              <StatusFilter
+                value={statusFilter}
+                onChange={setStatusFilter}
+                statuses={TECHNICAL_STATUSES}
+                variant="tabs"
+              />
+            </Box>
+            <CategoryFilter
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+              availableCategories={availableCategories}
+              variant="chips"
+              size="small"
+            />
+          </Box>
+        )}
+
+        {!loading && filteredReports.length > 0 && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {singleCategory ? (
               // single category: show one chip and a single table
@@ -140,14 +191,14 @@ const TechnicalOfficerPage: React.FC = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {reports.map(r => (
+                      {filteredReports.map(r => (
                         <TableRow key={r.id} hover>
                           <TableCell sx={{ width: 60 }}>{r.id}</TableCell>
                           <TableCell>{r.title}</TableCell>
                           <TableCell>
-                            <Chip 
-                              label={r.state || 'ASSIGNED'} 
-                              size="small" 
+                            <Chip
+                              label={r.state || 'ASSIGNED'}
+                              size="small"
                               color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
                             />
                           </TableCell>
@@ -193,9 +244,9 @@ const TechnicalOfficerPage: React.FC = () => {
                             <TableCell sx={{ width: 60 }}>{r.id}</TableCell>
                             <TableCell>{r.title}</TableCell>
                             <TableCell>
-                              <Chip 
-                                label={r.state || 'ASSIGNED'} 
-                                size="small" 
+                              <Chip
+                                label={r.state || 'ASSIGNED'}
+                                size="small"
                                 color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
                               />
                             </TableCell>
@@ -218,6 +269,10 @@ const TechnicalOfficerPage: React.FC = () => {
               ))
             )}
           </Box>
+        )}
+
+        {!loading && reports.length > 0 && filteredReports.length === 0 && (
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>No reports match the selected filters.</Typography>
         )}
       </Paper>
       <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
