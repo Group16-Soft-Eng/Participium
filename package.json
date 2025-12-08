@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "test:backend": "jest server --runInBand"
+  },
   "devDependencies": {
     "@types/jest": "^30.0.0"
   }
