@@ -20,15 +20,123 @@ import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
 import ExternalMaintainersPage from './pages/ExternalMaintainer';
 import { UserPage } from './pages/UserPage';
 
+function PROfficerButton() {
+  return <Button
+    component={Link}
+    to="/officer"
+    variant="contained"
+    color="primary"
+    sx={{
+      px: 2.2,
+      py: 0.7,
+      borderRadius: 2,
+      textTransform: 'none',
+      fontWeight: 700,
+      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+    }}
+  >
+    Review Reports
+  </Button>
+}
+
+function TechnicalOfficerButton() {
+  return <Button
+    component={Link}
+    to="/technical"
+    variant="contained"
+    color="primary"
+    sx={{
+      px: 2.2,
+      py: 0.7,
+      borderRadius: 2,
+      textTransform: 'none',
+      fontWeight: 700,
+      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+    }}
+  >
+    Technical Workspace
+  </Button>
+}
+
+function PublicRelationsButton() {
+  return <Button
+    component={Link}
+    to="/officer"
+    variant="contained"
+    color="primary"
+    sx={{
+      px: 2.2,
+      py: 0.7,
+      borderRadius: 2,
+      textTransform: 'none',
+      fontWeight: 700,
+      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+    }}
+  >
+    Review Reports
+  </Button>
+}
+
+type ButtonProps = {
+  isLoggedIn: boolean;
+  setShowLoginDialog: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+export function AdminButton({ isLoggedIn, setShowLoginDialog }: ButtonProps) {
+  return (
+    <Button
+      {...(isLoggedIn
+        ? { component: Link, to: "/admin" }
+        : { onClick: () => setShowLoginDialog(true) }
+      )}
+      variant="contained"
+      color="secondary"
+      sx={{
+        px: 2.2,
+        py: 0.7,
+        borderRadius: 2,
+        textTransform: "none",
+        fontWeight: 700,
+        boxShadow: "0 6px 18px rgba(25,118,210,0.18)",
+        background: "linear-gradient(90deg, #00c20a, #008f15)"
+      }}
+    >
+      Admin Dashboard
+    </Button>
+  );
+}
+
+function UserButton({ isLoggedIn, setShowLoginDialog }: ButtonProps) {
+  return <Button id="report-button"
+    {...(isLoggedIn
+      ? { component: Link, to: "/submitReport" }
+      : { onClick: () => setShowLoginDialog(true) }
+    )}
+    variant="contained"
+    color="secondary"
+    sx={{
+      px: 2.2,
+      py: 0.7,
+      borderRadius: 2,
+      textTransform: 'none',
+      fontWeight: 700,
+      boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
+      background: 'linear-gradient(90deg,#ff6b35,#ff3d00)'
+    }}
+  >
+    Write a report
+  </Button>
+}
+
 function App() {
   const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
   const [showLoginDialog, setShowLoginDialog] = useState(false);
 
-    useEffect(() => {
-      const onAuth = () => setAuth({ token: getToken(), role: getRole() });
-      window.addEventListener('authChange', onAuth);
-      return () => window.removeEventListener('authChange', onAuth);
-    }, []);
+  useEffect(() => {
+    const onAuth = () => setAuth({ token: getToken(), role: getRole() });
+    window.addEventListener('authChange', onAuth);
+    return () => window.removeEventListener('authChange', onAuth);
+  }, []);
 
   const isLoggedIn = Boolean(auth.token);
   const isAdmin = auth.role === 'municipal_administrator';
@@ -37,7 +145,7 @@ function App() {
   const isMaintainer = auth.role === 'maintainer';
   const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';
 
-    return (
+  return (
     <NotificationProvider>
       <Router>
         <AppBar position="fixed" color="default" elevation={1} className="app-bar">
@@ -51,8 +159,8 @@ function App() {
                 </svg>
               </Box>
 
-              
-              <Box id = "app-title" component={Link} to="/map" sx={{ textDecoration: 'none' }}>
+
+              <Box id="app-title" component={Link} to="/map" sx={{ textDecoration: 'none' }}>
                 <Typography variant="h6" component="div" sx={{ color: '#222', fontWeight: 700 }}>
                   Participium
                 </Typography>
@@ -71,60 +179,15 @@ function App() {
               /*isOfficer && (
                 <Button component={Link} to="/officer/messages" color="inherit">Messages</Button>
               )*/}
-              
+
               {/* Show different button based on user role */}
               {isOfficer ? (
                 isPROfficer ? (
-                  <Button
-                    component={Link}
-                    to="/officer"
-                    variant="contained"
-                    color="primary"
-                    sx={{
-                      px: 2.2,
-                      py: 0.7,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontWeight: 700,
-                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
-                    }}
-                  >
-                    Review Reports
-                  </Button>
+                  <PROfficerButton />
                 ) : isTechnicalOfficer ? (
-                  <Button
-                    component={Link}
-                    to="/technical"
-                    variant="contained"
-                    color="primary"
-                    sx={{
-                      px: 2.2,
-                      py: 0.7,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontWeight: 700,
-                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
-                    }}
-                  >
-                    Technical Workspace
-                  </Button>
+                  <TechnicalOfficerButton />
                 ) : (
-                  <Button
-                    component={Link}
-                    to="/officer"
-                    variant="contained"
-                    color="primary"
-                    sx={{
-                      px: 2.2,
-                      py: 0.7,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontWeight: 700,
-                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
-                    }}
-                  >
-                    Review Reports
-                  </Button>
+                  <PublicRelationsButton />
                 )
               ) : isMaintainer ? (
                 <Button
@@ -144,44 +207,11 @@ function App() {
                   Maintainer Workspace
                 </Button>
               ) : isAdmin ? (
-                <Button
-                  component={isLoggedIn ? Link : undefined}
-                  to={isLoggedIn ? "/admin" : undefined}
-                  onClick={!isLoggedIn ? () => setShowLoginDialog(true) : undefined}
-                  variant="contained"
-                  color="secondary"
-                  sx={{
-                    px: 2.2,
-                    py: 0.7,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
-                    background: 'linear-gradient(90deg, #00c20aff, #008f15ff)'
-                  }}
-                >
-                  Admin Dashboard
-                </Button>
+                <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
               ) : (
-                <Button id="report-button"
-                  component={isLoggedIn ? Link : undefined}
-                  to={isLoggedIn ? "/submitReport" : undefined}
-                  onClick={!isLoggedIn ? () => setShowLoginDialog(true) : undefined}
-                  variant="contained"
-                  color="secondary"
-                  sx={{
-                    px: 2.2,
-                    py: 0.7,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
-                    background: 'linear-gradient(90deg,#ff6b35,#ff3d00)'
-                  }}
-                >
-                  Write a report
-                </Button>)}
-              
+                <UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
+              )}
+
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
               {isLoggedIn ? (
                 <>
@@ -223,10 +253,10 @@ function App() {
             <Button onClick={() => setShowLoginDialog(false)} color="inherit">
               Cancel
             </Button>
-            <Button 
-              component={Link} 
-              to="/login" 
-              variant="contained" 
+            <Button
+              component={Link}
+              to="/login"
+              variant="contained"
               color="primary"
               onClick={() => setShowLoginDialog(false)}
             >
