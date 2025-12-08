@@ -12,7 +12,7 @@ echo "════════════════════════�
 echo ""
 
 # Check if database exists
-if [ ! -f "$DB_PATH" ]; then
+if [[ ! -f "$DB_PATH" ]]; then
     echo "❌ Database not found at $DB_PATH"
     echo "Please run the server first to create the database."
     exit 1
@@ -22,13 +22,13 @@ fi
 echo "📋 Checking for users in database..."
 USER_IDS=($(sqlite3 "$DB_PATH" "SELECT id FROM users;"))
 
-if [ ${#USER_IDS[@]} -eq 0 ]; then
+if [[ ${#USER_IDS[[@]]} -eq 0 ]]; then
     echo "❌ No users found in database."
     echo "Please create at least one user before seeding reports."
     exit 1
 fi
 
-echo "✅ Found ${#USER_IDS[@]} user(s)"
+echo "✅ Found ${#USER_IDS[[@]]} user(s)"
 echo ""
 
 # Clear existing reports
@@ -81,13 +81,13 @@ insert_report() {
     local date=$(date -d "$days_ago days ago" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -v-${days_ago}d '+%Y-%m-%d %H:%M:%S')
     
     # Assign user (cycle through available users)
-    local user_index=$((report_count % ${#USER_IDS[@]}))
-    local author_id=${USER_IDS[$user_index]}
+    local user_index=$((report_count % ${#USER_IDS[[@]]}))
+    local author_id=${USER_IDS[[$user_index]]}
     
     # Random anonymity (30% chance of being anonymous)
     local anonymity=0
     local random=$((RANDOM % 10))
-    if [ $random -lt 3 ]; then
+    if [[ $random -lt 3 ]]; then
         anonymity=1
     fi
     
@@ -104,7 +104,7 @@ VALUES (
     $anonymity,
     '$date',
     '$category',
-    '{"Description":"$description","Photos":[]}',
+    '{"Description":"$description","Photos":[[]]}',
     '$state',
     NULL,
     NULL
@@ -114,7 +114,7 @@ EOF
     ((report_count++))
     
     # Progress indicator
-    if [ $((report_count % 10)) -eq 0 ]; then
+    if [[ $((report_count % 10)) -eq 0 ]]; then
         echo "  📝 Inserted $report_count reports..."
     fi
 }

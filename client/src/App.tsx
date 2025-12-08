@@ -20,29 +20,16 @@ import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
 import ExternalMaintainersPage from './pages/ExternalMaintainer';
 import { UserPage } from './pages/UserPage';
 
-function PROfficerButton() {
-  return <Button
-    component={Link}
-    to="/officer"
-    variant="contained"
-    color="primary"
-    sx={{
-      px: 2.2,
-      py: 0.7,
-      borderRadius: 2,
-      textTransform: 'none',
-      fontWeight: 700,
-      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
-    }}
-  >
-    Review Reports
-  </Button>
-}
 
-function TechnicalOfficerButton() {
+
+type OfficerProps = {
+  technical: boolean;
+};
+
+function OfficerButton({ technical }: OfficerProps) {
   return <Button
     component={Link}
-    to="/technical"
+    to={technical ? "/technical" : "/officer"}
     variant="contained"
     color="primary"
     sx={{
@@ -54,7 +41,7 @@ function TechnicalOfficerButton() {
       boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
     }}
   >
-    Technical Workspace
+    {technical ? "Technical Workspace" : "Review Reports"}
   </Button>
 }
 
@@ -140,7 +127,7 @@ function App() {
 
   const isLoggedIn = Boolean(auth.token);
   const isAdmin = auth.role === 'municipal_administrator';
-  const isPROfficer = auth.role === 'municipal_public_relations_officer' || auth.role === 'municipal_public_relations_officer';
+  const isPROfficer = auth.role === 'municipal_public_relations_officer';
   const isTechnicalOfficer = auth.role === 'technical_office_staff';
   const isMaintainer = auth.role === 'maintainer';
   const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';

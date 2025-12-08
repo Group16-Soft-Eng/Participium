@@ -175,7 +175,7 @@ export const CONFIG = {
 &nbsp;
   DB_TYPE: process.env.DB_TYPE || "sqlite",
   DB_HOST: process.env.DB_HOST || "localhost",
-  DB_PORT: process.env.DB_PORT ? <span class="branch-0 cbranch-no" title="branch not covered" >parseInt(process.env.DB_PORT) </span>: 5432,
+  DB_PORT: process.env.DB_PORT ? <span class="branch-0 cbranch-no" title="branch not covered" >Number.parseInt(process.env.DB_PORT) </span>: 5432,
   DB_USERNAME: process.env.DB_USERNAME || "app",
   DB_PASSWORD: process.env.DB_PASSWORD || "app",
   DB_NAME: process.env.DB_NAME || "participium.db",
@@ -202,7 +202,7 @@ export const CONFIG = {
   },
 &nbsp;
   REDIS_HOST: process.env.REDIS_HOST || "localhost",
-  REDIS_PORT: process.env.REDIS_PORT ? <span class="branch-0 cbranch-no" title="branch not covered" >parseInt(process.env.REDIS_PORT) </span>: 6379
+  REDIS_PORT: process.env.REDIS_PORT ? <span class="branch-0 cbranch-no" title="branch not covered" >Number.parseInt(process.env.REDIS_PORT) </span>: 6379
   
 };</pre></td></tr></table></pre>
 

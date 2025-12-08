@@ -24,12 +24,19 @@ const UploadAvatar: React.FC<UploadAvatarProps> = ({ onPhotoSelected }) => {
         onChange={handleSelect}
       />
       <div
+        role="button"
+        tabIndex={0}
         style={{
           position: "absolute",
           inset: 0,
           cursor: "pointer",
         }}
         onClick={() => fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            fileInputRef.current?.click();
+          }
+        }}
       />
     </>
   );
