@@ -30,15 +30,25 @@ export class MaintainerRepository {
         );
     
         const userRepo = new UserRepository();
-        // const existingUser = await userRepo.getUserByEmail(email).catch(() => null);
-        const existingUser = await userRepo.getUserByEmail(email);
+        // Tolleriamo il caso "non trovato": se l'utente NON esiste, va bene creare il maintainer
+        let existingUser: any = null;
+        try {
+            existingUser = await userRepo.getUserByEmail(email);
+        } catch (_) {
+            existingUser = null;
+        }
         if (existingUser) {
             throw new Error(`Email '${email}' is already used.`);
         }
 
         const officerRepo = new OfficerRepository();
-        // const existingOfficer = await officerRepo.getOfficerByEmail(email).catch(() => null);
-        const existingOfficer = await officerRepo.getOfficerByEmail(email);
+        // Anche per officer: se NON esiste, proseguiamo; se esiste con stessa email, conflitto
+        let existingOfficer: any = null;
+        try {
+            existingOfficer = await officerRepo.getOfficerByEmail(email);
+        } catch (_) {
+            existingOfficer = null;
+        }
         if (existingOfficer) {
             throw new Error(`Email '${email}' is already used.`);
         }
