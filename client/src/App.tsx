@@ -49,7 +49,7 @@ function PublicRelationsButton() {
     component={Link}
     to="/officer"
     variant="contained"
-    color="primary"
+    color="secondary"
     sx={{
       px: 2.2,
       py: 0.7,
