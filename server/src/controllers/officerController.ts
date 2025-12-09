@@ -151,6 +151,7 @@ export async function removeRoleFromOfficer(
   return mapOfficerDAOToDTO(refreshed);
 }
 
+
 export async function assignReportToOfficer(reportId: number, officerId: number): Promise<void> {
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
@@ -226,7 +227,17 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
   return mapReportDAOToDTO(updatedReport);
 }
 
-export async function deleteOfficer(email: string): Promise<void> {
+export async function deleteOfficer(id: number): Promise<void> {
   const officerRepo = new OfficerRepository();
-  await officerRepo.deleteOfficer(email);
+  const existingOfficer = await officerRepo.getOfficerById(id);
+  if (!existingOfficer) {
+    throw new Error(`Officer with id '${id}' does not exist.`);
+  }
+  const reportRepo = new ReportRepository();
+  for(const role of existingOfficer.roles ?? []) {
+    if(role.officerRole === OfficerRole.TECHNICAL_OFFICE_STAFF) {
+      await reportRepo.resetReportsAssignmentByOfficer(existingOfficer.id, role.officeType as OfficeType);
+    }
+  }
+  await officerRepo.deleteOfficer(id);
 }

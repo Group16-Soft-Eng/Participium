@@ -1093,6 +1093,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /admin/officers/{id}:
+    delete:
+      tags:
+        - Admin
+      summary: Admin deletes an officer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Officer with id '1' deleted successfully"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /admin/officers:
     get:
       tags:
