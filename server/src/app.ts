@@ -11,6 +11,7 @@ import {officerRouter} from "@routes/OfficerRoutes";
 import { infoTypeRouter } from "@routes/InfoType";
 import { notificationRouter } from "@routes/NotificationRoutes";
 import { maintainerRouter } from "@routes/MaintainerRoutes";
+import { internalMessageRouter } from "@routes/InternalMessageRoutes";
 
 export const app = express();
 let routes = CONFIG.ROUTES;
@@ -34,6 +35,7 @@ app.use(routes.V1_INFO_TYPES, infoTypeRouter);
 app.use(routes.V1_NOTIFICATIONS, notificationRouter);
 app.use(routes.V1_ADMIN, AdminRouter);
 app.use(routes.V1_PUBLICS, PublicRelationRoutes);
+app.use(routes.V1_INTERNAL_MESSAGES, internalMessageRouter);
 // static files
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
