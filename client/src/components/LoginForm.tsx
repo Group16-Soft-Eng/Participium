@@ -35,18 +35,19 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             const token = await officerLogin(user);
             setToken(token);
             // try to read role from token if available
+
             const detected = getRoleFromToken(token);
-            setRole(detected);
-            console.log(token);
+            setRole(detected ?? []);
+            console.log(detected);
             window.dispatchEvent(new Event('authChange'));
             setLoading(false);
 
             // Redirect based on role
-            if (detected === 'municipal_administrator') {
+            if (detected.includes('municipal_administrator')) {
                 navigate('/admin');
-            } else if (detected === 'municipal_public_relations_officer') {
+            } else if (detected.includes('municipal_public_relations_officer')) {
                 navigate('/officer');
-            } else if (detected === 'technical_office_staff') {
+            } else if (detected.includes('technical_office_staff')) {
                 navigate('/technical');
             } else {
                 navigate('/technical'); // default fallback
@@ -56,8 +57,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             try {
                 const token = await maintainerLogin(user);
                 setToken(token);
-                const detected = getRoleFromToken(token);
-                setRole(detected || 'external_maintainer');
+                setRole(['external_maintainer']);
                 window.dispatchEvent(new Event('authChange'));
                 setLoading(false);
                 navigate('/maintainer');
@@ -68,7 +68,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                     setToken(token);
                     const details = await getUserProfile();
                     setPicture(details.avatar);
-                    setRole('citizen');
+                    setRole(['citizen']);
                     window.dispatchEvent(new Event('authChange'));
                     setLoading(false);
                     navigate('/map');

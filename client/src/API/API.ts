@@ -513,6 +513,52 @@ async function getAllMaintainers() {
     }
 }
 
+async function updateMaintainers(maintainer: Maintainer, id: number) {
+    const token = getToken();
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers };
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/admin/maintainers/${id}`, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify(maintainer),
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to mark notification as read');
+    }
+}
+
+
+async function updateOfficer(officer: Officer) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/admin`, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify(officer),
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to mark notification as read');
+    }
+}
+
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer };
 export type { Notification };

@@ -9,13 +9,14 @@ export function getToken(): string | null {
   return localStorage.getItem('token');
 }
 
-export function setRole(role: Role) {
-  if (role) localStorage.setItem('role', role);
+export function setRole(role: Role[]) {
+  if (role) localStorage.setItem('role', JSON.stringify(role));
   else localStorage.removeItem('role');
 }
 
-export function getRole(): Role {
-  return (localStorage.getItem('role') as Role) || null;
+export function getRole(): Role[] | null {
+  const roleStr = localStorage.getItem('role');
+  return roleStr ? (JSON.parse(roleStr) as Role[]) : null;
 }
 
 export function setPicture(picture: string) {
@@ -61,21 +62,32 @@ export function decodeJwt(token: string | null): any | null {
   }
 }
 
-export function getRoleFromToken(token: string | null): Role {
+export function getRoleFromToken(token: string | null): Role[] | null {
+  const result: Role[] = [];
   const data = decodeJwt(token);
   if (!data) return null;
-  // common claim names: role, roles, scope
-  if (data.type && Array.isArray(data.type) && data.type.length > 0) {
-    const typeStr = data.type[0];
-    if (typeStr === 'external_maintainer') return 'external_maintainer';
-    return typeStr.toLowerCase() as Role;
-  }
-  if (data.type) return data.type as Role;
-  if (typeof data.scope === 'string' && data.scope.includes('technical_office_staff')) return 'technical_office_staff';
-  if (typeof data.scope === 'string' && data.scope.includes('municipal_public_relations_officer')) return 'municipal_public_relations_officer';
-  if (typeof data.scope === 'string' && data.scope.includes('municipal_administrator')) return 'municipal_administrator';
 
-  return null;
+  if (data.type && Array.isArray(data.type)) {
+    const allowedRoles: string[] = [
+      'technical_office_staff',
+      'municipal_public_relations_officer',
+      'municipal_administrator',
+    ];
+    
+    data.type.forEach(typeStr => {
+      if (allowedRoles.includes(typeStr)) {
+        result.push(typeStr as Role);
+      }
+    });
+  }
+
+  if (typeof data.scope === 'string') {
+    if (data.scope.includes('technical_office_staff')) result.push('technical_office_staff' as Role);
+    if (data.scope.includes('municipal_public_relations_officer')) result.push('municipal_public_relations_officer' as Role);
+    if (data.scope.includes('municipal_administrator')) result.push('municipal_administrator' as Role);
+  }
+
+  return result.length > 0 ? result : null;
 }
 
 export interface DecodedUser {
