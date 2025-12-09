@@ -46,10 +46,10 @@ export async function assignReportToMaintainer(reportId: number, maintainerId: n
   const reportRepo = new ReportRepository();
   const maintainerRepo = new MaintainerRepository();
   
-    // Verifica che il report sia in stato PENDING
+    // Verifica che il report sia in stato ASSIGNED
     const report = await reportRepo.getReportById(reportId);
-    if (report.state !== ReportState.PENDING) {
-      throw new Error("Only PENDING reports can be assigned");
+    if (report.state !== ReportState.ASSIGNED) {
+      throw new Error("Only ASSIGNED reports can be assigned");
     }
   
     // Verifica che il maintainer esista

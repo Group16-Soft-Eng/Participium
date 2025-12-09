@@ -128,7 +128,7 @@ function App() {
   const isAdmin = auth.role === 'municipal_administrator';
   const isPROfficer = auth.role === 'municipal_public_relations_officer';
   const isTechnicalOfficer = auth.role === 'technical_office_staff';
-  const isMaintainer = auth.role === 'maintainer';
+  const isMaintainer = auth.role === 'external_maintainer';
   const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';
   const isCitizen = auth.role === 'citizen';
 

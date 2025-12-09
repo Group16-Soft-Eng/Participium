@@ -1,5 +1,5 @@
 // Minimal auth helpers for dev: login stores token and role in localStorage
-export type Role = 'citizen' | 'technical_office_staff' | 'municipal_public_relations_officer' | 'municipal_administrator' | 'maintainer' | null;
+export type Role = 'citizen' | 'technical_office_staff' | 'municipal_public_relations_officer' | 'municipal_administrator' | 'external_maintainer' | null;
 
 export function setToken(token: string) {
   localStorage.setItem('token', token);
@@ -67,7 +67,7 @@ export function getRoleFromToken(token: string | null): Role {
   // common claim names: role, roles, scope
   if (data.type && Array.isArray(data.type) && data.type.length > 0) {
     const typeStr = data.type[0];
-    if (typeStr === 'MAINTAINER') return 'maintainer';
+    if (typeStr === 'external_maintainer') return 'external_maintainer';
     return typeStr.toLowerCase() as Role;
   }
   if (data.type) return data.type as Role;

@@ -150,8 +150,8 @@ export async function assignReportToOfficer(reportId: number, officerId: number)
   const officerRepo = new OfficerRepository();
 
   const report = await reportRepo.getReportById(reportId);
-  if (report.state !== ReportState.PENDING) {
-    throw new Error("Only PENDING reports can be assigned");
+  if (report.state !== ReportState.ASSIGNED) {
+    throw new Error("Only ASSIGNED reports can be assigned");
   }
 
   const officer = await officerRepo.getOfficerById(officerId);
