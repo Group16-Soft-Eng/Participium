@@ -40,6 +40,13 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
                     return (
                       // eslint-disable-next-line jsx-a11y/alt-text
                       <img
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            setOpenImageIndex(idx);
+                          }
+                        }}
                         key={idx}
                         src={src}
                         style={{ width: 120, height: 90, objectFit: 'cover', borderRadius: 6, border: '1px solid #ddd', cursor: 'pointer' }}

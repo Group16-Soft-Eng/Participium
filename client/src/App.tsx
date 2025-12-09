@@ -21,7 +21,6 @@ import ExternalMaintainersPage from './pages/ExternalMaintainer';
 import { UserPage } from './pages/UserPage';
 
 
-
 type OfficerProps = {
   technical: boolean;
 };
@@ -131,6 +130,7 @@ function App() {
   const isTechnicalOfficer = auth.role === 'technical_office_staff';
   const isMaintainer = auth.role === 'maintainer';
   const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';
+  const isCitizen = auth.role === 'citizen';
 
   return (
     <NotificationProvider>
@@ -165,15 +165,14 @@ function App() {
               )*/}
 
               {/* Show different button based on user role */}
-              {isOfficer ? (
+              {isOfficer && (
                 isPROfficer ? (
-                  <PublicRelationsButton/>
-                ) : isTechnicalOfficer ? (
-                  <OfficerButton technical={true} />
-                ) : (
-                  <OfficerButton technical={false} />
-                )
-              ) : isMaintainer ? (
+                  <PublicRelationsButton />
+                ) :
+                  <OfficerButton technical={isTechnicalOfficer} />
+              )
+              }
+              {isMaintainer && (
                 <Button
                   component={Link}
                   to="/maintainer"
@@ -190,9 +189,9 @@ function App() {
                 >
                   Maintainer Workspace
                 </Button>
-              ) : isAdmin ? (
-                <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
-              ) : (
+              )}
+              {isAdmin && <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />}
+              {isCitizen && (
                 <UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
               )}
 

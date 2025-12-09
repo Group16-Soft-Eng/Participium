@@ -24,7 +24,6 @@ export function EditUserForm({ setShowEdit, avatar, telegram, emailNotifications
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [userAvatar, setUserAvatar] = useState<string | File>(avatar);
-    const navigate = useNavigate();
 
     const previewURL =
         userAvatar instanceof File

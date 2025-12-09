@@ -9,13 +9,12 @@ interface AdminFormProps {
     setShowForm: (show: boolean) => void;
 }
 
-type RegisterState = {
-    success?: boolean;
-    error?: string;
-};
+type RegisterState =
+    | { success: boolean }
+    | { error: string };
+
 
 export function AdminForm({ setShowForm }: AdminFormProps) {
-    const navigate = useNavigate();
     const [officeTypes, setOfficeTypes] = useState<string[]>([]);
     const [officerTypes, setOfficerTypes] = useState<string[]>([]);
 
@@ -41,84 +40,105 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
     }, []);
 
     const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
-    const [error, setError] = useState<string | null>(null);
 
     async function register(prevData: RegisterState, formData: FormData) {
-        let officer, maintainer;
-        const role = formData.get('role');
 
-        if (role === 'external_maintainer') {
-            maintainer = {
-                name: formData.get('name') as string,
-                email: formData.get('email') as string,
-                password: formData.get('password') as string,
-                categories: [
-                    formData.get('office') as string
-                ],
-                active: true
+        const role = formData.get("role") as string;
+
+        const validateMatch = (a: string | FormDataEntryValue | null, b: string | FormDataEntryValue | null, message: string) => {
+            if (a !== b) {
+                setSnackMessage(message);
+                setSnackSeverity("error");
+                setSnackOpen(true);
+                return { error: message };
             }
-        } else {
-            officer = {
-                name: formData.get('name') as string,
-                surname: formData.get('surname') as string,
-                username: formData.get('username') as string,
-                email: formData.get('email') as string,
-                password: formData.get('password') as string,
+            return null;
+        };
+
+        const createMaintainer = () => ({
+            name: formData.get("name") as string,
+            email: formData.get("email") as string,
+            password: formData.get("password") as string,
+            categories: [formData.get("office") as string],
+            active: true,
+        });
+
+        const createOfficer = () => {
+            const officer = {
+                name: formData.get("name") as string,
+                surname: formData.get("surname") as string,
+                username: formData.get("username") as string,
+                email: formData.get("email") as string,
+                password: formData.get("password") as string,
                 roles: [
                     {
-                        office: formData.get('office') as string,
-                        role: formData.get('role') as string
-                    }
-                ] as { office: string; role: string }[]
+                        office: formData.get("office") as string,
+                        role: formData.get("role") as string,
+                    },
+                ],
+            };
+
+            const officerRole = officer.roles[0].role;
+            if (
+                officerRole === "municipal_public_relations_officer" ||
+                officerRole === "municipal_administrator"
+            ) {
+                officer.roles[0].office = "organization";
             }
 
-            if (officer.roles[0].role === 'municipal_public_relations_officer' || officer.roles[0].role === 'municipal_administrator') {
-                officer.roles[0].office = 'organization';
-            }
-        }
+            return officer;
+        };
 
-        if (formData.get('email') !== formData.get('cemail')) {
-            setSnackMessage('Emails do not match');
-            setSnackSeverity('error');
-            setSnackOpen(true);
-            return { error: 'Emails do not match' };
-        }
-        if (formData.get('password') !== formData.get('confirm-password')) {
-            setSnackMessage('Passwords do not match');
-            setSnackSeverity('error');
-            setSnackOpen(true);
-            return { error: 'Passwords do not match' };
-        }
+        // --- Validations ---
+        const emailCheck = validateMatch(
+            formData.get("email"),
+            formData.get("cemail"),
+            "Emails do not match"
+        );
+        if (emailCheck) return emailCheck;
+
+        const passwordCheck = validateMatch(
+            formData.get("password"),
+            formData.get("confirm-password"),
+            "Passwords do not match"
+        );
+        if (passwordCheck) return passwordCheck;
+
         try {
-            if (role === 'external_maintainer') {
-                await maintainerRegister(maintainer);
+            if (role === "external_maintainer") {
+                await maintainerRegister(createMaintainer());
             } else {
-                await officerRegister(officer);
-            }
-            setSnackMessage('Officer registered successfully');
-            setSnackSeverity('success');
-            setSnackOpen(true);
-            return { success: true }
-        }
-        catch (error) {
-
-            if (error instanceof Error && error.message.includes('409')) {
-                setSnackMessage('Username or email already in use');
-                setSnackSeverity('error');
-                setSnackOpen(true);
-                return { error: 'Username or email already in use' };
-            }
-            if (error instanceof Error && error.message.includes('400')) {
-                setSnackMessage('Invalid email. Please use a valid email address.');
-                setSnackSeverity('error');
-                setSnackOpen(true);
-                return { error: 'Invalid email. Please use a valid email address.' };
+                await officerRegister(createOfficer());
             }
 
-            setSnackMessage('Registration failed');
-            setSnackSeverity('error');
+            setSnackMessage("Officer registered successfully");
+            setSnackSeverity("success");
             setSnackOpen(true);
-            return { error: error instanceof Error ? error.message : String(error) };
+            return { success: true };
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : String(error);
+
+            if (message.includes("409")) {
+                const msg = "Username or email already in use";
+                setSnackMessage(msg);
+                setSnackSeverity("error");
+                setSnackOpen(true);
+                return { error: msg };
+            }
+
+            if (message.includes("400")) {
+                const msg = "Invalid email. Please use a valid email address.";
+                setSnackMessage(msg);
+                setSnackSeverity("error");
+                setSnackOpen(true);
+                return { error: msg };
+            }
+
+            setSnackMessage("Registration failed");
+            setSnackSeverity("error");
+            setSnackOpen(true);
+            return { error: message };
         }
     }
 
@@ -170,7 +190,6 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                             </Grid>
                         </FormControl>
                     )}
-                    {error && <Grid size={12}><p className="error">{error}</p></Grid>}
                     <Grid size={6}>
                         <Button variant="outlined" onClick={() => setShowForm(false)} fullWidth>Go Back</Button>
                     </Grid>
