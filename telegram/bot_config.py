@@ -1,6 +1,7 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler
 from telegram import BotCommand
 from endpoint import *
+from telegram.ext import ConversationHandler, MessageHandler, filters
 
 # Pattern constants (rinominati per non collidere con le funzioni)
 BACK_PATTERN = r"^back_"
