@@ -45,7 +45,7 @@ function ensureAuthorized(report: any, sender: Participant, receiver: Participan
 export async function sendInternalMessage(reportId: number, sender: Participant, receiver: Participant, message: string) {
   if (!message?.trim()) throw new BadRequestError("Message cannot be empty");
   const reportRepo = new ReportRepository();
-  const report = await reportRepo.getById(reportId);
+  const report = await reportRepo.getReportById(reportId);
   
   ensureAuthorized(report, sender, receiver);
 

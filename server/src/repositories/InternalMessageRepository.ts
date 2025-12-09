@@ -17,7 +17,8 @@ export class InternalMessageRepository {
 
   
   async create(msg: Partial<InternalMessageDAO>): Promise<InternalMessageDAO> {
-    const entity = this.repo.create(msg as any);
-    return this.repo.save(entity);
+    const entity: InternalMessageDAO = this.repo.create(msg as InternalMessageDAO);
+    const saved: InternalMessageDAO = await this.repo.save(entity as InternalMessageDAO);
+  return saved;
   }
 }
