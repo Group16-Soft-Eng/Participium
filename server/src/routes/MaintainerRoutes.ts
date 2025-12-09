@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
-import { createMaintainer, getAllMaintainers, getMaintainersByCategory, updateMaintainer, assignReportToMaintainer, updateReportStatusByMaintainer, getAssignedReportsForMaintainer } from "@controllers/maintainerController";
+import { createMaintainer, getAllMaintainers, getMaintainersByCategory, updateMaintainer, deleteMaintainer, updateReportStatusByMaintainer, getAssignedReportsForMaintainer } from "@controllers/maintainerController";
 
 const router = Router({ mergeParams: true });
 
@@ -58,6 +58,17 @@ router.patch("/reports/:id/status", authenticateToken, requireUserType([OfficerR
       id: updated.id,
       state: updated.state
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete("/:id", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR]), async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: "id is required" });
+    await deleteMaintainer(id);
+    res.status(200).json({ message: `Maintainer with id '${id}' deleted successfully` });
   } catch (err) {
     next(err);
   }

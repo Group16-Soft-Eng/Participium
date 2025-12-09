@@ -103,13 +103,35 @@ export class ReportRepository {
   }
 
 
-  async resetReportsAssignmentByOfficer(officerId: number, office: OfficeType): Promise<void> {
+  async resetReportsAssignmentByOfficer(officerId: number): Promise<void> {
+    const reports = await this.getReportsByAssignedOfficer(officerId);
+    for (const report of reports) {
+      if (report.state === ReportState.ASSIGNED || report.state === ReportState.IN_PROGRESS || report.state === ReportState.SUSPENDED) {
+        report.state = ReportState.PENDING
+        report.assignedOfficerId = null;
+        report.assignedMaintainerId = null;
+        await this.repo.save(report);
+      }
+    }
+  }
+  async resetPartialReportsAssignmentByOfficer(officerId: number, office: OfficeType): Promise<void> {
     const reports = await this.getReportsByAssignedOfficer(officerId);
     for (const report of reports) {
       if (report.category === office && 
         (report.state === ReportState.ASSIGNED || report.state === ReportState.IN_PROGRESS)) {
         report.state = ReportState.PENDING
         report.assignedOfficerId = null;
+        report.assignedMaintainerId = null;
+        await this.repo.save(report);
+      }
+    }
+  }
+
+  async resetReportsAssignmentByMaintainer(maintainerId: number): Promise<void> {
+    const reports = await this.getReportsByMaintainerId(maintainerId);
+    for (const report of reports) {
+      if (report.state === ReportState.ASSIGNED || report.state === ReportState.IN_PROGRESS) {
+        report.state = ReportState.PENDING;
         report.assignedMaintainerId = null;
         await this.repo.save(report);
       }

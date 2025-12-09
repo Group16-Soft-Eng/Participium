@@ -132,7 +132,7 @@ export async function removeRoleFromOfficer(
 
   const reportRepo = new ReportRepository();
   if(role === OfficerRole.TECHNICAL_OFFICE_STAFF)
-    await reportRepo.resetReportsAssignmentByOfficer(officerId, office);
+    await reportRepo.resetPartialReportsAssignmentByOfficer(officerId, office);
 
   // Tipizza office come OfficeType | null per compatibilità
   const filtered: { role: OfficerRole; office: OfficeType | null }[] =
@@ -236,7 +236,7 @@ export async function deleteOfficer(id: number): Promise<void> {
   const reportRepo = new ReportRepository();
   for(const role of existingOfficer.roles ?? []) {
     if(role.officerRole === OfficerRole.TECHNICAL_OFFICE_STAFF) {
-      await reportRepo.resetReportsAssignmentByOfficer(existingOfficer.id, role.officeType as OfficeType);
+      await reportRepo.resetReportsAssignmentByOfficer(existingOfficer.id, );
     }
   }
   await officerRepo.deleteOfficer(id);

@@ -8,7 +8,9 @@ export class RoleDAO {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(() => OfficerDAO, (officer) => officer.roles)
+  @ManyToOne(() => OfficerDAO, (officer) => officer.roles, {
+    onDelete: "CASCADE", 
+  })
   @JoinColumn({ name: "officerID" })
   officer!: OfficerDAO;
 
