@@ -66,7 +66,6 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 try {
                     const token = await userLogin(user);
                     setToken(token);
-                    const detected = getRoleFromToken(token);
                     const details = await getUserProfile();
                     setPicture(details.avatar);
                     setRole('citizen');

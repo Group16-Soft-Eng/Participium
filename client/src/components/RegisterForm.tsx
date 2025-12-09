@@ -9,10 +9,10 @@ interface RegisterFormProps {
     setShowRegister: (show: boolean) => void;
 }
 
-type RegisterState = {
-    success?: boolean;
-    error?: string;
-};
+type RegisterState =
+    | { success: boolean }
+    | { error: string };
+
 
 export function OtpForm({ username, email, password, setSnackMessage, setSnackSeverity, setSnackOpen, setOtp, fromPath }: { username: string, email: string, password: string, setSnackMessage: React.Dispatch<React.SetStateAction<string>>, setSnackSeverity: React.Dispatch<React.SetStateAction<'success' | 'error' | 'info'>>, setSnackOpen: React.Dispatch<React.SetStateAction<boolean>>, setOtp: React.Dispatch<React.SetStateAction<boolean>>, fromPath: string | null }) {
     const navigate = useNavigate();
@@ -65,12 +65,10 @@ export function OtpForm({ username, email, password, setSnackMessage, setSnackSe
 }
 
 export function RegisterForm({ setShowRegister }: RegisterFormProps) {
-    const navigate = useNavigate();
     const location = useLocation();
     const fromPath = (location && (location as any).state && (location as any).state.from && (location as any).state.from.pathname) ? (location as any).state.from.pathname : null;
 
     const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
-    const [error, setError] = useState<string | null>(null);
 
     const [snackOpen, setSnackOpen] = useState(false);
     const [snackMessage, setSnackMessage] = useState('');
@@ -94,14 +92,12 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
             setSnackMessage('Emails do not match');
             setSnackSeverity('error');
             setSnackOpen(true);
-            setError('Emails do not match');
             return { error: 'Emails do not match' };
         }
         if (formData.get('password') !== formData.get('confirm-password')) {
             setSnackMessage('Passwords do not match');
             setSnackSeverity('error');
             setSnackOpen(true);
-            setError('Passwords do not match');
             return { error: 'Passwords do not match' };
         }
         try {
@@ -157,7 +153,6 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
                         <Grid size={6}>
                             <TextField id="confirm-password" name="confirm-password" label="Confirm Password" variant="outlined" type="password" fullWidth required />
                         </Grid>
-                        {error && <Grid size={12}><p className="error">{error}</p></Grid>}
                         <Grid size={6}>
                             <Button variant="outlined" onClick={() => setShowRegister(false)} fullWidth>Go Back</Button>
                         </Grid>

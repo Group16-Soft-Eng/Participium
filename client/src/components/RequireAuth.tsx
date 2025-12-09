@@ -9,7 +9,6 @@ interface RequireAuthProps {
 const RequireLogin: React.FC<RequireAuthProps> = ({ children }) => {
   const token = getToken();
   const location = useLocation();
-  const role = getRole();
 
   // require that a token exists
   if (!token) {
