@@ -52,7 +52,7 @@ router.patch("/reports/:id/status", authenticateToken, requireUserType([OfficerR
     if (!maintainerId) return res.status(401).json({ error: "Unauthorized" });
     if (!state) return res.status(400).json({ error: "state is required" });
 
-    const updated = await updateReportStatusByMaintainer(maintainerId, reportId, state, reason);+
+    const updated = await updateReportStatusByMaintainer(maintainerId, reportId, state, reason);
     
     res.status(200).json({
       id: updated.id,

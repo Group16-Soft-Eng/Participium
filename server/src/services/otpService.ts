@@ -1,6 +1,6 @@
 import { redisClient } from "@database";
 const APP_NS = "participium";
-const DEFAULT_TTL_SEC = 5 * 60;
+const DEFAULT_TTL_SEC = 30 * 60;
 
 function keyFor(email: string): string {
   return `${APP_NS}:otp:email:${email}`;
