@@ -4,6 +4,7 @@ import { InternalMessageRepository } from "@repositories/InternalMessageReposito
 import { ReportRepository } from "@repositories/ReportRepository";
 import { BadRequestError, ForbiddenError } from "@utils/utils";
 import { OfficerRole } from "@models/enums/OfficerRole";
+import { getIO } from "@services/ioService";
 
 type Participant = {
     type: OfficerRole.TECHNICAL_OFFICE_STAFF | OfficerRole.MAINTAINER;
@@ -58,6 +59,21 @@ export async function sendInternalMessage(reportId: number, sender: Participant,
     receiverId: receiver.id,
     message,
   });
+
+  // Emit real-time event to room after saving
+  const io = getIO();
+  if (io) {
+    io.to(`report:${reportId}`).emit("internal-message:new", {
+      id: saved.id,
+      reportId: saved.reportId,
+      senderType: saved.senderType,
+      senderId: saved.senderId,
+      recipientType: saved.receiverType,
+      recipientId: saved.receiverId,
+      message: saved.message,
+      createdAt: saved.createdAt,
+    });
+  }
 
   return {
     id: saved.id,
