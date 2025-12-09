@@ -8,7 +8,7 @@ import ReportDetailDialog from './ReportDetailDialog';
 import AssignOfficerDialog from './AssignOfficerDialog';
 import { CategoryFilter } from './filters';
 import type { ReportCategory } from './filters';
-import { getAllMaintainers, getAllOfficers, getAvailableOfficerTypes, updateOfficer } from '../API/API';
+import { getAllMaintainers, getAllOfficers, getAvailableOfficerTypes, updateOfficer, deleteOfficer } from '../API/API'; // <--- AGGIUNTA deleteOfficer
 
 // Category colors matching the map
 const CATEGORY_COLORS: Record<string, string> = {
@@ -71,6 +71,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
     const [snackMessage, setSnackMessage] = useState('');
     const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
     const [showingAssign, setShowingAssign] = useState(false);
+    const [showingDelete, setShowingDelete] = useState(false); // <--- NUOVO STATO PER IL DELETE
 
     // Stato dinamico per i tipi di ufficio e i ruoli
     const [officeTypes, setOfficeTypes] = useState<string[]>([]);
@@ -156,16 +157,13 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
     }
 
     const openDelete = (officer: Officer) => {
-        // This is still using the same dialog setup for now,
-        // but typically a separate confirmation dialog is used for delete.
         setSelected(officer);
-        // setShowingDelete(true); // Assuming you'll add a separate delete dialog
-        console.log(`Delete action opened for: ${officer.name}`);
+        setShowingDelete(true); // <--- APRE IL DIALOG DI DELETE
     }
 
     const closeDelete = () => {
         setSelected(null);
-        // setShowingDelete(false); // Assuming you'll add a separate delete dialog
+        setShowingDelete(false); // <--- CHIUDE IL DIALOG DI DELETE
     }
 
     // Role Management Functions
@@ -207,6 +205,28 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
         }
     };
 
+    // Funzione di gestione dell'eliminazione
+    const handleDeleteOfficer = async () => {
+        if (!selected) return;
+
+        try {
+            // Assicurati che deleteOfficer sia implementata nel tuo API/API.ts
+            await deleteOfficer(selected.id);
+            await fetchOfficers(); // Ricarica la lista dopo l'eliminazione
+
+            setSnackMessage(`Officer ${selected.name} ${selected.surname} successfully deleted.`);
+            setSnackSeverity('success');
+            setSnackOpen(true);
+            closeDelete();
+        } catch (error) {
+            console.error("Failed to delete officer:", error);
+            setSnackMessage('Failed to delete officer.');
+            setSnackSeverity('error');
+            setSnackOpen(true);
+            closeDelete();
+        }
+    };
+
 
     // Filtered officers based on category only
     const filteredOfficers = useMemo(() => {
@@ -221,6 +241,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
 
     return (
         <Box>
+            {/* Dialog per l'Assegnazione Ruoli (Edit) */}
             <Dialog open={showingAssign} onClose={closeEdit} fullWidth maxWidth="sm">
                 <DialogTitle>Assign Officer Roles</DialogTitle>
                 <DialogContent>
@@ -265,7 +286,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                                 Assign New Role
                             </Typography>
                             <Grid container spacing={2} alignItems="center">
-                                <Grid>
+                                <Grid item xs={newRole == 'technical_office_staff' || newRole == 'external_maintainer' ? 5 : 9}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Role</InputLabel>
                                         <Select
@@ -281,7 +302,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                                     </FormControl>
                                 </Grid>
                                 {
-                                    (newRole == 'technical_office_staff' || newRole == 'external_maintainer') && <Grid>
+                                    (newRole === 'technical_office_staff' || newRole === 'external_maintainer') && <Grid item xs={5}>
                                         <FormControl fullWidth size="small">
                                             <InputLabel>Office</InputLabel>
                                             <Select
@@ -297,7 +318,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                                         </FormControl>
                                     </Grid>
                                 }
-                                <Grid sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <Grid item xs={2} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                     <IconButton
                                         aria-label="add role"
                                         onClick={handleAddRole}
@@ -317,8 +338,32 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                 </DialogActions>
             </Dialog>
 
-            <Typography variant="h5" gutterBottom>Available Officers</Typography>
+            {/* Dialog di Conferma Eliminazione */}
+            <Dialog
+                open={showingDelete}
+                onClose={closeDelete}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure you want to delete the officer **{selected?.name} {selected?.surname}**?
+                        This action is irreversible.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeDelete} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleDeleteOfficer} color="error" variant="contained" autoFocus>
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
+            <Typography variant="h5" gutterBottom>Available Officers</Typography>
+            <hr />
             {loading && <div>Loading...</div>}
 
             {!loading && officers.length === 0 && (

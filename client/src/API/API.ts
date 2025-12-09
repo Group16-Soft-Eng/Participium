@@ -532,7 +532,7 @@ async function updateMaintainers(maintainer: Maintainer, id: number) {
         return await response.json();
     } else {
         const err = await response.text();
-        throw new Error(err || 'Failed to mark notification as read');
+        throw new Error(err || 'Failed to update maintainer');
     }
 }
 
@@ -556,9 +556,56 @@ async function updateOfficer(officer: Officer) {
         return await response.json();
     } else {
         const err = await response.text();
-        throw new Error(err || 'Failed to mark notification as read');
+        throw new Error(err || 'Failed to update officer');
     }
 }
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer };
+
+
+async function deleteOfficer(id: Number) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/admin/officers/${id}`, {
+        method: 'DELETE',
+        headers: headers,
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to delete officer');
+    }
+}
+
+
+async function deleteMaintainer(id: Number) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/maintainers/${id}`, {
+        method: 'DELETE',
+        headers: headers,
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to delete maintainer');
+    }
+}
+
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer };
 export type { Notification };
