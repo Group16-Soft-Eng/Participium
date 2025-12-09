@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware";
 import { listConversation, sendInternalMessage } from "@controllers/internalMessageController";
-import { OfficeRole } from "@models/enums/OfficeRole";
+import { OfficerRole } from "@models/enums/OfficerRole";
 
 const router = Router({ mergeParams: true });
 
@@ -26,7 +26,7 @@ router.post("/", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFIC
 
     const reportId = Number.parseInt(req.body.reportId);
     const message = req.body.message;
-    const receiverType = req.body.receiverType as OfficeRole.TECHNICAL_OFFICE_STAFF | OfficeRole.MAINTAINER;
+    const receiverType = req.body.receiverType as OfficerRole.TECHNICAL_OFFICE_STAFF | OfficerRole.MAINTAINER;
     const receiverId = Number.parseInt(req.body.receiverId);
 
     const saved = await sendInternalMessage(

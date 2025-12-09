@@ -1,9 +1,9 @@
 // ...existing code...
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Index } from "typeorm";
 import { ReportDAO } from "@models/dao/ReportDAO";
-import { OfficeRole } from "@models/enums/OfficeRole";
+import { OfficerRole } from "@models/enums/OfficerRole";
 
-export type ParticipantType = OfficeRole.TECHNICAL_OFFICE_STAFF | OfficeRole.MAINTAINER;
+export type ParticipantType = OfficerRole.TECHNICAL_OFFICE_STAFF | OfficerRole.MAINTAINER;
 
 @Entity({ name: "internal_messages" })
 export class InternalMessageDAO {

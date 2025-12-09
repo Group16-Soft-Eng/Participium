@@ -3,10 +3,10 @@
 import { InternalMessageRepository } from "@repositories/InternalMessageRepository";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { BadRequestError, ForbiddenError } from "@utils/utils";
-import { OfficeRole } from "@models/enums/OfficeRole";
+import { OfficerRole } from "@models/enums/OfficerRole";
 
 type Participant = {
-    type: OfficeRole.TECHNICAL_OFFICE_STAFF | OfficeRole.MAINTAINER;
+    type: OfficerRole.TECHNICAL_OFFICE_STAFF | OfficerRole.MAINTAINER;
     id: number
 };
 

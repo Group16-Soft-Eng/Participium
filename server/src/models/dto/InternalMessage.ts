@@ -1,11 +1,11 @@
-import { OfficeRole } from "@models/enums/OfficeRole";
+import { OfficerRole } from "@models/enums/OfficerRole";
 
 export interface InternalMessage {
   id: number;
   reportId: number;
-  senderType: OfficeRole.TECHNICAL_OFFICE_STAFF | OfficeRole.MAINTAINER;
+  senderType: OfficerRole.TECHNICAL_OFFICE_STAFF | OfficerRole.MAINTAINER;
   senderId: number;
-  receiverType: OfficeRole.TECHNICAL_OFFICE_STAFF | OfficeRole.MAINTAINER;
+  receiverType: OfficerRole.TECHNICAL_OFFICE_STAFF | OfficerRole.MAINTAINER;
   receiverId: number;
   message: string;
   createdAt: string;
