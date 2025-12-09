@@ -26,7 +26,7 @@ def _normalize_server_url(raw: str) -> str:
     raw = (raw or "").strip()
     if not raw:
         return "https://localhost:5000"
-    if not raw.startswith(("http://", "https://")):
+    if not raw.startswith(("https://", "https://")):
         raw = f"https://{raw}"
     parsed = urlparse(raw)
     # Se manca hostname, fallback
@@ -34,7 +34,7 @@ def _normalize_server_url(raw: str) -> str:
         return "https://localhost:5000"
     return raw
 
-SERVER_URL = _normalize_server_url(os.getenv("SERVER_URL", "http://localhost:5000"))
+SERVER_URL = _normalize_server_url(os.getenv("SERVER_URL", "https://localhost:5000"))
 BASE_URL = SERVER_URL.rstrip("/") + "/api/v1"
 print(f"[telegram] BASE_URL={BASE_URL}")
 str_ch_category = "Choose a category:"
