@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Snackbar, Alert, Dialog, DialogContent, Select, Container, Stack, MenuItem, FormControl, InputLabel, Grid, Tabs, Tab } from '@mui/material';
+import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, IconButton, Snackbar, Alert, Dialog, DialogContent, Select, Stack, MenuItem, FormControl, InputLabel, Grid, Tabs, Tab } from '@mui/material';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { CategoryFilter } from './filters';
@@ -50,9 +50,9 @@ interface EditOfficersFormProps {
 
 function formatString(str: string) {
     return str
-        .replace(/_/g, " ")
+        .replaceAll(/_/g, " ")
         .toLowerCase()
-        .replace(/\b\w/g, c => c.toUpperCase());
+        .replaceAll(/\b\w/g, c => c.toUpperCase());
 }
 
 interface EditMaintainerDialogProps {

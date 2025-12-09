@@ -562,7 +562,7 @@ async function updateOfficer(officer: Officer) {
 
 
 
-async function deleteOfficer(id: Number) {
+async function deleteOfficer(id: number) {
     const token = getToken();
 
     const headers: HeadersInit = {};
@@ -585,7 +585,7 @@ async function deleteOfficer(id: Number) {
 }
 
 
-async function deleteMaintainer(id: Number) {
+async function deleteMaintainer(id: number) {
     const token = getToken();
 
     const headers: HeadersInit = {};

@@ -15,9 +15,9 @@ type RegisterState =
 
 function formatString(str: string) {
   return str
-    .replace(/_/g, " ")            
+    .replaceAll(/_/g, " ")            
     .toLowerCase()                 
-    .replace(/\b\w/g, c => c.toUpperCase());
+    .replaceAll(/\b\w/g, c => c.toUpperCase());
 }
 
 export function AdminForm({ setShowForm }: AdminFormProps) {
