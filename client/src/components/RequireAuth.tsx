@@ -84,7 +84,7 @@ const RequireMaintainer: React.FC<RequireAuthProps> = ({ children }) => {
   const location = useLocation();
 
   // require that a token exists and role is 'maintainer'
-  if (!token || role !== 'maintainer') {
+  if (!token || role !== 'external_maintainer') {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
