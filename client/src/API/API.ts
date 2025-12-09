@@ -465,5 +465,54 @@ async function markNotificationAsRead(notificationId: number): Promise<{ id: num
 }
 
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister };
+
+async function getAllOfficers() {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/admin/admin`, {
+        method: 'GET',
+        headers: headers,
+    });
+    if (response.ok) {
+        const profile = await response.json();
+        return profile;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+
+async function getAllMaintainers() {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/maintainers/list`, {
+        method: 'GET',
+        headers: headers,
+    });
+    if (response.ok) {
+        const profile = await response.json();
+        return profile;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers };
 export type { Notification };
