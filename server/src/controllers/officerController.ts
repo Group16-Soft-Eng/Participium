@@ -130,6 +130,10 @@ export async function removeRoleFromOfficer(
   const officerRepo = new OfficerRepository();
   const current = await officerRepo.getOfficerById(officerId);
 
+  const reportRepo = new ReportRepository();
+  if(role === OfficerRole.TECHNICAL_OFFICE_STAFF)
+    await reportRepo.resetReportsAssignmentByOfficer(officerId, office);
+
   // Tipizza office come OfficeType | null per compatibilità
   const filtered: { role: OfficerRole; office: OfficeType | null }[] =
     (current.roles ?? [])
@@ -138,6 +142,8 @@ export async function removeRoleFromOfficer(
         office: (r.officeType as OfficeType) ?? null
       }))
       .filter(r => !(r.role === role && r.office === office));
+  
+
 
   await officerRepo.updateOfficerRoles(officerId, filtered);
 
