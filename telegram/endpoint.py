@@ -25,13 +25,13 @@ import httpx
 def _normalize_server_url(raw: str) -> str:
     raw = (raw or "").strip()
     if not raw:
-        return "http://localhost:5000"
+        return "https://localhost:5000"
     if not raw.startswith(("http://", "https://")):
-        raw = f"http://{raw}"
+        raw = f"https://{raw}"
     parsed = urlparse(raw)
     # Se manca hostname, fallback
     if not parsed.hostname:
-        return "http://localhost:5000"
+        return "https://localhost:5000"
     return raw
 
 SERVER_URL = _normalize_server_url(os.getenv("SERVER_URL", "http://localhost:5000"))
