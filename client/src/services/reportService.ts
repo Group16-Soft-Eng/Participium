@@ -24,6 +24,7 @@ export interface OfficerReport {
   };
   state?: ReportState;
   assignedOfficerId?: number;
+  assignedMaintainerId?: number;
 }
 
 export async function getAssignedReports(): Promise<OfficerReport[]> {

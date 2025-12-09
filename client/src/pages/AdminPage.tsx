@@ -3,20 +3,23 @@ import { useState } from "react";
 import { LoginForm } from "../components/LoginForm";
 import { RegisterForm } from "../components/RegisterForm";
 import { AdminForm } from "../components/AdminForm";
+import EditOfficersForm from "../components/EditOfficersForm";
 
 export function AdminScreen() {
 
     const [showForm, setShowForm] = useState(false);
+    const [showEditForm, setEditForm] = useState(false);
 
     return (
         <>
-            {!showForm && (
+            {!showForm && !showEditForm && (
             <Container id="login-screen">
                 <Box my={4} mx={4}>
                     <Stack spacing={5}>
                         <h1 id="login-title">Admin Dashboard</h1>
                         <Stack spacing={2}>
                             <Button variant="contained" onClick={() => setShowForm(true)}>Register new officer</Button>
+                            <Button variant="outlined" onClick={() => setEditForm(true)}>Update officer accounts</Button>
                         </Stack>
                         {/* reverted to original simple login screen (no mock buttons) */}
                     </Stack>
@@ -24,6 +27,7 @@ export function AdminScreen() {
             </Container>
             )}
             {showForm && (<AdminForm setShowForm={setShowForm} />)}
+            {showEditForm && (<EditOfficersForm setShowForm={setEditForm}/>)}
         </>
     );
 }
