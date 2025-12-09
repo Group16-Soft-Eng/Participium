@@ -166,7 +166,7 @@ export async function loginMaintainerByMail(email: string, password: string) {
     id: maintainer.id!,
     username: maintainer.name!,
     isStaff: true,
-    type: ["MAINTAINER"],           // sempre array
+    type: [OfficerRole.MAINTAINER, "MAINTAINER"], // enum + legacy string per retrocompatibilità
     sessionType: "web"
   });
   await saveSession(maintainer.id!, token, "web");
@@ -190,7 +190,7 @@ export async function loginMaintainerByUsername(username: string, password: stri
     id: maintainer.id!,
     username: maintainer.name!,
     isStaff: true,
-    type: ["MAINTAINER"],           // sempre array
+    type: [OfficerRole.MAINTAINER, "MAINTAINER"], // enum + legacy string per retrocompatibilità
     sessionType: "web"
   });
   await saveSession(maintainer.id!, token, "web");
