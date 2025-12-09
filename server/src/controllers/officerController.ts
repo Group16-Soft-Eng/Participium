@@ -236,7 +236,7 @@ export async function deleteOfficer(id: number): Promise<void> {
   const reportRepo = new ReportRepository();
   for(const role of existingOfficer.roles ?? []) {
     if(role.officerRole === OfficerRole.TECHNICAL_OFFICE_STAFF) {
-      await reportRepo.resetReportsAssignmentByOfficer(existingOfficer.id, );
+      await reportRepo.resetReportsAssignmentByOfficer(existingOfficer.id );
     }
   }
   await officerRepo.deleteOfficer(id);

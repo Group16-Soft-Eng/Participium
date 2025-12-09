@@ -115,16 +115,15 @@ export class ReportRepository {
     }
   }
   async resetPartialReportsAssignmentByOfficer(officerId: number, office: OfficeType): Promise<void> {
-    const reports = await this.getReportsByAssignedOfficer(officerId);
-    for (const report of reports) {
-      if (report.category === office && 
-        (report.state === ReportState.ASSIGNED || report.state === ReportState.IN_PROGRESS)) {
-        report.state = ReportState.PENDING
-        report.assignedOfficerId = null;
-        report.assignedMaintainerId = null;
-        await this.repo.save(report);
-      }
-    }
+    if (office == null) return;
+    await this.repo
+      .createQueryBuilder()
+      .update(ReportDAO)
+      .set({ state: ReportState.PENDING, assignedOfficerId: () => 'NULL', assignedMaintainerId: () => 'NULL' })
+      .where('assignedOfficerId = :officerId', { officerId })
+      .andWhere('category = :office', { office })
+      .andWhere('state IN (:...states)', { states: [ReportState.ASSIGNED, ReportState.IN_PROGRESS, ReportState.SUSPENDED] })
+      .execute();
   }
 
   async resetReportsAssignmentByMaintainer(maintainerId: number): Promise<void> {
