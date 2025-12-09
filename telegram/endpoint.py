@@ -1,6 +1,9 @@
 from __future__ import annotations
 import os
+import socket
 from typing import List, Dict
+from urllib.parse import urlparse
+import asyncio
 from telegram import InputFile
 import aiofiles
 import io
@@ -19,21 +22,63 @@ import httpx
 # ------------------------------------------------------------------ #
 # Configuration / State
 # ------------------------------------------------------------------ #
-BASE_URL = os.getenv("SERVER_URL", "http://localhost:5000") + "/api/v1"
+def _normalize_server_url(raw: str) -> str:
+    raw = (raw or "").strip()
+    if not raw:
+        return "http://localhost:5000"
+    if not raw.startswith(("http://", "https://")):
+        raw = f"http://{raw}"
+    parsed = urlparse(raw)
+    # Se manca hostname, fallback
+    if not parsed.hostname:
+        return "http://localhost:5000"
+    return raw
 
+SERVER_URL = _normalize_server_url(os.getenv("SERVER_URL", "http://localhost:5000"))
+BASE_URL = SERVER_URL.rstrip("/") + "/api/v1"
+print(f"[telegram] BASE_URL={BASE_URL}")
+str_ch_category = "Choose a category:"
+str_send_location = "Now send your location."
+str_going_back = "Going back..."
 sessions: Dict[int, str] = {}
 categories: List[str] = []
+
+async def _httpx_with_retry(method: str, url: str, **kwargs):
+    # Piccolo retry esponenziale per DNS/timeout
+    attempts = 3
+    delay = 0.5
+    last_exc = None
+    async with httpx.AsyncClient(timeout=5) as client:
+        for i in range(attempts):
+            try:
+                return await client.request(method, url, **kwargs)
+            except httpx.ConnectError as e:
+                last_exc = e
+            except httpx.ReadTimeout as e:
+                last_exc = e
+            except httpx.TransportError as e:
+                last_exc = e
+            await asyncio.sleep(delay * (2 ** i))
+    raise last_exc
 
 async def load_categories() -> None:
     """Load categories asynchronously at startup."""
     global categories
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            response = await client.get(f"{BASE_URL}/info-types")
-            response.raise_for_status()
-            data = response.json()
-            categories = data.get("officeTypes", []) or []
-            print("Loaded categories:", categories)
+        # Verifica DNS una volta e logga errore chiaro
+        host = urlparse(SERVER_URL).hostname
+        try:
+            socket.gethostbyname(host)
+        except Exception:
+            print(f"Failed to resolve server host: {host}. Using cached/empty categories.")
+            categories = []
+            return
+
+        response = await _httpx_with_retry("GET", f"{BASE_URL}/info-types")
+        response.raise_for_status()
+        data = response.json()
+        categories = data.get("officeTypes", []) or []
+        print("Loaded categories:", categories)
     except Exception as e:
         print("Failed to load categories:", e)
         categories = []
@@ -46,16 +91,29 @@ WAITING_PHOTO = 4
 WAITING_LOCATION = 5
 WAITING_ANONYMOUS = 6
 
+
+
 # ------------------------------------------------------------------ #
 # Helpers
 # ------------------------------------------------------------------ #
+def build_back_cancel_row(prefix: str) -> list[InlineKeyboardButton]:
+    # Ritorna una singola riga (lista di bottoni)
+    return [
+        InlineKeyboardButton("⬅️ Back", callback_data=f"back_{prefix}"),
+        InlineKeyboardButton("❌ Cancel", callback_data="cancel_report"),
+    ]
+
+def build_back_cancel_keyboard(prefix: str) -> InlineKeyboardMarkup:
+    # Se vuoi l'intero markup (non usarlo dentro altre tastiere)
+    return InlineKeyboardMarkup([build_back_cancel_row(prefix)])
+
 def build_category_keyboard() -> InlineKeyboardMarkup:
     keyboard = [
         [InlineKeyboardButton(label, callback_data=f"category_{i}")]
         for i, label in enumerate(categories)
     ]
-    # Add back and cancel button row
-    keyboard.append([InlineKeyboardButton("⬅️ Back", callback_data="back_description"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")])
+    # Append la riga, non un InlineKeyboardMarkup
+    keyboard.append(build_back_cancel_row("description"))
     return InlineKeyboardMarkup(keyboard)
 
 def build_yes_no_keyboard(prefix: str) -> InlineKeyboardMarkup:
@@ -67,6 +125,7 @@ def build_yes_no_keyboard(prefix: str) -> InlineKeyboardMarkup:
             ]
         ]
     )
+
 
 def in_turin(latitude: float, longitude: float) -> bool:
     return 44.9 <= latitude <= 45.2 and 7.5 <= longitude <= 7.8
@@ -103,8 +162,7 @@ async def handle_login(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     chat_id = update.effective_chat.id
     username = update.effective_user.username
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            response = await client.post(f"{BASE_URL}/auth/telegram", json={"username": username})
+        response = await _httpx_with_retry("POST", f"{BASE_URL}/auth/telegram", json={"username": username})
     except Exception as e:
         await query.edit_message_text(f"Error connecting to server: {e}")
         return
@@ -122,8 +180,7 @@ async def retrieveAccount(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     chat_id = update.effective_chat.id
     username = update.effective_user.username
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            response = await client.post(f"{BASE_URL}/auth/telegram", json={"username": username})
+        response = await _httpx_with_retry("POST", f"{BASE_URL}/auth/telegram", json={"username": username})
     except Exception as e:
         await update.message.reply_text(f"Error connecting to server: {e}")
         return
@@ -169,7 +226,7 @@ async def receiveDescription(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await update.message.reply_text("Description must be at least 30 characters. Send a more detailed description.")
         return WAITING_DESCRIPTION
     context.user_data["description"] = description
-    await update.message.reply_text("Choose a category:", reply_markup=build_category_keyboard())
+    await update.message.reply_text(str_ch_category, reply_markup=build_category_keyboard())
     return WAITING_CATEGORY
 
 async def receiveCategory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -180,8 +237,8 @@ async def receiveCategory(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     context.user_data["category"] = category
     context.user_data["photos"] = []
     await query.edit_message_text(f"Category selected: {category}")
-    keyboard = [
-        [InlineKeyboardButton("⬅️ Back", callback_data="back_category"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+    keyboard= [
+        build_back_cancel_row("category")
     ]
     await query.message.reply_text(
         "Send at least 1 photo (max 3). When done, send /done.",
@@ -206,11 +263,11 @@ async def receivePhoto(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     # If 3 photos, automatically move to next step
     if num >= 3:
         await update.message.reply_text(f"Photo {num}/3 received. Maximum reached!")
-        keyboard = [
-            [InlineKeyboardButton("⬅️ Back", callback_data="back_photos"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        keyboard= [
+            build_back_cancel_row("photos")
         ]
         await update.message.reply_text(
-            "Now send your location.",
+            str_send_location,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return WAITING_LOCATION
@@ -236,11 +293,11 @@ async def done_photos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
             await query.message.reply_text("At least 1 photo required.")
             return WAITING_PHOTO
         await query.edit_message_text(f"{num} photo(s) received.")
-        keyboard = [
-            [InlineKeyboardButton("⬅️ Back", callback_data="back_photos"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        keyboard= [
+            build_back_cancel_row("photos")
         ]
         await query.message.reply_text(
-            "Now send your location.",
+            str_send_location,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     else:
@@ -249,11 +306,11 @@ async def done_photos(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         if num < 1:
             await update.message.reply_text("At least 1 photo required.")
             return WAITING_PHOTO
-        keyboard = [
-            [InlineKeyboardButton("⬅️ Back", callback_data="back_photos"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        keyboard= [
+            build_back_cancel_row("photos")
         ]
         await update.message.reply_text(
-            "Now send your location.",
+            str_send_location,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     return WAITING_LOCATION
@@ -276,7 +333,7 @@ async def receiveLocation(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             InlineKeyboardButton("✅ Yes", callback_data="anonymous_yes"),
             InlineKeyboardButton("❌ No", callback_data="anonymous_no"),
         ],
-        [InlineKeyboardButton("⬅️ Back", callback_data="back_location"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")],
+        build_back_cancel_row("location"),
     ])
     await update.message.reply_text("Do you want to send the report anonymously?", reply_markup=anon_keyboard)
     return WAITING_ANONYMOUS
@@ -290,7 +347,7 @@ async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
     if target == "title":
         # Already at first step; just re-prompt title
-        await query.edit_message_text("Going back...")
+        await query.edit_message_text(str_going_back)
         keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]]
         await query.message.reply_text(
             "Send the report title again:",
@@ -300,9 +357,9 @@ async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         context.user_data.pop("description", None)
         return WAITING_TITLE
     if target == "description":
-        await query.edit_message_text("Going back...")
-        keyboard = [
-            [InlineKeyboardButton("⬅️ Back", callback_data="back_title"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        await query.edit_message_text(str_going_back)
+        keyboard= [
+            build_back_cancel_row("title")
         ]
         await query.message.reply_text(
             "Send the description again:",
@@ -311,16 +368,16 @@ async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         context.user_data.pop("description", None)
         return WAITING_DESCRIPTION
     if target == "category":
-        await query.edit_message_text("Going back...")
+        await query.edit_message_text(str_going_back)
         context.user_data.pop("category", None)
         context.user_data.pop("photos", None)
-        await query.message.reply_text("Choose a category:", reply_markup=build_category_keyboard())
+        await query.message.reply_text(str_ch_category, reply_markup=build_category_keyboard())
         return WAITING_CATEGORY
     if target == "photos":
         # Go back to photo collection stage
-        await query.edit_message_text("Going back...")
-        keyboard = [
-            [InlineKeyboardButton("⬅️ Back", callback_data="back_category"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        await query.edit_message_text(str_going_back)
+        keyboard= [
+            build_back_cancel_row("category")
         ]
         await query.message.reply_text(
             "Send at least 1 photo (max 3). When done, send /done.",
@@ -329,9 +386,9 @@ async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         return WAITING_PHOTO
     if target == "location":
         # Back from anonymous to location
-        await query.edit_message_text("Going back...")
-        keyboard = [
-            [InlineKeyboardButton("⬅️ Back", callback_data="back_photos"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        await query.edit_message_text(str_going_back)
+        keyboard= [
+            build_back_cancel_row("photos")
         ]
         await query.message.reply_text(
             "Send your location again.",
@@ -369,13 +426,13 @@ async def receiveAnonymous(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             bio.name = os.path.basename(p)
             files.append(("photos", (os.path.basename(p), bio, "image/jpeg")))
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.post(
-                f"{BASE_URL}/reports",
-                data=report_data,
-                files=files,
-                headers={"Authorization": f"Bearer {token}"},
-            )
+        response = await _httpx_with_retry(
+            "POST",
+            f"{BASE_URL}/reports",
+            data=report_data,
+            files=files,
+            headers={"Authorization": f"Bearer {token}"},
+        )
         if response.status_code in (200, 201):
             await query.edit_message_text(f"✅ Report sent with {len(files)} photo(s)! {'(Anonymous)' if anonymous else ''}")
             await query.message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
@@ -417,7 +474,7 @@ async def show_categories(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not categories:
         await update.message.reply_text("No categories available.")
         return ConversationHandler.END
-    await update.message.reply_text("Choose a category:", reply_markup=build_category_keyboard())
+    await update.message.reply_text(str_ch_category, reply_markup=build_category_keyboard())
     return WAITING_CATEGORY
 
 async def handle_start_report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
