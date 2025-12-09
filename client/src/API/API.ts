@@ -464,6 +464,74 @@ async function markNotificationAsRead(notificationId: number): Promise<{ id: num
     }
 }
 
+async function getReportById(reportId: string) {
+    const token = getToken();
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister };
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/reports/${reportId}`, {
+        method: 'GET',
+        headers: headers,
+    });
+    
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to fetch report');
+    }
+}
+
+async function approveReport(reportId: number, explanation?: string) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/reports/${reportId}/approve`, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify({ explanation }),
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to approve report');
+    }
+}
+
+async function declineReport(reportId: number, explanation: string) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/reports/${reportId}/decline`, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify({ explanation }),
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to decline report');
+    }
+}
+
+
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getReportById, approveReport, declineReport };
 export type { Notification };

@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup, Dialog, DialogTitle, DialogContent, FormControl, InputLabel, Select, MenuItem, DialogActions } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, ButtonGroup, Dialog, DialogTitle, DialogContent, FormControl, InputLabel, Select, MenuItem, DialogActions, IconButton, Badge } from '@mui/material';
+import ChatIcon from '@mui/icons-material/Chat';
 import ReportDetailDialog from '../components/ReportDetailDialog';
 import { assignReportToMaintainer, getMaintainersByCategory, getMyAssignedReports, updateReportStatus } from '../services/reportService';
 import type { Maintainer, OfficerReport } from '../services/reportService';
@@ -24,14 +26,12 @@ const TechnicalOfficerPage: React.FC = () => {
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selected, setSelected] = useState<OfficerReport | null>(null);
-  const [snackOpen, setSnackOpen] = useState(false);
-  const [snackMessage, setSnackMessage] = useState('');
-  const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedReportForAssignment, setSelectedReportForAssignment] = useState<OfficerReport | null>(null);
   const [selectedMaintainerId, setSelectedMaintainerId] = useState<number | null>(null);
   const [maintainers, setMaintainers] = useState<Maintainer[]>([]);
   const [loadingMaintainers, setLoadingMaintainers] = useState(false);
+  const navigate = useNavigate();
   // Filter state
   const [statusFilter, setStatusFilter] = useState<ReportStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<ReportCategory | 'all' | null>('all');
@@ -53,14 +53,7 @@ const TechnicalOfficerPage: React.FC = () => {
   const handleStatusChange = async (reportId: number, newStatus: 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED') => {
     const success = await updateReportStatus(reportId, newStatus);
     if (success) {
-      setSnackMessage(`Report status updated to ${newStatus.replace('_', ' ')}`);
-      setSnackSeverity('success');
-      setSnackOpen(true);
       fetchAssigned(); // Refresh the list
-    } else {
-      setSnackMessage('Failed to update report status');
-      setSnackSeverity('error');
-      setSnackOpen(true);
     }
   };
 
@@ -90,14 +83,7 @@ const TechnicalOfficerPage: React.FC = () => {
 
     const success = await assignReportToMaintainer(selectedReportForAssignment.id, selectedMaintainerId);
     if (success) {
-      setSnackMessage('Report successfully assigned to external maintainer');
-      setSnackSeverity('success');
-      setSnackOpen(true);
       fetchAssigned(); // Refresh the list
-    } else {
-      setSnackMessage('Failed to assign report to maintainer');
-      setSnackSeverity('error');
-      setSnackOpen(true);
     }
     handleCloseAssignDialog();
   };
@@ -205,6 +191,11 @@ const TechnicalOfficerPage: React.FC = () => {
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                           <TableCell align="right">
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                            <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                              <Badge badgeContent={0} color="error">
+                                <ChatIcon />
+                              </Badge>
+                            </IconButton>
                             <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
                             <ButtonGroup size="small" variant="contained">
                               <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
@@ -253,6 +244,11 @@ const TechnicalOfficerPage: React.FC = () => {
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
                               <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                              <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                                <Badge badgeContent={0} color="error">
+                                  <ChatIcon />
+                                </Badge>
+                              </IconButton>
                               <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
                               <ButtonGroup size="small" variant="contained">
                                 <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
@@ -275,11 +271,6 @@ const TechnicalOfficerPage: React.FC = () => {
           <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>No reports match the selected filters.</Typography>
         )}
       </Paper>
-      <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
-          {snackMessage}
-        </Alert>
-      </Snackbar>
 
       <ReportDetailDialog open={selected !== null} report={selected} onClose={() => setSelected(null)} />
 

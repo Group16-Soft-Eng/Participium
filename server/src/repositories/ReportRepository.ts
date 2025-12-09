@@ -135,4 +135,8 @@ export class ReportRepository {
     report.state = ReportState.ASSIGNED;
     return this.repo.save(report);
   }
+
+  async updateReport(report: ReportDAO): Promise<ReportDAO> {
+    return this.repo.save(report);
+  }
 }

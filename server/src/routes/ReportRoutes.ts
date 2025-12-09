@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {uploadReport, getReports, getReportsByOffice } from "@controllers/reportController"
+import {uploadReport, getReports, getReportsByOffice, getReport } from "@controllers/reportController"
 import {ReportFromJSON} from "@dto/Report";
 
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
@@ -8,17 +8,15 @@ import { OfficerRole } from "@models/enums/OfficerRole";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { NotificationRepository } from "@repositories/NotificationRepository";
 import { OfficerRepository } from "@repositories/OfficerRepository";
-import { MaintainerRepository } from "@repositories/MaintainerRepository";
-import { OfficeType } from "@models/enums/OfficeType";
-import { get } from "http";
+import { ReviewStatus } from "@models/enums/ReviewStatus";
 
 const router = Router({mergeParams : true});
 
 router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, async(req, res, next) =>{
     try{
         // Build DTO from multipart/form-data fields directly to avoid mismatches
-        const lat = req.body.latitude ? Number.parseFloat(req.body.latitude as string) : undefined;
-        const lng = req.body.longitude ? Number.parseFloat(req.body.longitude as string) : undefined;
+        const lat = req.body.latitude ? parseFloat(req.body.latitude as string) : undefined;
+        const lng = req.body.longitude ? parseFloat(req.body.longitude as string) : undefined;
 
         const reportData: any = {
             title: req.body.title || undefined,
@@ -42,7 +40,7 @@ router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, asy
     }
 });
 
-router.get("/",authenticateToken, async(req, res, next) =>{
+router.get("/", async(req, res, next) =>{
     try{
         // Check if user is authenticated
         const authHeader = req.headers.authorization;
@@ -78,6 +76,92 @@ router.get("/",authenticateToken, async(req, res, next) =>{
     }
     catch(error)
     {
+        next(error);
+    }
+});
+
+//? Get single report by ID (for officers and authenticated users)
+router.get("/:id", authenticateToken, async (req, res, next) => {
+    try {
+        const reportId = Number(req.params.id);
+        
+        if (isNaN(reportId)) {
+            return res.status(400).json({ error: "Invalid report ID" });
+        }
+
+        const reportRepo = new ReportRepository();
+        const report = await reportRepo.getReportById(reportId);
+        
+        if (!report) {
+            return res.status(404).json({ error: "Report not found" });
+        }
+
+        // Map the report DAO to DTO
+        const result = await getReport(reportId);
+        res.status(200).json(result);
+    } catch (error: any) {
+        console.error(`Error fetching report ${req.params.id}:`, error);
+        if (error.message?.includes('not found')) {
+            return res.status(404).json({ error: "Report not found" });
+        }
+        next(error);
+    }
+});
+
+//? Approve report (Public Relations Officer only)
+router.patch("/:id/approve", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async (req, res, next) => {
+    try {
+        const reportId = Number(req.params.id);
+        const explanation = req.body.explanation;
+
+        const reportRepo = new ReportRepository();
+        const report = await reportRepo.getReportById(reportId);
+
+        if (!report) {
+            return res.status(404).json({ error: "Report not found" });
+        }
+
+        report.reviewStatus = ReviewStatus.APPROVED;
+        if (explanation) {
+            report.explanation = explanation;
+        }
+
+        await reportRepo.updateReport(report);
+
+        // TODO: Create notification for user
+
+        res.status(200).json({ message: "Report approved successfully", report });
+    } catch (error) {
+        next(error);
+    }
+});
+
+//? Decline report (Public Relations Officer only)
+router.patch("/:id/decline", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async (req, res, next) => {
+    try {
+        const reportId = Number(req.params.id);
+        const explanation = req.body.explanation;
+
+        if (!explanation || explanation.trim().length === 0) {
+            return res.status(400).json({ error: "Explanation is required when declining a report" });
+        }
+
+        const reportRepo = new ReportRepository();
+        const report = await reportRepo.getReportById(reportId);
+
+        if (!report) {
+            return res.status(404).json({ error: "Report not found" });
+        }
+
+        report.reviewStatus = ReviewStatus.DECLINED;
+        report.explanation = explanation.trim();
+
+        await reportRepo.updateReport(report);
+
+        // TODO: Create notification for user
+
+        res.status(200).json({ message: "Report declined successfully", report });
+    } catch (error) {
         next(error);
     }
 });

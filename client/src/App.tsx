@@ -1,11 +1,11 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import './App.css'
 import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import UserMenu from './components/UserMenu';
 import NotificationBell from './components/NotificationBell';
 import { useEffect, useState } from 'react';
-import { getToken, getRole, getRoleFromToken } from './services/auth';
+import { getToken, getRole } from './services/auth';
 import { LoginScreen } from './pages/LoginScreen';
 
 import ReportForm from './Map/MapComponents/ReportForm';
@@ -13,126 +13,30 @@ import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
 import OfficerMessagesPage from './pages/OfficerMessagesPage';
 import MessagesPage from './pages/MessagesPage';
-import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePublicRelations, RequireMaintainer } from './components/RequireAuth';
+import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePublicRelations } from './components/RequireAuth';
 import { AdminScreen } from './pages/AdminPage';
 import { NotificationProvider } from './contexts/NotificationContext';
 import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
-import ExternalMaintainersPage from './pages/ExternalMaintainer';
 import { UserPage } from './pages/UserPage';
-
-
-type OfficerProps = {
-  technical: boolean;
-};
-
-function OfficerButton({ technical }: OfficerProps) {
-  return <Button
-    component={Link}
-    to={technical ? "/technical" : "/officer"}
-    variant="contained"
-    color="primary"
-    sx={{
-      px: 2.2,
-      py: 0.7,
-      borderRadius: 2,
-      textTransform: 'none',
-      fontWeight: 700,
-      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
-    }}
-  >
-    {technical ? "Technical Workspace" : "Review Reports"}
-  </Button>
-}
-
-function PublicRelationsButton() {
-  return <Button
-    component={Link}
-    to="/officer"
-    variant="contained"
-    color="primary"
-    sx={{
-      px: 2.2,
-      py: 0.7,
-      borderRadius: 2,
-      textTransform: 'none',
-      fontWeight: 700,
-      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
-    }}
-  >
-    Review Reports
-  </Button>
-}
-
-type ButtonProps = {
-  isLoggedIn: boolean;
-  setShowLoginDialog: React.Dispatch<React.SetStateAction<boolean>>;
-};
-
-export function AdminButton({ isLoggedIn, setShowLoginDialog }: ButtonProps) {
-  return (
-    <Button
-      {...(isLoggedIn
-        ? { component: Link, to: "/admin" }
-        : { onClick: () => setShowLoginDialog(true) }
-      )}
-      variant="contained"
-      color="secondary"
-      sx={{
-        px: 2.2,
-        py: 0.7,
-        borderRadius: 2,
-        textTransform: "none",
-        fontWeight: 700,
-        boxShadow: "0 6px 18px rgba(25,118,210,0.18)",
-        background: "linear-gradient(90deg, #00c20a, #008f15)"
-      }}
-    >
-      Admin Dashboard
-    </Button>
-  );
-}
-
-function UserButton({ isLoggedIn, setShowLoginDialog }: ButtonProps) {
-  return <Button id="report-button"
-    {...(isLoggedIn
-      ? { component: Link, to: "/submitReport" }
-      : { onClick: () => setShowLoginDialog(true) }
-    )}
-    variant="contained"
-    color="secondary"
-    sx={{
-      px: 2.2,
-      py: 0.7,
-      borderRadius: 2,
-      textTransform: 'none',
-      fontWeight: 700,
-      boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
-      background: 'linear-gradient(90deg,#ff6b35,#ff3d00)'
-    }}
-  >
-    Write a report
-  </Button>
-}
+import { ReportDetailsPage } from './pages/ReportDetailsPage';
 
 function App() {
   const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
   const [showLoginDialog, setShowLoginDialog] = useState(false);
 
-  useEffect(() => {
-    const onAuth = () => setAuth({ token: getToken(), role: getRole() });
-    window.addEventListener('authChange', onAuth);
-    return () => window.removeEventListener('authChange', onAuth);
-  }, []);
+    useEffect(() => {
+      const onAuth = () => setAuth({ token: getToken(), role: getRole() });
+      window.addEventListener('authChange', onAuth);
+      return () => window.removeEventListener('authChange', onAuth);
+    }, []);
 
   const isLoggedIn = Boolean(auth.token);
   const isAdmin = auth.role === 'municipal_administrator';
-  const isPROfficer = auth.role === 'municipal_public_relations_officer';
+  const isPROfficer = auth.role === 'municipal_public_relations_officer' || auth.role === 'municipal_public_relations_officer';
   const isTechnicalOfficer = auth.role === 'technical_office_staff';
-  const isMaintainer = auth.role === 'maintainer';
   const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';
-  const isCitizen = auth.role === 'citizen';
 
-  return (
+    return (
     <NotificationProvider>
       <Router>
         <AppBar position="fixed" color="default" elevation={1} className="app-bar">
@@ -140,11 +44,14 @@ function App() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {/* small inline logo */}
               <Box className="app-logo" component={Link} to="/map" sx={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
-                <img src="/assets/StemmaTorino.svg" width="34" height="34" alt="Participium logo" />
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                  <circle cx="12" cy="12" r="10" fill="#1976d2" />
+                  <text x="12" y="16" textAnchor="middle" fontSize="12" fontFamily="Poppins, sans-serif" fill="#fff" fontWeight="600">P</text>
+                </svg>
               </Box>
 
-
-              <Box id="app-title" component={Link} to="/map" sx={{ textDecoration: 'none' }}>
+              
+              <Box id = "app-title" component={Link} to="/map" sx={{ textDecoration: 'none' }}>
                 <Typography variant="h6" component="div" sx={{ color: '#222', fontWeight: 700 }}>
                   Participium
                 </Typography>
@@ -156,49 +63,110 @@ function App() {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button className="flex-mobile" id="map-button" component={Link} to="/map" color="inherit">Map</Button>
-              {isLoggedIn && !isOfficer && !isAdmin && !isMaintainer && (
+              {isLoggedIn && !isOfficer && !isAdmin && (
                 <Button component={Link} to="/messages" color="inherit">Messages</Button>
               )}
               {
               /*isOfficer && (
                 <Button component={Link} to="/officer/messages" color="inherit">Messages</Button>
               )*/}
-
+              
               {/* Show different button based on user role */}
-              {isOfficer && (
+              {isOfficer ? (
                 isPROfficer ? (
-                  <PublicRelationsButton />
-                ) :
-                  <OfficerButton technical={isTechnicalOfficer} />
-              )
-              }
-              {isMaintainer && (
+                  <Button
+                    component={Link}
+                    to="/officer"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    Review Reports
+                  </Button>
+                ) : isTechnicalOfficer ? (
+                  <Button
+                    component={Link}
+                    to="/technical"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    Technical Workspace
+                  </Button>
+                ) : (
+                  <Button
+                    component={Link}
+                    to="/officer"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    Review Reports
+                  </Button>
+                )
+              ) : isAdmin ? (
                 <Button
                   component={Link}
-                  to="/maintainer"
+                  to="/admin"
                   variant="contained"
-                  color="primary"
+                  color="secondary"
                   sx={{
                     px: 2.2,
                     py: 0.7,
                     borderRadius: 2,
                     textTransform: 'none',
                     fontWeight: 700,
-                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
+                    background: 'linear-gradient(90deg, #00c20aff, #008f15ff)'
                   }}
                 >
-                  Maintainer Workspace
+                  Admin Dashboard
                 </Button>
-              )}
-              {isAdmin && <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />}
-              {isCitizen && (
-                <UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
-              )}
-
+              ) : isLoggedIn ? (
+                <Button id="report-button"
+                  component={Link}
+                  to="/submitReport"
+                  variant="contained"
+                  color="secondary"
+                  sx={{
+                    px: 2.2,
+                    py: 0.7,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
+                    background: 'linear-gradient(90deg,#ff6b35,#ff3d00)'
+                  }}
+                >
+                  Write a report
+                </Button>
+              ) : null}
+              
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
               {isLoggedIn ? (
                 <>
-                  {!isOfficer && !isAdmin && !isMaintainer && <NotificationBell />}
+                  {!isOfficer && !isAdmin && <NotificationBell />}
                   <UserMenu />
                 </>
               ) : (
@@ -220,7 +188,7 @@ function App() {
             <Route path="/officer/messages" element={<RequireTechnical><OfficerMessagesPage /></RequireTechnical>} />
             <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
             <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
-            <Route path="/maintainer" element={<RequireMaintainer><ExternalMaintainersPage /></RequireMaintainer>} />
+            <Route path="/reports/:reportId/details" element={<RequireLogin><ReportDetailsPage /></RequireLogin>} />
           </Routes>
         </Box>
 
@@ -236,10 +204,10 @@ function App() {
             <Button onClick={() => setShowLoginDialog(false)} color="inherit">
               Cancel
             </Button>
-            <Button
-              component={Link}
-              to="/login"
-              variant="contained"
+            <Button 
+              component={Link} 
+              to="/login" 
+              variant="contained" 
               color="primary"
               onClick={() => setShowLoginDialog(false)}
             >
