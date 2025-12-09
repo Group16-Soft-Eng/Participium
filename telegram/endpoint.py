@@ -1,9 +1,9 @@
 from __future__ import annotations
-
 import os
-import requests
 from typing import List, Dict
-
+from telegram import InputFile
+import aiofiles
+import io
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -14,24 +14,29 @@ from telegram.ext import (
     CallbackQueryHandler,
     ContextTypes,
 )
+import httpx
 
 # ------------------------------------------------------------------ #
 # Configuration / State
 # ------------------------------------------------------------------ #
-# Usa la variabile d'ambiente o fallback a localhost per sviluppo locale
 BASE_URL = os.getenv("SERVER_URL", "http://localhost:5000") + "/api/v1"
 
 sessions: Dict[int, str] = {}
 categories: List[str] = []
 
-try:
-    response = requests.get(f"{BASE_URL}/info-types", timeout=5)
-    data = response.json()
-    categories = data.get("officeTypes", []) or []
-    print("Loaded categories:", categories)
-except Exception as e:
-    print("Failed to load categories:", e)
-    categories = []
+async def load_categories() -> None:
+    """Load categories asynchronously at startup."""
+    global categories
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            response = await client.get(f"{BASE_URL}/info-types")
+            response.raise_for_status()
+            data = response.json()
+            categories = data.get("officeTypes", []) or []
+            print("Loaded categories:", categories)
+    except Exception as e:
+        print("Failed to load categories:", e)
+        categories = []
 
 # Conversation states
 WAITING_TITLE = 1
@@ -82,8 +87,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     image_path = os.path.join(script_dir, "welcome.png")
     if os.path.exists(image_path):
-        with open(image_path, "rb") as f:
-            await update.message.reply_sticker(sticker=f)
+        # Use asynchronous file I/O to read the image
+        async with aiofiles.open(image_path, "rb") as f:
+            content = await f.read()
+        bio = io.BytesIO(content)
+        bio.name = os.path.basename(image_path)
+        await update.message.reply_sticker(sticker=bio)
     else:
         print(f"Warning: Image not found at {image_path}")
 
@@ -94,7 +103,8 @@ async def handle_login(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     chat_id = update.effective_chat.id
     username = update.effective_user.username
     try:
-        response = requests.post(f"{BASE_URL}/auth/telegram", json={"username": username}, timeout=5)
+        async with httpx.AsyncClient(timeout=5) as client:
+            response = await client.post(f"{BASE_URL}/auth/telegram", json={"username": username})
     except Exception as e:
         await query.edit_message_text(f"Error connecting to server: {e}")
         return
@@ -112,7 +122,8 @@ async def retrieveAccount(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     chat_id = update.effective_chat.id
     username = update.effective_user.username
     try:
-        response = requests.post(f"{BASE_URL}/auth/telegram", json={"username": username}, timeout=5)
+        async with httpx.AsyncClient(timeout=5) as client:
+            response = await client.post(f"{BASE_URL}/auth/telegram", json={"username": username})
     except Exception as e:
         await update.message.reply_text(f"Error connecting to server: {e}")
         return
@@ -352,25 +363,35 @@ async def receiveAnonymous(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     files = []
     for p in photo_paths:
         if os.path.exists(p):
-            files.append(("photos", (os.path.basename(p), open(p, "rb"), "image/jpeg")))
+            async with aiofiles.open(p, "rb") as af:
+                data = await af.read()
+            bio = io.BytesIO(data)
+            bio.name = os.path.basename(p)
+            files.append(("photos", (os.path.basename(p), bio, "image/jpeg")))
     try:
-        response = requests.post(f"{BASE_URL}/reports", data=report_data, files=files, headers={"Authorization": f"Bearer {token}"})
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(
+                f"{BASE_URL}/reports",
+                data=report_data,
+                files=files,
+                headers={"Authorization": f"Bearer {token}"},
+            )
         if response.status_code in (200, 201):
             await query.edit_message_text(f"✅ Report sent with {len(files)} photo(s)! {'(Anonymous)' if anonymous else ''}")
-            # Show main menu after successful report
-            await query.message.reply_text(
-                "What would you like to do next?",
-                reply_markup=build_main_menu()
-            )
+            await query.message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
         elif response.status_code == 401:
-            # Clear session on unauthorized
             sessions.pop(chat_id, None)
             await query.edit_message_text("❌ Unauthorized. Your session has expired. Please /login again.")
         else:
             await query.edit_message_text(f"❌ Error sending report: {response.text}")
     finally:
+        # Close buffers and remove temp files
         for _, file_tuple in files:
-            file_tuple[1].close()
+            file_obj = file_tuple[1]
+            try:
+                file_obj.close()
+            except Exception:
+                pass
         for p in photo_paths:
             if os.path.exists(p):
                 os.remove(p)
@@ -419,7 +440,6 @@ async def handle_start_report(update: Update, context: ContextTypes.DEFAULT_TYPE
 async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Logout user and clear session."""
     chat_id = update.effective_chat.id
-    
     if chat_id in sessions:
         sessions.pop(chat_id, None)
         await update.message.reply_text("✅ Logged out successfully. Use /login to authenticate again.")
