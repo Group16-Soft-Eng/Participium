@@ -6,7 +6,7 @@ import { BadRequestError, ForbiddenError } from "@utils/utils";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { getIO } from "@services/ioService";
 
-type Participant = {
+export type Participant = {
     type: OfficerRole.TECHNICAL_OFFICE_STAFF | OfficerRole.MAINTAINER;
     id: number
 };
