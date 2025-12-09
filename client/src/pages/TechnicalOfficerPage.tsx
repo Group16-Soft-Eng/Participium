@@ -204,13 +204,22 @@ const TechnicalOfficerPage: React.FC = () => {
                           </TableCell>
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                           <TableCell align="right">
+
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                            <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
-                            <ButtonGroup size="small" variant="contained">
-                              <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
-                              <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
-                              <Button color="success" onClick={() => handleStatusChange(r.id, 'RESOLVED')}>Resolve</Button>
-                            </ButtonGroup>
+                            
+                            {r.assignedMaintainerId ? (
+                              <Typography variant="body2" color="text.secondary">Report assigned to external maintainer {r.assignedMaintainerId}</Typography>
+                            ) : (
+                              <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
+                            )}
+
+                            {!r.assignedMaintainerId && (
+                                <ButtonGroup size="small" variant="contained">
+                                  <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
+                                  <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
+                                  <Button color="success" onClick={() => handleStatusChange(r.id, 'RESOLVED')}>Resolve</Button>
+                                </ButtonGroup>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}

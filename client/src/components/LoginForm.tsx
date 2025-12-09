@@ -57,7 +57,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 const token = await maintainerLogin(user);
                 setToken(token);
                 const detected = getRoleFromToken(token);
-                setRole(detected || 'maintainer');
+                setRole(detected || 'external_maintainer');
                 window.dispatchEvent(new Event('authChange'));
                 setLoading(false);
                 navigate('/maintainer');
