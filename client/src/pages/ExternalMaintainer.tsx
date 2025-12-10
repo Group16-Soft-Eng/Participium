@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup, IconButton, Badge } from '@mui/material';
-import ChatIcon from '@mui/icons-material/Chat';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup } from '@mui/material';
 import ReportDetailDialog from '../components/ReportDetailDialog';
 import { getMaintainerAssignedReports, updateReportStatusByMaintainer } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
@@ -21,7 +19,6 @@ const getCategoryColor = (category?: string): string => {
 };
 
 const ExternalMaintainersPage: React.FC = () => {
-  const navigate = useNavigate();
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selected, setSelected] = useState<OfficerReport | null>(null);
@@ -114,9 +111,6 @@ const ExternalMaintainersPage: React.FC = () => {
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                           <TableCell align="right">
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                            <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
-                              <ChatIcon />
-                            </IconButton>
                             <ButtonGroup size="small" variant="contained">
                               <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                               <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
@@ -164,9 +158,6 @@ const ExternalMaintainersPage: React.FC = () => {
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
                               <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                              <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
-                                <ChatIcon />
-                              </IconButton>
                               <ButtonGroup size="small" variant="contained">
                                 <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                                 <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>

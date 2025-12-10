@@ -65,13 +65,6 @@ function App() {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button className="flex-mobile" id="map-button" component={Link} to="/map" color="inherit">Map</Button>
-              {isLoggedIn && !isOfficer && !isAdmin && (
-                <Button component={Link} to="/messages" color="inherit">Messages</Button>
-              )}
-              {
-              /*isOfficer && (
-                <Button component={Link} to="/officer/messages" color="inherit">Messages</Button>
-              )*/}
               
               {/* Show different button based on user role */}
               {isOfficer ? (
