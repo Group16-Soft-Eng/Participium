@@ -142,7 +142,7 @@ function App() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {/* small inline logo */}
               <Box className="app-logo" component={Link} to="/map" sx={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
-                <img src="/assets/StemmaTorino.svg" width="34" height="34" alt="Participium logo" />
+                <img src="/assets/ParticipiumLogoNoText.png" width="39" height="39" alt="Participium logo" />
               </Box>
 
 
