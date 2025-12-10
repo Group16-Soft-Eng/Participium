@@ -1,236 +1,784 @@
-import "reflect-metadata";
 import {
-  loginUser,
-  loginOfficer,
-  getUserByTelegramUsername,
-  loginUserByMail,
-  loginUserByUsername,
-  loginOfficerByMail,
-  loginOfficerByUsername
-} from "../../../src/controllers/authController";
-import { UserRepository } from "../../../src/repositories/UserRepository";
-import { OfficerRepository } from "../../../src/repositories/OfficerRepository";
-import { verifyPassword, generateToken, saveSession } from "../../../src/services/authService";
-import { UnauthorizedError } from "../../../src/utils/utils";
+    loginUserByUsername,
+    loginUserByMail,
+    loginOfficerByMail,
+    loginOfficerByUsername,
+    loginUser,
+    loginOfficer,
+    getUserByTelegramUsername,
+    loginMaintainerByMail,
+    loginMaintainerByUsername,
+    loginMaintainer
+} from '../../../src/controllers/authController';
+import { UserRepository } from '../../../src/repositories/UserRepository';
+import { OfficerRepository } from '../../../src/repositories/OfficerRepository';
+import { MaintainerRepository } from '../../../src/repositories/MaintainerRepository';
+import * as authService from '../../../src/services/authService';
+import { UnauthorizedError } from '../../../src/utils/utils';
+import { OfficerRole } from '../../../src/models/enums/OfficerRole';
+import { UserDAO } from '../../../src/models/dao/UserDAO';
+import { OfficerDAO } from '../../../src/models/dao/OfficerDAO';
+import { MaintainerDAO } from '../../../src/models/dao/MaintainerDAO';
 
-jest.mock("../../../src/services/authService");
+jest.mock('@repositories/UserRepository');
+jest.mock('@repositories/OfficerRepository');
+jest.mock('@repositories/MaintainerRepository');
+jest.mock('@services/authService');
 
-describe("AuthController Unit Tests", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+describe('authController', () => {
+    let mockUserRepo: jest.Mocked<UserRepository>;
+    let mockOfficerRepo: jest.Mocked<OfficerRepository>;
+    let mockMaintainerRepo: jest.Mocked<MaintainerRepository>;
 
-  describe("loginUser", () => {
-    it("dovrebbe restituire un token con credenziali valide (username)", async () => {
-      const mockUser = {
-        id: 1,
-        username: "testuser",
-        firstName: "Test",
-        lastName: "User",
-        email: "test@example.com",
-        password: "hashedpassword"
-      };
+    beforeEach(() => {
+        mockUserRepo = {
+            getUserByUsername: jest.fn(),
+            getUserByEmail: jest.fn(),
+            getUseryTelegramUsername: jest.fn()
+        } as any;
 
-      // Spy sui metodi del repository
-      jest.spyOn(UserRepository.prototype, 'getUserByUsername').mockResolvedValue(mockUser as any);
-      (verifyPassword as jest.Mock).mockResolvedValue(true);
-      (generateToken as jest.Mock).mockReturnValue("mock-token");
+        mockOfficerRepo = {
+            getOfficerByEmail: jest.fn(),
+            getOfficersByUsername: jest.fn()
+        } as any;
 
-      const result = await loginUser("testuser", "password123", false);
+        mockMaintainerRepo = {
+            getMaintainerByEmail: jest.fn(),
+            getMaintainersByUsername: jest.fn()
+        } as any;
 
-      expect(result).toBe("mock-token");
-      expect(UserRepository.prototype.getUserByUsername).toHaveBeenCalledWith("testuser");
-      expect(verifyPassword).toHaveBeenCalledWith("password123", "hashedpassword");
-      expect(generateToken).toHaveBeenCalledWith({
-        id: 1,
-        username: "testuser",
-        type: "user"
-      });
+        (UserRepository as jest.Mock).mockImplementation(() => mockUserRepo);
+        (OfficerRepository as jest.Mock).mockImplementation(() => mockOfficerRepo);
+        (MaintainerRepository as jest.Mock).mockImplementation(() => mockMaintainerRepo);
+
+        (authService.verifyPassword as jest.Mock).mockResolvedValue(true);
+        (authService.generateToken as jest.Mock).mockReturnValue('mock-token');
+        (authService.saveSession as jest.Mock).mockResolvedValue(undefined);
     });
 
-    it("dovrebbe restituire un token con credenziali valide (email)", async () => {
-      const mockUser = {
-        id: 1,
-        username: "testuser",
-        firstName: "Test",
-        lastName: "User",
-        email: "test@example.com",
-        password: "hashedpassword"
-      };
-
-      jest.spyOn(UserRepository.prototype, 'getUserByEmail').mockResolvedValue(mockUser as any);
-      (verifyPassword as jest.Mock).mockResolvedValue(true);
-      (generateToken as jest.Mock).mockReturnValue("mock-token");
-
-      const result = await loginUser("test@example.com", "password123", true);
-
-      expect(result).toBe("mock-token");
-      expect(UserRepository.prototype.getUserByEmail).toHaveBeenCalledWith("test@example.com");
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
-    it("dovrebbe lanciare UnauthorizedError con password errata", async () => {
-      const mockUser = {
-        id: 1,
-        username: "testuser",
-        password: "hashedpassword"
-      };
+    // ===================== loginUserByUsername =====================
+    describe('loginUserByUsername', () => {
+        it('should login user successfully with username', async () => {
+            const mockUser: UserDAO = {
+                id: 1,
+                username: 'testuser',
+                email: 'test@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
 
-      jest.spyOn(UserRepository.prototype, 'getUserByUsername').mockResolvedValue(mockUser as any);
-      (verifyPassword as jest.Mock).mockResolvedValue(false);
+            mockUserRepo.getUserByUsername.mockResolvedValue(mockUser);
 
-      await expect(loginUser("testuser", "wrongpassword", false))
-        .rejects
-        .toThrow(UnauthorizedError);
-    });
-  });
+            const token = await loginUserByUsername('testuser', 'password123');
 
-  describe("loginOfficer", () => {
-    it("dovrebbe restituire un token con credenziali valide (email)", async () => {
-      const mockOfficer = {
-        id: 1,
-        username: "officer1",
-        email: "officer@example.com",
-        password: "hashedpassword",
-        role: "ROLE_1"
-      };
+            expect(mockUserRepo.getUserByUsername).toHaveBeenCalledWith('testuser');
+            expect(authService.verifyPassword).toHaveBeenCalledWith('password123', 'hashed-password');
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 1,
+                username: 'testuser',
+                isStaff: false,
+                type: 'user',
+                sessionType: 'web'
+            });
+            expect(authService.saveSession).toHaveBeenCalledWith(1, 'mock-token', 'web');
+            expect(token).toBe('mock-token');
+        });
 
-      jest.spyOn(OfficerRepository.prototype, 'getOfficerByEmail').mockResolvedValue(mockOfficer as any);
-      (verifyPassword as jest.Mock).mockResolvedValue(true);
-      (generateToken as jest.Mock).mockReturnValue("mock-officer-token");
+        it('should throw error if user has no password', async () => {
+            const mockUser: UserDAO = {
+                id: 1,
+                username: 'testuser',
+                email: 'test@example.com',
+                password: null,
+                isActive: true
+            } as any;
 
-      const result = await loginOfficer("officer@example.com", "password123", true);
+            mockUserRepo.getUserByUsername.mockResolvedValue(mockUser);
 
-      expect(result).toBe("mock-officer-token");
-      expect(OfficerRepository.prototype.getOfficerByEmail).toHaveBeenCalledWith("officer@example.com");
-      expect(generateToken).toHaveBeenCalledWith({
-        id: 1,
-        username: "officer@example.com",
-        type: "ROLE_1"
-      });
-    });
+            await expect(loginUserByUsername('testuser', 'password123'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginUserByUsername('testuser', 'password123'))
+                .rejects.toThrow('Invalid username or password');
+        });
 
-    it("dovrebbe restituire un token con credenziali valide (username)", async () => {
-      const mockOfficer = {
-        id: 1,
-        username: "officer1",
-        email: "officer@example.com",
-        password: "hashedpassword",
-        role: "ROLE_1"
-      };
+        it('should throw error if user is not active', async () => {
+            const mockUser: UserDAO = {
+                id: 1,
+                username: 'testuser',
+                email: 'test@example.com',
+                password: 'hashed-password',
+                isActive: false
+            } as any;
 
-      jest.spyOn(OfficerRepository.prototype, 'getOfficersByUsername').mockResolvedValue([mockOfficer] as any);
-      (verifyPassword as jest.Mock).mockResolvedValue(true);
-      (generateToken as jest.Mock).mockReturnValue("mock-officer-token");
+            mockUserRepo.getUserByUsername.mockResolvedValue(mockUser);
 
-      const result = await loginOfficer("officer1", "password123", false);
+            await expect(loginUserByUsername('testuser', 'password123'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginUserByUsername('testuser', 'password123'))
+                .rejects.toThrow('User account is not active');
+        });
 
-      expect(result).toBe("mock-officer-token");
-      expect(OfficerRepository.prototype.getOfficersByUsername).toHaveBeenCalledWith("officer1");
-    });
+        it('should throw error if password is invalid', async () => {
+            const mockUser: UserDAO = {
+                id: 1,
+                username: 'testuser',
+                email: 'test@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
 
-    it("dovrebbe lanciare UnauthorizedError con password errata", async () => {
-      const mockOfficer = {
-        id: 1,
-        email: "officer@example.com",
-        password: "hashedpassword",
-        role: "ROLE_1"
-      };
+            mockUserRepo.getUserByUsername.mockResolvedValue(mockUser);
+            (authService.verifyPassword as jest.Mock).mockResolvedValue(false);
 
-      jest.spyOn(OfficerRepository.prototype, 'getOfficerByEmail').mockResolvedValue(mockOfficer as any);
-      (verifyPassword as jest.Mock).mockResolvedValue(false);
-
-      await expect(loginOfficer("officer@example.com", "wrongpassword", true))
-        .rejects
-        .toThrow(UnauthorizedError);
-    });
-
-    it("dovrebbe lanciare UnauthorizedError quando username non esiste", async () => {
-      jest.spyOn(OfficerRepository.prototype, 'getOfficersByUsername').mockResolvedValue([] as any);
-
-      await expect(loginOfficer("nonexistent", "password123", false))
-        .rejects
-        .toThrow(UnauthorizedError);
-    });
-  });
-
-  describe("loginUserByMail", () => {
-    it("should throw UnauthorizedError if user has no password", async () => {
-      jest.spyOn(UserRepository.prototype, 'getUserByEmail').mockResolvedValue({ password: undefined } as any);
-      await expect(loginUserByMail("mail@domain.com", "pass")).rejects.toThrow(UnauthorizedError);
+            await expect(loginUserByUsername('testuser', 'wrong-password'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginUserByUsername('testuser', 'wrong-password'))
+                .rejects.toThrow('Invalid username or password');
+        });
     });
 
-    it("should throw UnauthorizedError if password is invalid", async () => {
-      jest.spyOn(UserRepository.prototype, 'getUserByEmail').mockResolvedValue({ password: "hashed" } as any);
-      (verifyPassword as jest.Mock).mockResolvedValue(false);
-      await expect(loginUserByMail("mail@domain.com", "wrong")).rejects.toThrow(UnauthorizedError);
-    });
-  });
+    // ===================== loginUserByMail =====================
+    describe('loginUserByMail', () => {
+        it('should login user successfully with email', async () => {
+            const mockUser: UserDAO = {
+                id: 2,
+                username: 'testuser2',
+                email: 'test2@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
 
-  describe("loginUserByUsername", () => {
-    it("should throw UnauthorizedError if user has no password", async () => {
-      jest.spyOn(UserRepository.prototype, 'getUserByUsername').mockResolvedValue({ password: undefined } as any);
-      await expect(loginUserByUsername("user", "pass")).rejects.toThrow(UnauthorizedError);
+            mockUserRepo.getUserByEmail.mockResolvedValue(mockUser);
+
+            const token = await loginUserByMail('test2@example.com', 'password123');
+
+            expect(mockUserRepo.getUserByEmail).toHaveBeenCalledWith('test2@example.com');
+            expect(authService.verifyPassword).toHaveBeenCalledWith('password123', 'hashed-password');
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 2,
+                username: 'testuser2',
+                isStaff: false,
+                type: 'user',
+                sessionType: 'web'
+            });
+            expect(authService.saveSession).toHaveBeenCalledWith(2, 'mock-token', 'web');
+            expect(token).toBe('mock-token');
+        });
+
+        it('should throw error if user has no password', async () => {
+            const mockUser: UserDAO = {
+                id: 2,
+                username: 'testuser2',
+                email: 'test2@example.com',
+                password: null,
+                isActive: true
+            } as any;
+
+            mockUserRepo.getUserByEmail.mockResolvedValue(mockUser);
+
+            await expect(loginUserByMail('test2@example.com', 'password123'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginUserByMail('test2@example.com', 'password123'))
+                .rejects.toThrow('Invalid email or password');
+        });
+
+        it('should throw error if user is not active', async () => {
+            const mockUser: UserDAO = {
+                id: 2,
+                username: 'testuser2',
+                email: 'test2@example.com',
+                password: 'hashed-password',
+                isActive: false
+            } as any;
+
+            mockUserRepo.getUserByEmail.mockResolvedValue(mockUser);
+
+            await expect(loginUserByMail('test2@example.com', 'password123'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginUserByMail('test2@example.com', 'password123'))
+                .rejects.toThrow('User account is not active');
+        });
+
+        it('should throw error if password is invalid', async () => {
+            const mockUser: UserDAO = {
+                id: 2,
+                username: 'testuser2',
+                email: 'test2@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockUserRepo.getUserByEmail.mockResolvedValue(mockUser);
+            (authService.verifyPassword as jest.Mock).mockResolvedValue(false);
+
+            await expect(loginUserByMail('test2@example.com', 'wrong-password'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginUserByMail('test2@example.com', 'wrong-password'))
+                .rejects.toThrow('Invalid email or password');
+        });
     });
 
-    it("should throw UnauthorizedError if password is invalid", async () => {
-      jest.spyOn(UserRepository.prototype, 'getUserByUsername').mockResolvedValue({ password: "hashed" } as any);
-      (verifyPassword as jest.Mock).mockResolvedValue(false);
-      await expect(loginUserByUsername("user", "wrong")).rejects.toThrow(UnauthorizedError);
-    });
-  });
+    // ===================== loginOfficerByMail =====================
+    describe('loginOfficerByMail', () => {
+        it('should login officer with single role successfully', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 10,
+                username: 'officer1',
+                email: 'officer@example.com',
+                password: 'hashed-password',
+                roles: [{ officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, office: 'ROADS' }]
+            } as any;
 
-  describe("loginOfficerByMail", () => {
-    it("should throw UnauthorizedError if officer has no password", async () => {
-      jest.spyOn(OfficerRepository.prototype, 'getOfficerByEmail').mockResolvedValue({ password: undefined } as any);
-      await expect(loginOfficerByMail("mail@domain.com", "pass")).rejects.toThrow(UnauthorizedError);
+            mockOfficerRepo.getOfficerByEmail.mockResolvedValue(mockOfficer);
+
+            const token = await loginOfficerByMail('officer@example.com', 'password123');
+
+            expect(mockOfficerRepo.getOfficerByEmail).toHaveBeenCalledWith('officer@example.com');
+            expect(authService.verifyPassword).toHaveBeenCalledWith('password123', 'hashed-password');
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 10,
+                username: 'officer1',
+                isStaff: true,
+                type: [OfficerRole.TECHNICAL_OFFICE_STAFF],
+                sessionType: 'web'
+            });
+            expect(authService.saveSession).toHaveBeenCalledWith(10, 'mock-token', 'web');
+            expect(token).toBe('mock-token');
+        });
+
+        it('should login officer with multiple roles successfully', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 11,
+                username: 'officer2',
+                email: 'officer2@example.com',
+                password: 'hashed-password',
+                roles: [
+                    { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
+                    { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, office: 'WATER' }
+                ]
+            } as any;
+
+            mockOfficerRepo.getOfficerByEmail.mockResolvedValue(mockOfficer);
+
+            const token = await loginOfficerByMail('officer2@example.com', 'password123');
+
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 11,
+                username: 'officer2',
+                isStaff: true,
+                type: [OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.TECHNICAL_OFFICE_STAFF],
+                sessionType: 'web'
+            });
+            expect(token).toBe('mock-token');
+        });
+
+        it('should login officer with no roles (empty array)', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 12,
+                username: 'officer3',
+                email: 'officer3@example.com',
+                password: 'hashed-password',
+                roles: []
+            } as any;
+
+            mockOfficerRepo.getOfficerByEmail.mockResolvedValue(mockOfficer);
+
+            const token = await loginOfficerByMail('officer3@example.com', 'password123');
+
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 12,
+                username: 'officer3',
+                isStaff: true,
+                type: [],
+                sessionType: 'web'
+            });
+            expect(token).toBe('mock-token');
+        });
+
+        it('should throw error if officer has no password', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 13,
+                username: 'officer4',
+                email: 'officer4@example.com',
+                password: null,
+                roles: []
+            } as any;
+
+            mockOfficerRepo.getOfficerByEmail.mockResolvedValue(mockOfficer);
+
+            await expect(loginOfficerByMail('officer4@example.com', 'password123'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginOfficerByMail('officer4@example.com', 'password123'))
+                .rejects.toThrow('Invalid email or password');
+        });
+
+        it('should throw error if password is invalid', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 14,
+                username: 'officer5',
+                email: 'officer5@example.com',
+                password: 'hashed-password',
+                roles: [{ officerRole: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, office: null }]
+            } as any;
+
+            mockOfficerRepo.getOfficerByEmail.mockResolvedValue(mockOfficer);
+            (authService.verifyPassword as jest.Mock).mockResolvedValue(false);
+
+            await expect(loginOfficerByMail('officer5@example.com', 'wrong-password'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginOfficerByMail('officer5@example.com', 'wrong-password'))
+                .rejects.toThrow('Invalid email or password');
+        });
+
+        it('should handle officer with null roles', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 15,
+                username: 'officer6',
+                email: 'officer6@example.com',
+                password: 'hashed-password',
+                roles: null
+            } as any;
+
+            mockOfficerRepo.getOfficerByEmail.mockResolvedValue(mockOfficer);
+
+            const token = await loginOfficerByMail('officer6@example.com', 'password123');
+
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 15,
+                username: 'officer6',
+                isStaff: true,
+                type: [],
+                sessionType: 'web'
+            });
+            expect(token).toBe('mock-token');
+        });
     });
 
-    it("should throw UnauthorizedError if password is invalid", async () => {
-      jest.spyOn(OfficerRepository.prototype, 'getOfficerByEmail').mockResolvedValue({ password: "hashed" } as any);
-      (verifyPassword as jest.Mock).mockResolvedValue(false);
-      await expect(loginOfficerByMail("mail@domain.com", "wrong")).rejects.toThrow(UnauthorizedError);
-    });
-  });
+    // ===================== loginOfficerByUsername =====================
+    describe('loginOfficerByUsername', () => {
+        it('should login officer by username successfully', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 20,
+                username: 'officer_username',
+                email: 'officer@example.com',
+                password: 'hashed-password',
+                roles: [{ officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, office: 'ROADS' }]
+            } as any;
 
-  describe("loginOfficerByUsername", () => {
-    it("should throw UnauthorizedError if officers array is empty", async () => {
-      jest.spyOn(OfficerRepository.prototype, 'getOfficersByUsername').mockResolvedValue([]);
-      await expect(loginOfficerByUsername("user", "pass")).rejects.toThrow(UnauthorizedError);
+            mockOfficerRepo.getOfficersByUsername.mockResolvedValue([mockOfficer]);
+
+            const token = await loginOfficerByUsername('officer_username', 'password123');
+
+            expect(mockOfficerRepo.getOfficersByUsername).toHaveBeenCalledWith('officer_username');
+            expect(authService.verifyPassword).toHaveBeenCalledWith('password123', 'hashed-password');
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 20,
+                username: 'officer_username',
+                isStaff: true,
+                type: [OfficerRole.TECHNICAL_OFFICE_STAFF],
+                sessionType: 'web'
+            });
+            expect(token).toBe('mock-token');
+        });
+
+        it('should throw error if no officer found with username', async () => {
+            mockOfficerRepo.getOfficersByUsername.mockResolvedValue([]);
+
+            await expect(loginOfficerByUsername('nonexistent', 'password123'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginOfficerByUsername('nonexistent', 'password123'))
+                .rejects.toThrow('Invalid username or password');
+        });
+
+        it('should throw error if officer has no password', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 21,
+                username: 'officer_nopass',
+                email: 'officer@example.com',
+                password: null,
+                roles: []
+            } as any;
+
+            mockOfficerRepo.getOfficersByUsername.mockResolvedValue([mockOfficer]);
+
+            await expect(loginOfficerByUsername('officer_nopass', 'password123'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginOfficerByUsername('officer_nopass', 'password123'))
+                .rejects.toThrow('Invalid username or password');
+        });
+
+        it('should throw error if password is invalid', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 22,
+                username: 'officer_username',
+                email: 'officer@example.com',
+                password: 'hashed-password',
+                roles: []
+            } as any;
+
+            mockOfficerRepo.getOfficersByUsername.mockResolvedValue([mockOfficer]);
+            (authService.verifyPassword as jest.Mock).mockResolvedValue(false);
+
+            await expect(loginOfficerByUsername('officer_username', 'wrong-password'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginOfficerByUsername('officer_username', 'wrong-password'))
+                .rejects.toThrow('Invalid username or password');
+        });
+
+        it('should login first officer when multiple officers with same username exist', async () => {
+            const mockOfficer1: OfficerDAO = {
+                id: 23,
+                username: 'officer_dup',
+                email: 'officer1@example.com',
+                password: 'hashed-password',
+                roles: [{ officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null }]
+            } as any;
+
+            const mockOfficer2: OfficerDAO = {
+                id: 24,
+                username: 'officer_dup',
+                email: 'officer2@example.com',
+                password: 'hashed-password',
+                roles: [{ officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, office: 'WATER' }]
+            } as any;
+
+            mockOfficerRepo.getOfficersByUsername.mockResolvedValue([mockOfficer1, mockOfficer2]);
+
+            const token = await loginOfficerByUsername('officer_dup', 'password123');
+
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 23,
+                username: 'officer_dup',
+                isStaff: true,
+                type: [OfficerRole.MUNICIPAL_ADMINISTRATOR],
+                sessionType: 'web'
+            });
+            expect(token).toBe('mock-token');
+        });
     });
 
-    it("should throw UnauthorizedError if officer has no password", async () => {
-      jest.spyOn(OfficerRepository.prototype, 'getOfficersByUsername').mockResolvedValue([{ password: undefined }] as any);
-      await expect(loginOfficerByUsername("user", "pass")).rejects.toThrow(UnauthorizedError);
+    // ===================== loginUser =====================
+    describe('loginUser', () => {
+        it('should call loginUserByMail when isEmail is true', async () => {
+            const mockUser: UserDAO = {
+                id: 30,
+                username: 'user30',
+                email: 'user30@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockUserRepo.getUserByEmail.mockResolvedValue(mockUser);
+
+            const token = await loginUser('user30@example.com', 'password123', true);
+
+            expect(mockUserRepo.getUserByEmail).toHaveBeenCalledWith('user30@example.com');
+            expect(mockUserRepo.getUserByUsername).not.toHaveBeenCalled();
+            expect(token).toBe('mock-token');
+        });
+
+        it('should call loginUserByUsername when isEmail is false', async () => {
+            const mockUser: UserDAO = {
+                id: 31,
+                username: 'user31',
+                email: 'user31@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockUserRepo.getUserByUsername.mockResolvedValue(mockUser);
+
+            const token = await loginUser('user31', 'password123', false);
+
+            expect(mockUserRepo.getUserByUsername).toHaveBeenCalledWith('user31');
+            expect(mockUserRepo.getUserByEmail).not.toHaveBeenCalled();
+            expect(token).toBe('mock-token');
+        });
     });
 
-    it("should throw UnauthorizedError if password is invalid", async () => {
-      jest.spyOn(OfficerRepository.prototype, 'getOfficersByUsername').mockResolvedValue([{ password: "hashed" }] as any);
-      (verifyPassword as jest.Mock).mockResolvedValue(false);
-      await expect(loginOfficerByUsername("user", "wrong")).rejects.toThrow(UnauthorizedError);
-    });
-  });
+    // ===================== loginOfficer =====================
+    describe('loginOfficer', () => {
+        it('should call loginOfficerByMail when isEmail is true', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 40,
+                username: 'officer40',
+                email: 'officer40@example.com',
+                password: 'hashed-password',
+                roles: []
+            } as any;
 
-  describe("getUserByTelegramUsername", () => {
-    it("should return token for valid telegram username", async () => {
-      const mockUser = { id: 1, username: "testuser" };
-      jest.spyOn(UserRepository.prototype, 'getUseryTelegramUsername').mockResolvedValue(mockUser as any);
-      (generateToken as jest.Mock).mockReturnValue("telegram-token");
-      (saveSession as jest.Mock).mockResolvedValue(undefined);
+            mockOfficerRepo.getOfficerByEmail.mockResolvedValue(mockOfficer);
 
-      const result = await getUserByTelegramUsername("my_telegram");
-      expect(result).toBe("telegram-token");
-      expect(UserRepository.prototype.getUseryTelegramUsername).toHaveBeenCalledWith("my_telegram");
-      expect(generateToken).toHaveBeenCalledWith({
-        id: 1,
-        username: "testuser",
-        type: "user",
-        sessionType: "telegram"
-      });
-      expect(saveSession).toHaveBeenCalledWith(1, "telegram-token", "telegram");
+            const token = await loginOfficer('officer40@example.com', 'password123', true);
+
+            expect(mockOfficerRepo.getOfficerByEmail).toHaveBeenCalledWith('officer40@example.com');
+            expect(mockOfficerRepo.getOfficersByUsername).not.toHaveBeenCalled();
+            expect(token).toBe('mock-token');
+        });
+
+        it('should call loginOfficerByUsername when isEmail is false', async () => {
+            const mockOfficer: OfficerDAO = {
+                id: 41,
+                username: 'officer41',
+                email: 'officer41@example.com',
+                password: 'hashed-password',
+                roles: []
+            } as any;
+
+            mockOfficerRepo.getOfficersByUsername.mockResolvedValue([mockOfficer]);
+
+            const token = await loginOfficer('officer41', 'password123', false);
+
+            expect(mockOfficerRepo.getOfficersByUsername).toHaveBeenCalledWith('officer41');
+            expect(mockOfficerRepo.getOfficerByEmail).not.toHaveBeenCalled();
+            expect(token).toBe('mock-token');
+        });
     });
 
-    it("should throw UnauthorizedError if user not found", async () => {
-      await expect(getUserByTelegramUsername("notfound")).rejects.toThrow(UnauthorizedError);
+    // ===================== getUserByTelegramUsername =====================
+    describe('getUserByTelegramUsername', () => {
+        it('should get user by telegram username and return telegram session token', async () => {
+            const mockUser: UserDAO = {
+                id: 50,
+                username: 'user50',
+                email: 'user50@example.com',
+                telegramUsername: 'telegram_user',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockUserRepo.getUseryTelegramUsername.mockResolvedValue(mockUser);
+
+            const token = await getUserByTelegramUsername('telegram_user');
+
+            expect(mockUserRepo.getUseryTelegramUsername).toHaveBeenCalledWith('telegram_user');
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 50,
+                username: 'user50',
+                isStaff: false,
+                type: 'user',
+                sessionType: 'telegram'
+            });
+            expect(authService.saveSession).toHaveBeenCalledWith(50, 'mock-token', 'telegram');
+            expect(token).toBe('mock-token');
+        });
+
+        it('should throw error if no user found with telegram username', async () => {
+            mockUserRepo.getUseryTelegramUsername.mockResolvedValue(null as any);
+            await expect(getUserByTelegramUsername('nonexistent_telegram'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(getUserByTelegramUsername('nonexistent_telegram'))
+                .rejects.toThrow('No user associated with this Telegram username');
+        });
     });
-  });
+
+    // ===================== loginMaintainerByMail =====================
+    describe('loginMaintainerByMail', () => {
+        it('should login maintainer by email successfully', async () => {
+            const mockMaintainer: MaintainerDAO = {
+                id: 60,
+                name: 'maintainer1',
+                email: 'maintainer@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockMaintainerRepo.getMaintainerByEmail.mockResolvedValue(mockMaintainer);
+
+            const token = await loginMaintainerByMail('maintainer@example.com', 'password123');
+
+            expect(mockMaintainerRepo.getMaintainerByEmail).toHaveBeenCalledWith('maintainer@example.com');
+            expect(authService.verifyPassword).toHaveBeenCalledWith('password123', 'hashed-password');
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 60,
+                username: 'maintainer1',
+                isStaff: true,
+                type: [OfficerRole.MAINTAINER],
+                sessionType: 'web'
+            });
+            expect(authService.saveSession).toHaveBeenCalledWith(60, 'mock-token', 'web');
+            expect(token).toBe('mock-token');
+        });
+
+        it('should throw error if maintainer has no password', async () => {
+            const mockMaintainer: MaintainerDAO = {
+                id: 61,
+                name: 'maintainer2',
+                email: 'maintainer2@example.com',
+                password: null,
+                isActive: true
+            } as any;
+
+            mockMaintainerRepo.getMaintainerByEmail.mockResolvedValue(mockMaintainer);
+
+            await expect(loginMaintainerByMail('maintainer2@example.com', 'password123'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginMaintainerByMail('maintainer2@example.com', 'password123'))
+                .rejects.toThrow('Invalid email or password');
+        });
+
+        it('should throw error if password is invalid', async () => {
+            const mockMaintainer: MaintainerDAO = {
+                id: 62,
+                name: 'maintainer3',
+                email: 'maintainer3@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockMaintainerRepo.getMaintainerByEmail.mockResolvedValue(mockMaintainer);
+            (authService.verifyPassword as jest.Mock).mockResolvedValue(false);
+
+            await expect(loginMaintainerByMail('maintainer3@example.com', 'wrong-password'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginMaintainerByMail('maintainer3@example.com', 'wrong-password'))
+                .rejects.toThrow('Invalid email or password');
+        });
+    });
+
+    // ===================== loginMaintainerByUsername =====================
+    describe('loginMaintainerByUsername', () => {
+        it('should login maintainer by username successfully', async () => {
+            const mockMaintainer: MaintainerDAO = {
+                id: 70,
+                name: 'maintainer_username',
+                email: 'maintainer@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockMaintainerRepo.getMaintainersByUsername.mockResolvedValue([mockMaintainer]);
+
+            const token = await loginMaintainerByUsername('maintainer_username', 'password123');
+
+            expect(mockMaintainerRepo.getMaintainersByUsername).toHaveBeenCalledWith('maintainer_username');
+            expect(authService.verifyPassword).toHaveBeenCalledWith('password123', 'hashed-password');
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 70,
+                username: 'maintainer_username',
+                isStaff: true,
+                type: [OfficerRole.MAINTAINER],
+                sessionType: 'web'
+            });
+            expect(token).toBe('mock-token');
+        });
+
+        it('should throw error if no maintainer found with username', async () => {
+            mockMaintainerRepo.getMaintainersByUsername.mockResolvedValue([]);
+
+            await expect(loginMaintainerByUsername('nonexistent', 'password123'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginMaintainerByUsername('nonexistent', 'password123'))
+                .rejects.toThrow('Invalid username or password');
+        });
+
+        it('should throw error if maintainer has no password', async () => {
+            const mockMaintainer: MaintainerDAO = {
+                id: 71,
+                name: 'maintainer_nopass',
+                email: 'maintainer@example.com',
+                password: null,
+                isActive: true
+            } as any;
+
+            mockMaintainerRepo.getMaintainersByUsername.mockResolvedValue([mockMaintainer]);
+
+            await expect(loginMaintainerByUsername('maintainer_nopass', 'password123'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginMaintainerByUsername('maintainer_nopass', 'password123'))
+                .rejects.toThrow('Invalid username or password');
+        });
+
+        it('should throw error if password is invalid', async () => {
+            const mockMaintainer: MaintainerDAO = {
+                id: 72,
+                name: 'maintainer_username',
+                email: 'maintainer@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockMaintainerRepo.getMaintainersByUsername.mockResolvedValue([mockMaintainer]);
+            (authService.verifyPassword as jest.Mock).mockResolvedValue(false);
+
+            await expect(loginMaintainerByUsername('maintainer_username', 'wrong-password'))
+                .rejects.toThrow(UnauthorizedError);
+            await expect(loginMaintainerByUsername('maintainer_username', 'wrong-password'))
+                .rejects.toThrow('Invalid username or password');
+        });
+
+        it('should login first maintainer when multiple maintainers with same username exist', async () => {
+            const mockMaintainer1: MaintainerDAO = {
+                id: 73,
+                name: 'maintainer_dup',
+                email: 'maintainer1@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            const mockMaintainer2: MaintainerDAO = {
+                id: 74,
+                name: 'maintainer_dup',
+                email: 'maintainer2@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockMaintainerRepo.getMaintainersByUsername.mockResolvedValue([mockMaintainer1, mockMaintainer2]);
+
+            const token = await loginMaintainerByUsername('maintainer_dup', 'password123');
+
+            expect(authService.generateToken).toHaveBeenCalledWith({
+                id: 73,
+                username: 'maintainer_dup',
+                isStaff: true,
+                type: [OfficerRole.MAINTAINER],
+                sessionType: 'web'
+            });
+            expect(token).toBe('mock-token');
+        });
+    });
+
+    // ===================== loginMaintainer =====================
+    describe('loginMaintainer', () => {
+        it('should call loginMaintainerByMail when isEmail is true', async () => {
+            const mockMaintainer: MaintainerDAO = {
+                id: 80,
+                name: 'maintainer80',
+                email: 'maintainer80@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockMaintainerRepo.getMaintainerByEmail.mockResolvedValue(mockMaintainer);
+
+            const token = await loginMaintainer('maintainer80@example.com', 'password123', true);
+
+            expect(mockMaintainerRepo.getMaintainerByEmail).toHaveBeenCalledWith('maintainer80@example.com');
+            expect(mockMaintainerRepo.getMaintainersByUsername).not.toHaveBeenCalled();
+            expect(token).toBe('mock-token');
+        });
+
+        it('should call loginMaintainerByUsername when isEmail is false', async () => {
+            const mockMaintainer: MaintainerDAO = {
+                id: 81,
+                name: 'maintainer81',
+                email: 'maintainer81@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockMaintainerRepo.getMaintainersByUsername.mockResolvedValue([mockMaintainer]);
+
+            const token = await loginMaintainer('maintainer81', 'password123', false);
+
+            expect(mockMaintainerRepo.getMaintainersByUsername).toHaveBeenCalledWith('maintainer81');
+            expect(mockMaintainerRepo.getMaintainerByEmail).not.toHaveBeenCalled();
+            expect(token).toBe('mock-token');
+        });
+    });
 });
