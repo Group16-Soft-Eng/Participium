@@ -13,12 +13,13 @@ import MapPage from './pages/MapPage';
 import OfficerPage from './pages/OfficerPage';
 import OfficerMessagesPage from './pages/OfficerMessagesPage';
 import MessagesPage from './pages/MessagesPage';
-import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePublicRelations } from './components/RequireAuth';
+import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePublicRelations, RequireMaintainer } from './components/RequireAuth';
 import { AdminScreen } from './pages/AdminPage';
 import { NotificationProvider } from './contexts/NotificationContext';
 import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
 import { UserPage } from './pages/UserPage';
 import { ReportDetailsPage } from './pages/ReportDetailsPage';
+import MaintainerDashboardPage from './pages/MaintainerDashboardPage';
 
 function App() {
   const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
@@ -34,6 +35,7 @@ function App() {
   const isAdmin = auth.role === 'municipal_administrator';
   const isPROfficer = auth.role === 'municipal_public_relations_officer' || auth.role === 'municipal_public_relations_officer';
   const isTechnicalOfficer = auth.role === 'technical_office_staff';
+  const isMaintainer = auth.role === 'maintainer';
   const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';
 
     return (
@@ -143,6 +145,23 @@ function App() {
                 >
                   Admin Dashboard
                 </Button>
+              ) : isMaintainer ? (
+                <Button
+                  component={Link}
+                  to="/maintainer"
+                  variant="contained"
+                  color="primary"
+                  sx={{
+                    px: 2.2,
+                    py: 0.7,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                  }}
+                >
+                  Maintainer Dashboard
+                </Button>
               ) : isLoggedIn ? (
                 <Button id="report-button"
                   component={Link}
@@ -188,6 +207,7 @@ function App() {
             <Route path="/officer/messages" element={<RequireTechnical><OfficerMessagesPage /></RequireTechnical>} />
             <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
             <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
+            <Route path="/maintainer" element={<RequireMaintainer><MaintainerDashboardPage /></RequireMaintainer>} />
             <Route path="/reports/:reportId/details" element={<RequireLogin><ReportDetailsPage /></RequireLogin>} />
           </Routes>
         </Box>

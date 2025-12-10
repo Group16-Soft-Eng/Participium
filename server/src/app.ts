@@ -11,15 +11,23 @@ import {officerRouter} from "@routes/OfficerRoutes";
 import { infoTypeRouter } from "@routes/InfoType";
 import { notificationRouter } from "@routes/NotificationRoutes";
 import { maintainerRouter } from "@routes/MaintainerRoutes";
+import { internalMessageRouter } from "@routes/InternalMessageRoutes";
 
 export const app = express();
 let routes = CONFIG.ROUTES;
 
 app.use(cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+        origin: [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:1574",
+            "http://127.0.0.1:1574",
+            "http://localhost:5174",
+            "http://127.0.0.1:5174"
+        ],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
@@ -28,6 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(routes.V1_AUTH, authRouter);
 app.use(routes.V1_USERS, userRouter);
 app.use(routes.V1_REPORTS, reportRouter);
+app.use(routes.V1_REPORTS, internalMessageRouter);
 app.use(routes.V1_OFFICERS, officerRouter);
 app.use(routes.V1_MAINTAINERS, maintainerRouter);
 app.use(routes.V1_INFO_TYPES, infoTypeRouter);

@@ -4,6 +4,7 @@ import SendIcon from '@mui/icons-material/Send';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import { useState, useEffect, useRef } from 'react';
 import { getToken, getUserFromToken, getRoleFromToken } from '../../services/auth';
+import { io, Socket } from 'socket.io-client';
 
 interface InternalChatSectionProps {
   reportId: number;
@@ -22,21 +23,73 @@ export function InternalChatSection({ reportId }: InternalChatSectionProps) {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   // Get logged in user info
   const token = getToken();
   const currentUser = getUserFromToken(token);
   const currentRole = getRoleFromToken(token);
   const authorName = currentUser?.username || currentUser?.name || currentUser?.email || 'Unknown User';
-  const authorRole = currentRole ? currentRole.replace(/_/g, ' ').toUpperCase() : 'Technical Office';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    // TODO: Fetch messages from API
-    // fetchInternalComments(reportId).then(setMessages);
+    // Fetch messages from API
+    const fetchMessages = async () => {
+      try {
+        const token = getToken();
+        const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/internal-messages`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Fetched messages:', data);
+          const formattedMessages = data.map((msg: any) => ({
+            id: msg.id,
+            authorName: msg.senderName,
+            authorRole: msg.senderType,
+            content: msg.message,
+            createdAt: msg.createdAt
+          }));
+          setMessages(formattedMessages);
+        }
+      } catch (error) {
+        console.error('Failed to fetch messages:', error);
+      }
+    };
+
+    fetchMessages();
+
+    // Initialize socket connection
+    const socket = io('http://localhost:5000', {
+      transports: ['websocket', 'polling']
+    });
+    socketRef.current = socket;
+
+    // Join report room
+    socket.emit('join-report', reportId);
+
+    // Listen for new messages
+    socket.on('internal-message:new', (message: any) => {
+      console.log('New message from socket:', message);
+      const formattedMessage: Message = {
+        id: message.id,
+        authorName: message.senderName,
+        authorRole: message.senderType,
+        content: message.message,
+        createdAt: message.createdAt
+      };
+      setMessages(prev => [...prev, formattedMessage]);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.disconnect();
+    };
   }, [reportId]);
 
   useEffect(() => {
@@ -48,21 +101,30 @@ export function InternalChatSection({ reportId }: InternalChatSectionProps) {
     
     try {
       setLoading(true);
-      // TODO: Send message to API
-      // await addInternalComment(reportId, newMessage);
+      const token = getToken();
       
-      // Mock adding message
-      const mockMessage: Message = {
-        id: Date.now(),
-        authorName: authorName,
-        authorRole: authorRole,
-        content: newMessage,
-        createdAt: new Date().toISOString()
-      };
-      setMessages([...messages, mockMessage]);
-      setNewMessage('');
+      // Send message to API - receiver is automatically determined from report assignment
+      const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/internal-messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          message: newMessage
+        })
+      });
+
+      if (response.ok) {
+        setNewMessage('');
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to send message:', response.status, errorText);
+        alert(`Failed to send message: ${response.status}`);
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
+      alert('Failed to send message. Check console for details.');
     } finally {
       setLoading(false);
     }
@@ -103,13 +165,19 @@ export function InternalChatSection({ reportId }: InternalChatSectionProps) {
       </Box>
 
       {/* Messages Area */}
-      <Box sx={{ flex: 1, overflow: 'auto', py: 2 }}>
+      <Box sx={{ flex: 1, overflowY: 'auto', py: 2, maxHeight: '50vh' }}>
         {messages.length === 0 ? (
           <EmptyState />
         ) : (
           <Stack spacing={2}>
             {messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} formatTime={formatTime} />
+              <MessageBubble 
+                key={msg.id} 
+                message={msg} 
+                formatTime={formatTime}
+                currentUserRole={currentRole}
+                currentUserName={authorName}
+              />
             ))}
             <div ref={messagesEndRef} />
           </Stack>
@@ -168,35 +236,54 @@ function EmptyState() {
 interface MessageBubbleProps {
   message: Message;
   formatTime: (date: string) => string;
+  currentUserRole: string | null;
+  currentUserName: string;
 }
 
-function MessageBubble({ message, formatTime }: MessageBubbleProps) {
+function MessageBubble({ message, formatTime, currentUserRole, currentUserName }: MessageBubbleProps) {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const getRoleColor = (role: string) => {
-    if (role.includes('technical')) return 'primary.main';
-    if (role.includes('external')) return 'secondary.main';
+    if (role.includes('TECHNICAL')) return 'primary.main';
+    if (role.includes('MAINTAINER')) return 'secondary.main';
     return 'grey.500';
   };
 
+  // Check if message is sent by current user
+  const isSentByMe = 
+    (currentUserRole === 'technical_office_staff' && (message.authorRole === 'TECHNICAL_OFFICE_STAFF' || message.authorRole === 'technical_office_staff')) ||
+    (currentUserRole === 'maintainer' && message.authorRole === 'MAINTAINER') ||
+    (currentUserRole === 'external_maintainer' && message.authorRole === 'MAINTAINER');
+
+  // Use authorName which comes from backend (senderName)
+  const displayName = isSentByMe ? currentUserName : message.authorName;
+
   return (
-    <Box display="flex" gap={1.5}>
-      <Avatar 
-        sx={{ 
-          width: 36, 
-          height: 36,
-          bgcolor: getRoleColor(message.authorRole),
-          fontSize: '0.875rem'
-        }}
-      >
-        {getInitials(message.authorName)}
-      </Avatar>
-      <Box flex={1}>
-        <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+    <Box display="flex" gap={1.5} justifyContent={isSentByMe ? 'flex-end' : 'flex-start'}>
+      {!isSentByMe && (
+        <Avatar 
+          sx={{ 
+            width: 36, 
+            height: 36,
+            bgcolor: getRoleColor(message.authorRole),
+            fontSize: '0.875rem'
+          }}
+        >
+          {getInitials(displayName)}
+        </Avatar>
+      )}
+      <Box sx={{ maxWidth: '70%' }}>
+        <Box 
+          display="flex" 
+          alignItems="center" 
+          gap={1} 
+          mb={0.5}
+          justifyContent={isSentByMe ? 'flex-end' : 'flex-start'}
+        >
           <Typography variant="subtitle2" fontSize="0.875rem">
-            {message.authorName}
+            {displayName}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {formatTime(message.createdAt)}
@@ -206,8 +293,10 @@ function MessageBubble({ message, formatTime }: MessageBubbleProps) {
           variant="outlined" 
           sx={{ 
             p: 1.5, 
-            bgcolor: 'grey.50',
-            borderRadius: 2
+            bgcolor: isSentByMe ? 'primary.main' : 'grey.50',
+            color: isSentByMe ? 'white' : 'text.primary',
+            borderRadius: 2,
+            borderColor: isSentByMe ? 'primary.main' : 'divider'
           }}
         >
           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -215,6 +304,18 @@ function MessageBubble({ message, formatTime }: MessageBubbleProps) {
           </Typography>
         </Paper>
       </Box>
+      {isSentByMe && (
+        <Avatar 
+          sx={{ 
+            width: 36, 
+            height: 36,
+            bgcolor: getRoleColor(message.authorRole),
+            fontSize: '0.875rem'
+          }}
+        >
+          {getInitials(displayName)}
+        </Avatar>
+      )}
     </Box>
   );
 }

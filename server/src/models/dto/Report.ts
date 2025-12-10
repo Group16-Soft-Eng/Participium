@@ -109,6 +109,12 @@ export interface Report {
      */
     assignedOfficerId?: number;
     /**
+     * Id of the maintainer assigned to the report (if any)
+     * @type {number}
+     * @memberof Report
+     */
+    assignedMaintainerId?: number;
+    /**
      * Optional reason (for declines etc.)
      * @type {string}
      * @memberof Report
@@ -154,6 +160,7 @@ export function ReportFromJSONTyped(json: any, ignoreDiscriminator: boolean): Re
         'document': json['Document'] == null ? undefined : ReportDocumentFromJSON(json['Document']),
         'state': json['state'] == null ? (json['State'] == null ? undefined : json['State']) : json['state'],
         'assignedOfficerId': json['assignedOfficerId'] == null ? (json['AssignedOfficerId'] == null ? undefined : json['AssignedOfficerId']) : json['assignedOfficerId'],
+        'assignedMaintainerId': json['assignedMaintainerId'] == null ? (json['AssignedMaintainerId'] == null ? undefined : json['AssignedMaintainerId']) : json['assignedMaintainerId'],
         'reason': json['reason'] == null ? (json['Reason'] == null ? undefined : json['Reason']) : json['reason'],
     };
 }
@@ -179,6 +186,7 @@ export function ReportToJSONTyped(value?: Report | null, ignoreDiscriminator: bo
         'Document': ReportDocumentToJSON(value['document']),
         'state': value['state'],
         'assignedOfficerId': value['assignedOfficerId'],
+        'assignedMaintainerId': value['assignedMaintainerId'],
         'reason': value['reason'],
     };
 }

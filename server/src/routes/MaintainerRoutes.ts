@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
-import { createMaintainer, getAllMaintainers, getMaintainersByCategory, updateMaintainer, assignReportToMaintainer, updateReportStatusByMaintainer } from "@controllers/maintainerController";
+import { createMaintainer, getAllMaintainers, getMaintainersByCategory, updateMaintainer, assignReportToMaintainer, updateReportStatusByMaintainer, getAssignedReportsForMaintainer } from "@controllers/maintainerController";
 
 const router = Router({ mergeParams: true });
 
@@ -36,7 +36,7 @@ router.get("/assigned", authenticateToken, requireUserType([OfficerRole.MAINTAIN
     const maintainerId = (req as any).user?.id;
     if (!maintainerId) return res.status(401).json({ error: "Unauthorized" });
     
-    const result = await getMaintainersByCategory(maintainerId);
+    const result = await getAssignedReportsForMaintainer(maintainerId);
     res.status(200).json(result);
   } catch (err) {
     next(err);

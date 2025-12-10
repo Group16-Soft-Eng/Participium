@@ -83,9 +83,14 @@ const TechnicalOfficerPage: React.FC = () => {
 
     const success = await assignReportToMaintainer(selectedReportForAssignment.id, selectedMaintainerId);
     if (success) {
-      fetchAssigned(); // Refresh the list
+      handleCloseAssignDialog();
+      // Small delay to ensure DB is updated
+      setTimeout(() => {
+        fetchAssigned(); // Refresh the list
+      }, 300);
+    } else {
+      alert('Failed to assign report to maintainer');
     }
-    handleCloseAssignDialog();
   };
 
   // Extract unique categories from officer's assigned reports (dynamic filtering)
@@ -99,12 +104,27 @@ const TechnicalOfficerPage: React.FC = () => {
     return Array.from(cats);
   }, [reports]);
 
+  // Map status for display: if assigned but no maintainer -> show as "Awaiting maintainer"
+  const withDisplayStatus = useMemo(() => {
+    return reports.map(r => ({
+      ...r,
+      displayState: r.state === 'ASSIGNED' && !r.assignedMaintainerId ? 'AWAITING_MAINTAINER' : r.state
+    }));
+  }, [reports]);
+
   // Filtered reports based on status and category
   const filteredReports = useMemo(() => {
-    return reports.filter(report => {
+    return withDisplayStatus.filter(report => {
       // Status filter
-      if (statusFilter !== 'all' && report.state !== statusFilter) {
-        return false;
+      if (statusFilter !== 'all') {
+        if (statusFilter === 'AWAITING_MAINTAINER') {
+          if (!(report.state === 'ASSIGNED' && !report.assignedMaintainerId)) return false;
+        } else if (statusFilter === 'ASSIGNED') {
+          // Show in ASSIGNED tab only if already assigned to an external maintainer
+          if (report.state !== 'ASSIGNED' || !report.assignedMaintainerId) return false;
+        } else if (report.state !== statusFilter) {
+          return false;
+        }
       }
       // Category filter
       if (categoryFilter && categoryFilter !== 'all' && report.category !== categoryFilter) {
@@ -112,7 +132,7 @@ const TechnicalOfficerPage: React.FC = () => {
       }
       return true;
     });
-  }, [reports, statusFilter, categoryFilter]);
+  }, [withDisplayStatus, statusFilter, categoryFilter]);
 
   // group filtered reports by category for a compact overview
   const grouped = filteredReports.reduce((acc: Record<string, OfficerReport[]>, r) => {
@@ -123,6 +143,27 @@ const TechnicalOfficerPage: React.FC = () => {
   }, {} as Record<string, OfficerReport[]>);
   const categories = Object.keys(grouped);
   const singleCategory = categories.length === 1 ? categories[0] : null;
+
+  const renderStatusChip = (state?: string, hasMaintainer?: boolean) => {
+    const effective = state === 'ASSIGNED' && !hasMaintainer ? 'AWAITING_MAINTAINER' : state;
+    const label = effective === 'AWAITING_MAINTAINER' ? 'Awaiting maintainer' : (effective || 'ASSIGNED');
+    const color = effective === 'AWAITING_MAINTAINER'
+      ? 'warning'
+      : effective === 'RESOLVED'
+        ? 'success'
+        : effective === 'IN_PROGRESS'
+          ? 'primary'
+          : effective === 'SUSPENDED'
+            ? 'warning'
+            : 'default';
+    return (
+      <Chip
+        label={label}
+        size="small"
+        color={color as any}
+      />
+    );
+  };
 
   return (
     <Box>
@@ -182,21 +223,21 @@ const TechnicalOfficerPage: React.FC = () => {
                           <TableCell sx={{ width: 60 }}>{r.id}</TableCell>
                           <TableCell>{r.title}</TableCell>
                           <TableCell>
-                            <Chip
-                              label={r.state || 'ASSIGNED'}
-                              size="small"
-                              color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
-                            />
+                            {renderStatusChip(r.state, !!r.assignedMaintainerId)}
                           </TableCell>
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                           <TableCell align="right">
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                            <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
-                              <Badge badgeContent={0} color="error">
-                                <ChatIcon />
-                              </Badge>
-                            </IconButton>
-                            <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
+                            {r.assignedMaintainerId && (
+                              <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                                <Badge badgeContent={0} color="error">
+                                  <ChatIcon />
+                                </Badge>
+                              </IconButton>
+                            )}
+                            {r.state === 'ASSIGNED' && !r.assignedMaintainerId && (
+                              <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
+                            )}
                             <ButtonGroup size="small" variant="contained">
                               <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                               <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
@@ -235,21 +276,21 @@ const TechnicalOfficerPage: React.FC = () => {
                             <TableCell sx={{ width: 60 }}>{r.id}</TableCell>
                             <TableCell>{r.title}</TableCell>
                             <TableCell>
-                              <Chip
-                                label={r.state || 'ASSIGNED'}
-                                size="small"
-                                color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
-                              />
+                              {renderStatusChip(r.state, !!r.assignedMaintainerId)}
                             </TableCell>
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
                               <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                              <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
-                                <Badge badgeContent={0} color="error">
-                                  <ChatIcon />
-                                </Badge>
-                              </IconButton>
-                              <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
+                              {r.assignedMaintainerId && (
+                                <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                                  <Badge badgeContent={0} color="error">
+                                    <ChatIcon />
+                                  </Badge>
+                                </IconButton>
+                              )}
+                              {r.state === 'ASSIGNED' && !r.assignedMaintainerId && (
+                                <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
+                              )}
                               <ButtonGroup size="small" variant="contained">
                                 <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                                 <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>

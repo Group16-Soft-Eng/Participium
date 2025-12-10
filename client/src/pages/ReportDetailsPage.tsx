@@ -1,6 +1,7 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Button, Skeleton, Alert } from '@mui/material';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Box, Button, Skeleton, Alert, Accordion, AccordionSummary, AccordionDetails, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useEffect, useState } from 'react';
 import { getReportById } from '../API/API';
 import { ReportDetailsSection } from '../components/report-details/ReportDetailsSection';
@@ -9,9 +10,12 @@ import { InternalChatSection } from '../components/report-details/InternalChatSe
 export function ReportDetailsPage() {
   const { reportId } = useParams();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(!isMobile); // Collapsed on mobile by default
 
   useEffect(() => {
     if (reportId) {
@@ -67,32 +71,52 @@ export function ReportDetailsPage() {
   }
 
   return (
-    <Box sx={{ bgcolor: 'grey.50', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <Box sx={{ py: 2, px: 3, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'white' }}>
-        <Button 
-          startIcon={<ArrowBackIcon />} 
-          onClick={() => navigate(-1)}
-          variant="outlined"
-        >
-          Back to Reports
-        </Button>
-      </Box>
-
+    <Box sx={{ bgcolor: 'grey.50', height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Main content - full height */}
-      <Box sx={{ display: 'flex', gap: 0, flex: 1, overflow: 'hidden' }}>
-        {/* Left: Report Details - scrollable */}
-        <Box sx={{ flex: '0 0 45%', overflowY: 'auto', borderRight: '1px solid', borderColor: 'divider', bgcolor: 'white' }}>
-          <Box sx={{ p: 3 }}>
-            <ReportDetailsSection 
-              report={report} 
-              onUpdate={fetchReport}
-            />
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 0, flex: 1, overflow: 'hidden' }}>
+        {/* Left: Report Details - collapsible on mobile */}
+        {isMobile ? (
+          <Accordion 
+            expanded={expanded} 
+            onChange={() => setExpanded(!expanded)}
+            sx={{ 
+              boxShadow: 'none',
+              '&:before': { display: 'none' },
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              flexShrink: 0
+            }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'grey.50' }}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                Report #{reportId} - {report.title}
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ p: 3, maxHeight: '50vh', overflowY: 'auto' }}>
+              <ReportDetailsSection 
+                report={report} 
+                onUpdate={fetchReport}
+              />
+            </AccordionDetails>
+          </Accordion>
+        ) : (
+          <Box sx={{ flex: '0 0 45%', borderRight: '1px solid', borderColor: 'divider', bgcolor: 'white', overflow: 'hidden' }}>
+            <Box sx={{ p: 3, height: '100%', overflowY: 'auto' }}>
+              <ReportDetailsSection 
+                report={report} 
+                onUpdate={fetchReport}
+              />
+            </Box>
           </Box>
-        </Box>
+        )}
 
         {/* Right: Internal Chat - full height */}
-        <Box sx={{ flex: '0 0 55%', display: 'flex', flexDirection: 'column', bgcolor: 'white' }}>
+        <Box sx={{ 
+          flex: { xs: 1, md: '0 0 55%' }, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          bgcolor: 'white' 
+        }}>
           <InternalChatSection reportId={parseInt(reportId!)} />
         </Box>
       </Box>

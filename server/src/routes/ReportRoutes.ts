@@ -40,7 +40,7 @@ router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, asy
     }
 });
 
-router.get("/", async(req, res, next) =>{
+router.get("/",authenticateToken, async(req, res, next) =>{
     try{
         // Check if user is authenticated
         const authHeader = req.headers.authorization;

@@ -1,4 +1,4 @@
-import { Stack, Box, Typography, Chip, Paper, Divider, Modal, IconButton } from '@mui/material';
+import { Stack, Box, Typography, Chip, Paper, Divider, Modal, IconButton, Link } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -8,13 +8,15 @@ import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { static_ip_address } from '../../API/API';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface ReportDetailsSectionProps {
   report: any;
   onUpdate: () => void;
 }
 
-export function ReportDetailsSection({ report, onUpdate }: ReportDetailsSectionProps) {
+export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
+  const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
@@ -86,11 +88,27 @@ export function ReportDetailsSection({ report, onUpdate }: ReportDetailsSectionP
 
       {/* Metadata Grid */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-        <InfoField 
-          icon={<LocationOnIcon />}
-          label="Location"
-          value={typeof report.location === 'string' ? report.location : (report.location?.name || 'Not specified')}
-        />
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <LocationOnIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+            <Typography variant="caption" color="text.secondary" fontWeight={500}>
+              Location
+            </Typography>
+          </Box>
+          <Link
+            component="button"
+            variant="body2"
+            onClick={() => navigate('/map')}
+            sx={{ 
+              textAlign: 'left',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              '&:hover': { textDecoration: 'underline' }
+            }}
+          >
+            {typeof report.location === 'string' ? report.location : (report.location?.name || 'Not specified')}
+          </Link>
+        </Box>
         <InfoField 
           icon={<CalendarTodayIcon />}
           label="Reported"
