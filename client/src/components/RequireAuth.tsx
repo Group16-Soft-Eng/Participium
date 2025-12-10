@@ -26,7 +26,7 @@ const RequireCitizen: React.FC<RequireAuthProps> = ({ children }) => {
   const role = getRole();
 
   // require that a token exists and role is 'citizen'
-  if (!token || role != 'citizen') {
+  if (!token || !role?.includes('citizen')) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
