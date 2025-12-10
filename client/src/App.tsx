@@ -120,11 +120,11 @@ function App() {
   const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
   const [showLoginDialog, setShowLoginDialog] = useState(false);
 
-    useEffect(() => {
-      const onAuth = () => setAuth({ token: getToken(), role: getRole() });
-      window.addEventListener('authChange', onAuth);
-      return () => window.removeEventListener('authChange', onAuth);
-    }, []);
+  useEffect(() => {
+    const onAuth = () => setAuth({ token: getToken(), role: getRole() });
+    window.addEventListener('authChange', onAuth);
+    return () => window.removeEventListener('authChange', onAuth);
+  }, []);
 
   const isLoggedIn = Boolean(auth.token);
   const isAdmin = auth.role?.includes('municipal_administrator');
@@ -134,7 +134,7 @@ function App() {
   const isOfficer = isPROfficer || isTechnicalOfficer
   const isCitizen = auth.role?.includes('citizen');
 
-    return (
+  return (
     <NotificationProvider>
       <Router>
         <AppBar position="fixed" color="default" elevation={1} className="app-bar">
@@ -148,8 +148,8 @@ function App() {
                 </svg>
               </Box>
 
-              
-              <Box id = "app-title" component={Link} to="/map" sx={{ textDecoration: 'none' }}>
+
+              <Box id="app-title" component={Link} to="/map" sx={{ textDecoration: 'none' }}>
                 <Typography variant="h6" component="div" sx={{ color: '#222', fontWeight: 700 }}>
                   Participium
                 </Typography>
@@ -161,7 +161,7 @@ function App() {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button className="flex-mobile" id="map-button" component={Link} to="/map" color="inherit">Map</Button>
-              
+
               {/* Show different button based on user role */}
               {isPROfficer && (
                 <PublicRelationsButton />
@@ -188,26 +188,15 @@ function App() {
                 >
                   Maintainer Dashboard
                 </Button>
-              ) : isLoggedIn ? (
-                <Button id="report-button"
-                  component={Link}
-                  to="/submitReport"
-                  variant="contained"
-                  color="secondary"
-                  sx={{
-                    px: 2.2,
-                    py: 0.7,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
-                    background: 'linear-gradient(90deg,#ff6b35,#ff3d00)'
-                  }}
-                >
-                  Write a report
-                </Button>
-              ) : null}
-              
+              )}
+
+              {isCitizen && (<UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
+              )}
+
+              {isAdmin && (
+                <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
+              )}
+
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
               {isLoggedIn ? (
                 <>
@@ -250,10 +239,10 @@ function App() {
             <Button onClick={() => setShowLoginDialog(false)} color="inherit">
               Cancel
             </Button>
-            <Button 
-              component={Link} 
-              to="/login" 
-              variant="contained" 
+            <Button
+              component={Link}
+              to="/login"
+              variant="contained"
               color="primary"
               onClick={() => setShowLoginDialog(false)}
             >

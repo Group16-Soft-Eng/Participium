@@ -255,16 +255,16 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
 
 
   const getRoleColor = (role: string) => {
-    if (role.includes('TECHNICAL')) return 'primary.main';
-    if (role.includes('MAINTAINER')) return 'secondary.main';
+    if (role.includes('technical_office_staff')) return 'primary.main';
+    if (role.includes('external_maintainer')) return 'secondary.main';
     return 'grey.500';
   };
 
   // Check if message is sent by current user
   const isSentByMe =
-    (currentUserRole === 'technical_office_staff' && (message.authorRole === 'TECHNICAL_OFFICE_STAFF' || message.authorRole === 'technical_office_staff')) ||
-    (currentUserRole === 'maintainer' && message.authorRole === 'MAINTAINER') ||
-    (currentUserRole === 'external_maintainer' && message.authorRole === 'MAINTAINER');
+    (currentUserRole?.includes('technical_office_staff') && (message.authorRole.includes('technical_office_staff_OFFICE_STAFF') || message.authorRole.includes('technical_office_staff'))) ||
+    (currentUserRole?.includes('maintainer') && message.authorRole.includes('external_maintainer')) ||
+    (currentUserRole?.includes('external_maintainer') && message.authorRole.includes('external_maintainer'));
 
   // Use authorName which comes from backend (senderName)
   const displayName = isSentByMe ? currentUserName : message.authorName;

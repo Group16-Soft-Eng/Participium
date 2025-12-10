@@ -605,5 +605,27 @@ async function deleteMaintainer(id: number) {
     }
 }
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer };
+async function getReportById(reportId: string) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/reports/${reportId}`, {
+        method: 'GET',
+        headers: headers,
+    });
+    
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to fetch report');
+    }
+}
+
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById };
 export type { Notification };

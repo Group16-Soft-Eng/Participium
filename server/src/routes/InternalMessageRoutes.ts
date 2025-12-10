@@ -6,7 +6,7 @@ import { listConversation, sendInternalMessage } from "@controllers/internalMess
 const router = Router({ mergeParams: true });
 
 // GET /api/v1/reports/:reportId/internal-messages
-router.get("/:reportId/internal-messages", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, "MAINTAINER", "external_maintainer"]), async (req, res, next) => {
+router.get("/:reportId/internal-messages", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, OfficerRole.MAINTAINER, "external_maintainer"]), async (req, res, next) => {
   try {
     const reportId = Number(req.params.reportId);
     if (isNaN(reportId)) {
@@ -20,7 +20,7 @@ router.get("/:reportId/internal-messages", authenticateToken, requireUserType([O
 });
 
 // POST /api/v1/reports/:reportId/internal-messages
-router.post("/:reportId/internal-messages", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, "MAINTAINER", "external_maintainer"]), async (req, res, next) => {
+router.post("/:reportId/internal-messages", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, OfficerRole.MAINTAINER, "external_maintainer"]), async (req, res, next) => {
   try {
     const reportId = Number(req.params.reportId);
     if (isNaN(reportId)) {
@@ -47,17 +47,17 @@ router.post("/:reportId/internal-messages", authenticateToken, requireUserType([
 
     // Check user type - it's an array in JWT
     const userTypes = Array.isArray(user.type) ? user.type : [user.type];
-    const isMaintainer = userTypes.some((t: string) => t === "MAINTAINER" || t === "external_maintainer");
+    const isMaintainer = userTypes.some((t: string) => t === OfficerRole.MAINTAINER || t === "external_maintainer");
 
-    const sender: { type: OfficerRole.TECHNICAL_OFFICE_STAFF | "MAINTAINER"; id: number } = {
-      type: isMaintainer ? "MAINTAINER" : OfficerRole.TECHNICAL_OFFICE_STAFF,
+    const sender: { type: OfficerRole.TECHNICAL_OFFICE_STAFF | OfficerRole.MAINTAINER; id: number } = {
+      type: isMaintainer ? OfficerRole.MAINTAINER : OfficerRole.TECHNICAL_OFFICE_STAFF,
       id: user.id
     };
 
     // Receiver is automatically determined from report assignment
-    const receiver: { type: OfficerRole.TECHNICAL_OFFICE_STAFF | "MAINTAINER"; id: number } = 
+    const receiver: { type: OfficerRole.TECHNICAL_OFFICE_STAFF | OfficerRole.MAINTAINER; id: number } = 
       sender.type === OfficerRole.TECHNICAL_OFFICE_STAFF
-        ? { type: "MAINTAINER", id: report.assignedMaintainerId }
+        ? { type: OfficerRole.MAINTAINER, id: report.assignedMaintainerId }
         : { type: OfficerRole.TECHNICAL_OFFICE_STAFF, id: report.assignedOfficerId };
 
     const saved = await sendInternalMessage(reportId, sender, receiver, message);

@@ -72,6 +72,7 @@ export function getRoleFromToken(token: string | null): Role[] | null {
       'technical_office_staff',
       'municipal_public_relations_officer',
       'municipal_administrator',
+      'external_maintainer',
     ]);
 
     data.type.forEach(typeStr => {
@@ -85,6 +86,8 @@ export function getRoleFromToken(token: string | null): Role[] | null {
     if (data.scope.includes('technical_office_staff')) result.push('technical_office_staff' as Role);
     if (data.scope.includes('municipal_public_relations_officer')) result.push('municipal_public_relations_officer' as Role);
     if (data.scope.includes('municipal_administrator')) result.push('municipal_administrator' as Role);
+    if (data.scope.includes('external_maintainer')) result.push('external_maintainer' as Role);
+
   }
 
   return result.length > 0 ? result : null;

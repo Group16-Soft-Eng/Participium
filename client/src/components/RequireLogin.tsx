@@ -26,7 +26,7 @@ const RequireLogin: React.FC<RequireLoginProps> = ({ children }) => {
   }
 
   // Redirect officers to their dashboard
-  if (authState.role === 'municipal_public_relations_officer') {
+  if (authState.role?.includes('municipal_public_relations_officer')) {
     return <Navigate to="/officer" replace />;
   }
 
