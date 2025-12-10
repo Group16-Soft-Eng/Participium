@@ -285,21 +285,12 @@ describe("MaintainerController Integration", () => {
       expect(ReportRepository.prototype.assignReportToMaintainer).toHaveBeenCalledWith(10, 1);
     });
 
-    it("should throw error if report is not in ASSIGNED state", async () => {
-      const reportMock = { id: 10, state: ReportState.PENDING };
+    it("should throw error if report is DECLINED", async () => {
+      const reportMock = { id: 10, state: ReportState.DECLINED };
       (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue(reportMock);
 
       await expect(maintainerController.assignReportToMaintainer(10, 1)).rejects.toThrow(
-        "Only ASSIGNED reports can be assigned"
-      );
-    });
-
-    it("should throw error if report is IN_PROGRESS", async () => {
-      const reportMock = { id: 10, state: ReportState.IN_PROGRESS };
-      (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue(reportMock);
-
-      await expect(maintainerController.assignReportToMaintainer(10, 1)).rejects.toThrow(
-        "Only ASSIGNED reports can be assigned"
+        "Cannot assign resolved or declined reports"
       );
     });
 
@@ -308,7 +299,7 @@ describe("MaintainerController Integration", () => {
       (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue(reportMock);
 
       await expect(maintainerController.assignReportToMaintainer(10, 1)).rejects.toThrow(
-        "Only ASSIGNED reports can be assigned"
+        "Cannot assign resolved or declined reports"
       );
     });
 

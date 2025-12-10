@@ -191,8 +191,8 @@ describe("UserRoutes", () => {
       expect(mailService.sendMail).toHaveBeenCalledWith({
         to: "test@example.com",
         subject: "Your Participium OTP code",
-        text: "OTP code: 123456 (valid for 5 minutes)",
-        html: "<p>OTP code: <b>123456</b></p><p>Valid for 5 minutes.</p>"
+        text: "OTP code: 123456 (valid for 30 minutes)",
+        html: "<p>OTP code: <b>123456</b></p><p>Valid for 30 minutes.</p>"
       });
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ sent: true });

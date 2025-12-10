@@ -581,7 +581,7 @@ describe("Officer Routes Integration Tests", () => {
       expect(response.status).toBe(500);
     });
 
-    it("should return error for report not in ASSIGNED state", async () => {
+    it("should return error for report in RESOLVED state", async () => {
       const user = await userRepo.createUser("user12", "User", "Twelve", "user12@example.com", "Password@123");
       const repo = (userRepo as any).repo;
       user.isActive = true;
@@ -595,6 +595,8 @@ describe("Officer Routes Integration Tests", () => {
         OfficeType.INFRASTRUCTURE,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
+
+      await reportRepo.updateReportState(report.id, ReportState.RESOLVED);
 
       const maintainer = await maintainerRepo.createMaintainer(
         "Test Maintainer 3",

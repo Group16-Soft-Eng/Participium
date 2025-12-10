@@ -53,6 +53,8 @@ describe("internalMessageController", () => {
         receiverType: OfficerRole.MAINTAINER,
         receiverId: 2,
         message: "Test message",
+        receiverName: "Maintainer",
+        senderName: "Technical Officer",
         createdAt: new Date("2025-01-01")
       });
       expect(InternalMessageRepository.prototype.listByReport).toHaveBeenCalledWith(1);
@@ -98,8 +100,8 @@ describe("internalMessageController", () => {
       };
       (ioService.getIO as jest.Mock).mockReturnValue(mockIO);
 
-      const sender : Participant= { type: OfficerRole.TECHNICAL_OFFICE_STAFF, id: 1 };
-      const receiver : Participant = { type: OfficerRole.MAINTAINER, id: 2 };
+      const sender: Participant = { type: OfficerRole.TECHNICAL_OFFICE_STAFF, id: 1 };
+      const receiver: Participant = { type: OfficerRole.MAINTAINER, id: 2 };
 
       const result = await internalMessageController.sendInternalMessage(1, sender, receiver, "Test message");
 
@@ -130,8 +132,8 @@ describe("internalMessageController", () => {
         reportId: 1,
         senderType: OfficerRole.TECHNICAL_OFFICE_STAFF,
         senderId: 1,
-        recipientType: OfficerRole.MAINTAINER,
-        recipientId: 2,
+        receiverType: OfficerRole.MAINTAINER,
+        receiverId: 2,
         message: "Test message",
         createdAt: mockSavedMessage.createdAt
       });
@@ -153,8 +155,8 @@ describe("internalMessageController", () => {
       };
       (InternalMessageRepository.prototype.create as jest.Mock).mockResolvedValue(savedMessage);
 
-      const sender : Participant = { type: OfficerRole.MAINTAINER, id: 2 };
-      const receiver : Participant = { type: OfficerRole.TECHNICAL_OFFICE_STAFF, id: 1 };
+      const sender: Participant = { type: OfficerRole.MAINTAINER, id: 2 };
+      const receiver: Participant = { type: OfficerRole.TECHNICAL_OFFICE_STAFF, id: 1 };
 
       const result = await internalMessageController.sendInternalMessage(1, sender, receiver, "Reply message");
 
@@ -191,14 +193,14 @@ describe("internalMessageController", () => {
       ).rejects.toThrow(ForbiddenError);
     });
 
-        it("should throw ForbiddenError if maintainer not assigned to report", async () => {
-        const sender = { type: OfficerRole.MAINTAINER as OfficerRole.MAINTAINER, id: 99 };
-        const receiver = { type: OfficerRole.TECHNICAL_OFFICE_STAFF as OfficerRole.TECHNICAL_OFFICE_STAFF, id: 1 };
+    it("should throw ForbiddenError if maintainer not assigned to report", async () => {
+      const sender = { type: OfficerRole.MAINTAINER as OfficerRole.MAINTAINER, id: 99 };
+      const receiver = { type: OfficerRole.TECHNICAL_OFFICE_STAFF as OfficerRole.TECHNICAL_OFFICE_STAFF, id: 1 };
 
-        await expect(
-            internalMessageController.sendInternalMessage(1, sender, receiver, "Test")
-        ).rejects.toThrow(ForbiddenError);
-        });
+      await expect(
+        internalMessageController.sendInternalMessage(1, sender, receiver, "Test")
+      ).rejects.toThrow(ForbiddenError);
+    });
 
     it("should throw ForbiddenError if officer tries to send to wrong maintainer", async () => {
       const sender = { type: OfficerRole.TECHNICAL_OFFICE_STAFF as OfficerRole.TECHNICAL_OFFICE_STAFF, id: 1 };

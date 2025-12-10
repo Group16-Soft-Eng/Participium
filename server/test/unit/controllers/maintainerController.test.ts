@@ -197,22 +197,13 @@ describe("maintainerController", () => {
       expect(ReportRepository.prototype.assignReportToMaintainer).toHaveBeenCalledWith(10, 1);
     });
 
-    it("should throw error if report is not ASSIGNED", async () => {
-      const reportMock = { id: 10, state: ReportState.PENDING };
-      (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue(reportMock);
-
-      await expect(maintainerController.assignReportToMaintainer(10, 1))
-        .rejects
-        .toThrow("Only ASSIGNED reports can be assigned");
-    });
-
     it("should throw error if report is already resolved", async () => {
       const reportMock = { id: 10, state: ReportState.RESOLVED };
       (ReportRepository.prototype.getReportById as jest.Mock).mockResolvedValue(reportMock);
 
       await expect(maintainerController.assignReportToMaintainer(10, 1))
         .rejects
-        .toThrow("Only ASSIGNED reports can be assigned");
+        .toThrow("Cannot assign resolved or declined reports");
     });
 
     it("should throw error if maintainer does not exist", async () => {
