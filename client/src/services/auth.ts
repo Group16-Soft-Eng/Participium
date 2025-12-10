@@ -15,8 +15,13 @@ export function setRole(role: Role[]) {
 }
 
 export function getRole(): Role[] | null {
-  const roleStr = localStorage.getItem('role');
-  return roleStr ? (JSON.parse(roleStr) as Role[]) : null;
+  try{
+    const roleStr = localStorage.getItem('role');
+    return roleStr ? (JSON.parse(roleStr) as Role[]) : null;
+  } catch {
+    localStorage.removeItem('token');
+    return null;
+  }
 }
 
 export function setPicture(picture: string) {
