@@ -1,156 +1,208 @@
 import "reflect-metadata";
 import { OfficerRepository } from "../../../src/repositories/OfficerRepository";
 import { UserRepository } from "../../../src/repositories/UserRepository";
-import { OfficerDAO } from "../../../src/models/dao/OfficerDAO";
-import { Repository } from "typeorm";
 import { AppDataSource } from "../../../src/database/connection";
+import { OfficerDAO } from "../../../src/models/dao/OfficerDAO";
+import { RoleDAO } from "../../../src/models/dao/RoleDAO";
 import { OfficerRole } from "../../../src/models/enums/OfficerRole";
 import { OfficeType } from "../../../src/models/enums/OfficeType";
-import { hashPassword } from "../../../src/services/authService";
-import { NotFoundError, ConflictError } from "../../../src/utils/utils";
+import { Repository } from "typeorm";
+import * as authService from "../../../src/services/authService";
 
-// Mock dei moduli
+jest.mock("../../../src/database/connection", () => ({
+  AppDataSource: {
+    getRepository: jest.fn()
+  }
+}));
+jest.mock("../../../src/repositories/UserRepository");
 jest.mock("../../../src/services/authService");
 
-describe("OfficerRepository Unit Tests", () => {
+describe("OfficerRepository", () => {
   let officerRepository: OfficerRepository;
-  let mockRepo: jest.Mocked<Repository<OfficerDAO>>;
+  let mockOfficerRepo: jest.Mocked<Repository<OfficerDAO>>;
+  let mockRoleRepo: jest.Mocked<Repository<RoleDAO>>;
+  let mockUserRepository: jest.Mocked<UserRepository>;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock del repository TypeORM
-    mockRepo = {
+    mockOfficerRepo = {
       find: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
       save: jest.fn(),
-      remove: jest.fn()
+      remove: jest.fn(),
+      createQueryBuilder: jest.fn(),
     } as any;
 
-    // Spy su AppDataSource.getRepository
-    jest.spyOn(AppDataSource, 'getRepository').mockReturnValue(mockRepo);
+    mockRoleRepo = {
+      create: jest.fn(),
+      save: jest.fn(),
+      createQueryBuilder: jest.fn(),
+    } as any;
+
+    mockUserRepository = {
+      getUserByEmail: jest.fn(),
+    } as any;
+
+    (AppDataSource.getRepository as jest.Mock).mockImplementation((entity) => {
+      if (entity === OfficerDAO) return mockOfficerRepo;
+      if (entity === RoleDAO) return mockRoleRepo;
+      return {} as any;
+    });
+
+    (UserRepository as jest.MockedClass<typeof UserRepository>).mockImplementation(() => mockUserRepository);
+    (authService.hashPassword as jest.Mock).mockResolvedValue("hashedPassword123");
 
     officerRepository = new OfficerRepository();
   });
 
   describe("getAllOfficers", () => {
-    it("dovrebbe restituire tutti gli officers", async () => {
-      const mockOfficers: OfficerDAO[] = [
-        {
-          id: 1,
-          username: "officer1",
-          name: "John",
-          surname: "Doe",
-          email: "john@example.com",
-          password: "hash1",
-          role: OfficerRole.MUNICIPAL_ADMINISTRATOR,
-          office: OfficeType.INFRASTRUCTURE
-        },
-        {
-          id: 2,
-          username: "officer2",
-          name: "Jane",
-          surname: "Smith",
-          email: "jane@example.com",
-          password: "hash2",
-          role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          office: OfficeType.INFRASTRUCTURE
-        }
+    it("should return all officers with their roles", async () => {
+      const mockOfficers = [
+        { id: 1, username: "officer1", email: "officer1@test.com", roles: [] },
+        { id: 2, username: "officer2", email: "officer2@test.com", roles: [] }
       ];
 
-      mockRepo.find.mockResolvedValue(mockOfficers);
+      mockOfficerRepo.find.mockResolvedValue(mockOfficers as any);
 
       const result = await officerRepository.getAllOfficers();
 
+      expect(mockOfficerRepo.find).toHaveBeenCalledWith({ relations: ["roles"] });
       expect(result).toEqual(mockOfficers);
-      expect(mockRepo.find).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return empty array if no officers exist", async () => {
+      mockOfficerRepo.find.mockResolvedValue([]);
+
+      const result = await officerRepository.getAllOfficers();
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("getAdminOfficers", () => {
+    it("should return only admin officers", async () => {
+      const mockAdminOfficers = [
+        { 
+          id: 1, 
+          username: "admin1", 
+          roles: [{ officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR }] 
+        }
+      ];
+
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockAdminOfficers)
+      };
+
+      mockOfficerRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await officerRepository.getAdminOfficers();
+
+      expect(mockOfficerRepo.createQueryBuilder).toHaveBeenCalledWith("officer");
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("officer.roles", "role");
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        "role.officerRole = :admin",
+        { admin: OfficerRole.MUNICIPAL_ADMINISTRATOR }
+      );
+      expect(result).toEqual(mockAdminOfficers);
+    });
+
+    it("should return empty array if no admin officers exist", async () => {
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([])
+      };
+
+      mockOfficerRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+      const result = await officerRepository.getAdminOfficers();
+
+      expect(result).toEqual([]);
     });
   });
 
   describe("getOfficerByEmail", () => {
-    it("dovrebbe restituire un officer quando esiste", async () => {
-      const mockOfficer: OfficerDAO = {
-        id: 1,
-        username: "officer1",
-        name: "John",
-        surname: "Doe",
-        email: "john@example.com",
-        password: "hashedpassword",
-        role: OfficerRole.MUNICIPAL_ADMINISTRATOR,
-        office: OfficeType.INFRASTRUCTURE
+    it("should return officer by email", async () => {
+      const mockOfficer = { 
+        id: 1, 
+        email: "test@test.com", 
+        username: "test",
+        roles: [] 
       };
 
-      mockRepo.find.mockResolvedValue([mockOfficer]);
+      mockOfficerRepo.find.mockResolvedValue([mockOfficer] as any);
 
-      const result = await officerRepository.getOfficerByEmail("john@example.com");
+      const result = await officerRepository.getOfficerByEmail("test@test.com");
 
+      expect(mockOfficerRepo.find).toHaveBeenCalledWith({
+        where: { email: "test@test.com" },
+        relations: ["roles"]
+      });
       expect(result).toEqual(mockOfficer);
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { email: "john@example.com" } });
     });
 
-    it("dovrebbe lanciare NotFoundError quando l'officer non esiste", async () => {
-      mockRepo.find.mockResolvedValue([]);
+    it("should throw error if officer not found by email", async () => {
+      mockOfficerRepo.find.mockResolvedValue([]);
 
-      await expect(officerRepository.getOfficerByEmail("nonexistent@example.com"))
+      await expect(officerRepository.getOfficerByEmail("notfound@test.com"))
         .rejects
-        .toThrow(NotFoundError);
+        .toThrow("Officer with email 'notfound@test.com' not found");
     });
   });
 
   describe("getOfficerById", () => {
-    it("dovrebbe restituire un officer quando esiste", async () => {
-      const mockOfficer: OfficerDAO = {
-        id: 1,
-        username: "officer1",
-        name: "John",
-        surname: "Doe",
-        email: "john@example.com",
-        password: "hashedpassword",
-        role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-        office: OfficeType.INFRASTRUCTURE
+    it("should return officer by id", async () => {
+      const mockOfficer = { 
+        id: 1, 
+        email: "test@test.com", 
+        username: "test",
+        roles: [] 
       };
 
-      mockRepo.find.mockResolvedValue([mockOfficer]);
+      mockOfficerRepo.find.mockResolvedValue([mockOfficer] as any);
 
       const result = await officerRepository.getOfficerById(1);
 
+      expect(mockOfficerRepo.find).toHaveBeenCalledWith({
+        where: { id: 1 },
+        relations: ["roles"]
+      });
       expect(result).toEqual(mockOfficer);
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { id: 1 } });
     });
 
-    it("dovrebbe lanciare NotFoundError quando l'officer non esiste", async () => {
-      mockRepo.find.mockResolvedValue([]);
+    it("should throw error if officer not found by id", async () => {
+      mockOfficerRepo.find.mockResolvedValue([]);
 
       await expect(officerRepository.getOfficerById(999))
         .rejects
-        .toThrow(NotFoundError);
+        .toThrow("Officer with id '999' not found");
     });
   });
 
   describe("getOfficersByUsername", () => {
-    it("dovrebbe restituire array di officers con username specifico", async () => {
-      const mockOfficers: OfficerDAO[] = [
-        {
-          id: 1,
-          username: "testuser",
-          name: "John",
-          surname: "Doe",
-          email: "john@example.com",
-          password: "hash",
-          role: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER,
-          office: OfficeType.INFRASTRUCTURE
-        }
+    it("should return officers by username", async () => {
+      const mockOfficers = [
+        { id: 1, username: "testuser", email: "test1@test.com", roles: [] },
+        { id: 2, username: "testuser", email: "test2@test.com", roles: [] }
       ];
 
-      mockRepo.find.mockResolvedValue(mockOfficers);
+      mockOfficerRepo.find.mockResolvedValue(mockOfficers as any);
 
       const result = await officerRepository.getOfficersByUsername("testuser");
 
+      expect(mockOfficerRepo.find).toHaveBeenCalledWith({
+        where: { username: "testuser" },
+        relations: ["roles"]
+      });
       expect(result).toEqual(mockOfficers);
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { username: "testuser" } });
     });
 
-    it("dovrebbe restituire array vuoto se username non esiste", async () => {
-      mockRepo.find.mockResolvedValue([]);
+    it("should return empty array if no officers with username exist", async () => {
+      mockOfficerRepo.find.mockResolvedValue([]);
 
       const result = await officerRepository.getOfficersByUsername("nonexistent");
 
@@ -159,238 +211,490 @@ describe("OfficerRepository Unit Tests", () => {
   });
 
   describe("getOfficersByOffice", () => {
-    it("dovrebbe restituire officers per ufficio specifico", async () => {
-      const mockOfficers: OfficerDAO[] = [
-        {
-          id: 1,
+    it("should return officers by office type", async () => {
+      const mockOfficers = [
+        { 
+          id: 1, 
           username: "officer1",
-          name: "John",
-          surname: "Doe",
-          email: "john@example.com",
-          password: "hash1",
-          role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          office: OfficeType.INFRASTRUCTURE
-        },
-        {
-          id: 2,
-          username: "officer2",
-          name: "Jane",
-          surname: "Smith",
-          email: "jane@example.com",
-          password: "hash2",
-          role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          office: OfficeType.INFRASTRUCTURE
+          roles: [{ officeType: OfficeType.INFRASTRUCTURE }] 
         }
       ];
 
-      mockRepo.find.mockResolvedValue(mockOfficers);
+      const mockQueryBuilder = {
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockOfficers)
+      };
+
+      mockOfficerRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const result = await officerRepository.getOfficersByOffice(OfficeType.INFRASTRUCTURE);
 
+      expect(mockOfficerRepo.createQueryBuilder).toHaveBeenCalledWith("officer");
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("officer.roles", "role");
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        "role.officeType = :office",
+        { office: OfficeType.INFRASTRUCTURE }
+      );
       expect(result).toEqual(mockOfficers);
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { office: OfficeType.INFRASTRUCTURE } });
+    });
+
+    it("should handle different office types", async () => {
+      const officeTypes = [
+        OfficeType.ENVIRONMENT,
+        OfficeType.SAFETY,
+        OfficeType.TRANSPORT,
+        OfficeType.SANITATION,
+        OfficeType.ORGANIZATION,
+        OfficeType.OTHER
+      ];
+
+      for (const officeType of officeTypes) {
+        const mockQueryBuilder = {
+          leftJoinAndSelect: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          getMany: jest.fn().mockResolvedValue([])
+        };
+
+        mockOfficerRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+
+        await officerRepository.getOfficersByOffice(officeType);
+
+        expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+          "role.officeType = :office",
+          { office: officeType }
+        );
+      }
     });
   });
 
   describe("createOfficer", () => {
-    it("dovrebbe creare un nuovo officer con successo", async () => {
-      const newOfficer = {
-        username: "newofficer",
-        name: "New",
-        surname: "Officer",
-        email: "new@example.com",
-        password: "plainpassword",
-        role: OfficerRole.MUNICIPAL_ADMINISTRATOR,
-        office: OfficeType.INFRASTRUCTURE
+    it("should create a new officer with roles", async () => {
+      const mockCreatedOfficer = { 
+        id: 1, 
+        username: "newuser",
+        name: "Test",
+        surname: "User",
+        email: "new@test.com",
+        password: "hashedPassword123"
+      };
+      const mockFinalOfficer = {
+        ...mockCreatedOfficer,
+        roles: [
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE }
+        ]
       };
 
-      const savedOfficer: OfficerDAO = {
-        id: 1,
-        ...newOfficer,
-        password: "hashedpassword"
-      };
-
-      // Mock: email non esiste
-      mockRepo.find.mockResolvedValue([]);
-
-      // Mock: user non esiste
-      jest.spyOn(UserRepository.prototype, 'getUserByEmail').mockRejectedValue(new NotFoundError("Not found"));
-
-      // Mock: hashing password
-      (hashPassword as jest.Mock).mockResolvedValue("hashedpassword");
-
-      // Mock: salvataggio
-      mockRepo.save.mockResolvedValue(savedOfficer);
+      mockOfficerRepo.find.mockResolvedValueOnce([]) // email check
+        .mockResolvedValueOnce([mockFinalOfficer] as any); // getOfficerById
+      mockUserRepository.getUserByEmail.mockRejectedValue(new Error("Not found"));
+      mockOfficerRepo.create.mockReturnValue(mockCreatedOfficer as any);
+      mockOfficerRepo.save.mockResolvedValue(mockCreatedOfficer as any);
+      mockRoleRepo.create.mockReturnValue({} as any);
+      mockRoleRepo.save.mockResolvedValue([] as any);
 
       const result = await officerRepository.createOfficer(
-        newOfficer.username,
-        newOfficer.name,
-        newOfficer.surname,
-        newOfficer.email,
-        newOfficer.password,
-        newOfficer.role,
-        newOfficer.office
+        "newuser",
+        "Test",
+        "User",
+        "new@test.com",
+        "plainPassword",
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
       );
 
-      expect(result).toEqual(savedOfficer);
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { email: newOfficer.email } });
-      expect(UserRepository.prototype.getUserByEmail).toHaveBeenCalledWith(newOfficer.email);
-      expect(hashPassword).toHaveBeenCalledWith(newOfficer.password);
-      expect(mockRepo.save).toHaveBeenCalledWith({
-        username: newOfficer.username,
-        name: newOfficer.name,
-        surname: newOfficer.surname,
-        email: newOfficer.email,
-        password: "hashedpassword",
-        role: newOfficer.role,
-        office: newOfficer.office
+      expect(authService.hashPassword).toHaveBeenCalledWith("plainPassword");
+      expect(mockOfficerRepo.create).toHaveBeenCalledWith({
+        username: "newuser",
+        name: "Test",
+        surname: "User",
+        email: "new@test.com",
+        password: "hashedPassword123"
       });
+      expect(mockOfficerRepo.save).toHaveBeenCalled();
+      expect(mockRoleRepo.create).toHaveBeenCalled();
+      expect(mockRoleRepo.save).toHaveBeenCalled();
     });
 
-    it("dovrebbe lanciare ConflictError se email già esiste", async () => {
-      const existingOfficer: OfficerDAO = {
-        id: 1,
-        username: "existing",
-        name: "Existing",
-        surname: "Officer",
-        email: "existing@example.com",
-        password: "hash",
-        role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-        office: OfficeType.INFRASTRUCTURE
+    it("should create officer with multiple roles", async () => {
+      const mockCreatedOfficer = { 
+        id: 2, 
+        username: "multiuser",
+        email: "multi@test.com"
+      };
+      const mockFinalOfficer = {
+        ...mockCreatedOfficer,
+        roles: [
+          { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null },
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ENVIRONMENT }
+        ]
       };
 
-      // Email esiste
-      mockRepo.find.mockResolvedValue([existingOfficer]);
+      mockOfficerRepo.find.mockResolvedValueOnce([])
+        .mockResolvedValueOnce([mockFinalOfficer] as any);
+      mockUserRepository.getUserByEmail.mockRejectedValue(new Error("Not found"));
+      mockOfficerRepo.create.mockReturnValue(mockCreatedOfficer as any);
+      mockOfficerRepo.save.mockResolvedValue(mockCreatedOfficer as any);
+      mockRoleRepo.create.mockReturnValue({} as any);
+      mockRoleRepo.save.mockResolvedValue([] as any);
 
-      await expect(officerRepository.createOfficer(
-        "newofficer",
-        "New",
-        "Officer",
-        "existing@example.com",
+      const result = await officerRepository.createOfficer(
+        "multiuser",
+        "Multi",
+        "Role",
+        "multi@test.com",
         "password",
-        OfficerRole.MUNICIPAL_ADMINISTRATOR,
-        OfficeType.INFRASTRUCTURE
-      )).rejects.toThrow(ConflictError);
+        [
+          { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT }
+        ]
+      );
+
+      expect(mockRoleRepo.create).toHaveBeenCalledTimes(2);
     });
 
-    it("dovrebbe lanciare Error se email è già usata da un user", async () => {
-      const mockUser = {
-        id: 1,
-        username: "user1",
-        firstName: "User",
-        lastName: "One",
-        email: "user@example.com",
-        password: "hash"
+    it("should create officer without roles if not provided", async () => {
+      const mockCreatedOfficer = { 
+        id: 3, 
+        username: "noroles",
+        email: "noroles@test.com"
       };
 
-      mockRepo.find.mockResolvedValue([]); // email non esiste tra officers
-      jest.spyOn(UserRepository.prototype, 'getUserByEmail').mockResolvedValue(mockUser as any);
+      mockOfficerRepo.find.mockResolvedValueOnce([])
+        .mockResolvedValueOnce([mockCreatedOfficer] as any);
+      mockUserRepository.getUserByEmail.mockRejectedValue(new Error("Not found"));
+      mockOfficerRepo.create.mockReturnValue(mockCreatedOfficer as any);
+      mockOfficerRepo.save.mockResolvedValue(mockCreatedOfficer as any);
+
+      const result = await officerRepository.createOfficer(
+        "noroles",
+        "No",
+        "Roles",
+        "noroles@test.com",
+        "password"
+      );
+
+      expect(mockRoleRepo.create).not.toHaveBeenCalled();
+      expect(mockRoleRepo.save).not.toHaveBeenCalled();
+    });
+
+    it("should throw error if email already exists as officer", async () => {
+      mockOfficerRepo.find.mockResolvedValue([{ email: "existing@test.com" }] as any);
 
       await expect(officerRepository.createOfficer(
-        "newofficer",
-        "New",
-        "Officer",
-        "user@example.com",
+        "user",
+        "Test",
+        "User",
+        "existing@test.com",
+        "password"
+      )).rejects.toThrow("Officer with email 'existing@test.com' already exists");
+    });
+
+    it("should throw error if email already exists as user", async () => {
+      mockOfficerRepo.find.mockResolvedValue([]);
+      mockUserRepository.getUserByEmail.mockResolvedValue({ email: "user@test.com" } as any);
+
+      await expect(officerRepository.createOfficer(
+        "user",
+        "Test",
+        "User",
+        "user@test.com",
+        "password"
+      )).rejects.toThrow("Email 'user@test.com' is already used.");
+    });
+
+    it("should filter out roles with null role value", async () => {
+      const mockCreatedOfficer = { id: 4, username: "filtered", email: "filtered@test.com" };
+
+      mockOfficerRepo.find.mockResolvedValueOnce([])
+        .mockResolvedValueOnce([mockCreatedOfficer] as any);
+      mockUserRepository.getUserByEmail.mockRejectedValue(new Error("Not found"));
+      mockOfficerRepo.create.mockReturnValue(mockCreatedOfficer as any);
+      mockOfficerRepo.save.mockResolvedValue(mockCreatedOfficer as any);
+      mockRoleRepo.create.mockReturnValue({} as any);
+      mockRoleRepo.save.mockResolvedValue([] as any);
+
+      await officerRepository.createOfficer(
+        "filtered",
+        "Filter",
+        "Test",
+        "filtered@test.com",
         "password",
-        OfficerRole.MUNICIPAL_ADMINISTRATOR,
-        OfficeType.INFRASTRUCTURE
-      )).rejects.toThrow("Email 'user@example.com' is already used.");
+        [
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE },
+          { role: null as any, office: OfficeType.ENVIRONMENT }
+        ]
+      );
+
+      expect(mockRoleRepo.create).toHaveBeenCalledTimes(1);
+    });
+
+    it("should handle role with null office", async () => {
+      const mockCreatedOfficer = { id: 5, username: "nulloffice", email: "null@test.com" };
+
+      mockOfficerRepo.find.mockResolvedValueOnce([])
+        .mockResolvedValueOnce([mockCreatedOfficer] as any);
+      mockUserRepository.getUserByEmail.mockRejectedValue(new Error("Not found"));
+      mockOfficerRepo.create.mockReturnValue(mockCreatedOfficer as any);
+      mockOfficerRepo.save.mockResolvedValue(mockCreatedOfficer as any);
+      mockRoleRepo.create.mockReturnValue({} as any);
+      mockRoleRepo.save.mockResolvedValue([] as any);
+
+      await officerRepository.createOfficer(
+        "nulloffice",
+        "Null",
+        "Office",
+        "null@test.com",
+        "password",
+        [{ role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null }]
+      );
+
+      expect(mockRoleRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR,
+          officeType: null
+        })
+      );
     });
   });
 
   describe("updateOfficer", () => {
-    it("dovrebbe aggiornare un officer esistente", async () => {
-      const existingOfficer: OfficerDAO = {
+    it("should update officer basic information", async () => {
+      const mockExistingOfficer = {
         id: 1,
-        username: "oldusername",
+        username: "olduser",
         name: "Old",
         surname: "Name",
-        email: "old@example.com",
-        password: "oldhashedpassword",
-        role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-        office: OfficeType.INFRASTRUCTURE
+        email: "old@test.com",
+        roles: []
       };
-
-      const updatedOfficer: OfficerDAO = {
-        id: 1,
-        username: "newusername",
+      const mockUpdatedOfficer = {
+        ...mockExistingOfficer,
+        username: "newuser",
         name: "New",
         surname: "Name",
-        email: "new@example.com",
-        password: "oldhashedpassword", // password non cambia
-        role: OfficerRole.MUNICIPAL_ADMINISTRATOR,
-        office: OfficeType.INFRASTRUCTURE
+        email: "new@test.com"
       };
 
-      mockRepo.find.mockResolvedValue([existingOfficer]);
-      mockRepo.save.mockResolvedValue(updatedOfficer);
+      mockOfficerRepo.find.mockResolvedValueOnce([mockExistingOfficer] as any)
+        .mockResolvedValueOnce([mockUpdatedOfficer] as any);
+      mockOfficerRepo.save.mockResolvedValue(mockUpdatedOfficer as any);
+
+      const mockDeleteQueryBuilder = {
+        delete: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({})
+      };
+      mockRoleRepo.createQueryBuilder.mockReturnValue(mockDeleteQueryBuilder as any);
+      mockRoleRepo.create.mockReturnValue({} as any);
+      mockRoleRepo.save.mockResolvedValue({} as any);
 
       const result = await officerRepository.updateOfficer(
         1,
-        "newusername",
+        "newuser",
         "New",
         "Name",
-        "new@example.com",
-        OfficerRole.MUNICIPAL_ADMINISTRATOR,
+        "new@test.com",
+        OfficerRole.TECHNICAL_OFFICE_STAFF,
         OfficeType.INFRASTRUCTURE
       );
 
-      expect(result).toEqual(updatedOfficer);
-      expect(result.password).toBe("oldhashedpassword"); // password preserved
-      expect(mockRepo.save).toHaveBeenCalledWith(expect.objectContaining({
-        id: 1,
-        username: "newusername",
-        name: "New",
-        surname: "Name",
-        email: "new@example.com",
-        role: OfficerRole.MUNICIPAL_ADMINISTRATOR,
-        office: OfficeType.INFRASTRUCTURE
-      }));
+      expect(mockOfficerRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          username: "newuser",
+          name: "New",
+          surname: "Name",
+          email: "new@test.com"
+        })
+      );
+      expect(mockDeleteQueryBuilder.delete).toHaveBeenCalled();
+      expect(mockRoleRepo.create).toHaveBeenCalled();
     });
 
-    it("dovrebbe lanciare NotFoundError se l'officer non esiste", async () => {
-      mockRepo.find.mockResolvedValue([]);
+    it("should update officer without changing roles if role/office not provided", async () => {
+      const mockExistingOfficer = {
+        id: 1,
+        username: "user",
+        name: "Test",
+        surname: "User",
+        email: "test@test.com",
+        roles: [{ officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF }]
+      };
+
+      mockOfficerRepo.find.mockResolvedValue([mockExistingOfficer] as any);
+      mockOfficerRepo.save.mockResolvedValue(mockExistingOfficer as any);
+
+      const result = await officerRepository.updateOfficer(
+        1,
+        "user",
+        "Test",
+        "User",
+        "test@test.com"
+      );
+
+      expect(mockOfficerRepo.save).toHaveBeenCalled();
+      expect(mockRoleRepo.createQueryBuilder).not.toHaveBeenCalled();
+    });
+
+    it("should throw error if officer to update does not exist", async () => {
+      mockOfficerRepo.find.mockResolvedValue([]);
 
       await expect(officerRepository.updateOfficer(
         999,
-        "username",
-        "Name",
-        "Surname",
-        "email@example.com",
-        OfficerRole.MUNICIPAL_ADMINISTRATOR,
-        OfficeType.INFRASTRUCTURE
-      )).rejects.toThrow(NotFoundError);
+        "user",
+        "Test",
+        "User",
+        "test@test.com"
+      )).rejects.toThrow("Officer with id '999' not found");
+    });
+  });
+
+  describe("updateOfficerRoles", () => {
+    it("should update officer roles", async () => {
+      const mockOfficer = {
+        id: 1,
+        username: "user",
+        roles: [{ officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF }]
+      };
+      const mockUpdatedOfficer = {
+        ...mockOfficer,
+        roles: [
+          { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null },
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ENVIRONMENT }
+        ]
+      };
+
+      mockOfficerRepo.find.mockResolvedValueOnce([mockOfficer] as any)
+        .mockResolvedValueOnce([mockUpdatedOfficer] as any);
+
+      const mockDeleteQueryBuilder = {
+        delete: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({})
+      };
+      mockRoleRepo.createQueryBuilder.mockReturnValue(mockDeleteQueryBuilder as any);
+      mockRoleRepo.create.mockReturnValue({} as any);
+      mockRoleRepo.save.mockResolvedValue([] as any);
+
+      const result = await officerRepository.updateOfficerRoles(1, [
+        { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
+        { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT }
+      ]);
+
+      expect(mockDeleteQueryBuilder.delete).toHaveBeenCalled();
+      expect(mockDeleteQueryBuilder.where).toHaveBeenCalledWith("officerID = :id", { id: 1 });
+      expect(mockRoleRepo.create).toHaveBeenCalledTimes(2);
+      expect(mockRoleRepo.save).toHaveBeenCalled();
+    });
+
+    it("should clear all roles if empty array provided", async () => {
+      const mockOfficer = {
+        id: 1,
+        username: "user",
+        roles: [{ officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF }]
+      };
+
+      mockOfficerRepo.find.mockResolvedValue([mockOfficer] as any);
+
+      const mockDeleteQueryBuilder = {
+        delete: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({})
+      };
+      mockRoleRepo.createQueryBuilder.mockReturnValue(mockDeleteQueryBuilder as any);
+
+      await officerRepository.updateOfficerRoles(1, []);
+
+      expect(mockDeleteQueryBuilder.execute).toHaveBeenCalled();
+      expect(mockRoleRepo.create).not.toHaveBeenCalled();
+      expect(mockRoleRepo.save).not.toHaveBeenCalled();
+    });
+
+    it("should handle roles with null office", async () => {
+      const mockOfficer = { id: 1, username: "user", roles: [] };
+
+      mockOfficerRepo.find.mockResolvedValue([mockOfficer] as any);
+
+      const mockDeleteQueryBuilder = {
+        delete: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({})
+      };
+      mockRoleRepo.createQueryBuilder.mockReturnValue(mockDeleteQueryBuilder as any);
+      mockRoleRepo.create.mockReturnValue({} as any);
+      mockRoleRepo.save.mockResolvedValue([] as any);
+
+      await officerRepository.updateOfficerRoles(1, [
+        { role: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, office: null }
+      ]);
+
+      expect(mockRoleRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          officerRole: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER,
+          officeType: null
+        })
+      );
+    });
+
+    it("should throw error if officer does not exist", async () => {
+      mockOfficerRepo.find.mockResolvedValue([]);
+
+      await expect(officerRepository.updateOfficerRoles(999, [
+        { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null }
+      ])).rejects.toThrow("Officer with id '999' not found");
     });
   });
 
   describe("deleteOfficer", () => {
-    it("dovrebbe eliminare un officer esistente", async () => {
-      const mockOfficer: OfficerDAO = {
+    it("should delete an existing officer", async () => {
+      const mockOfficer = {
         id: 1,
-        username: "officerToDelete",
-        name: "Delete",
-        surname: "Me",
-        email: "delete@example.com",
-        password: "hash",
-        role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-        office: OfficeType.INFRASTRUCTURE
+        username: "todelete",
+        email: "delete@test.com",
+        roles: []
       };
 
-      mockRepo.find.mockResolvedValue([mockOfficer]);
-      mockRepo.remove.mockResolvedValue(mockOfficer);
+      mockOfficerRepo.find.mockResolvedValue([mockOfficer] as any);
+      mockOfficerRepo.remove.mockResolvedValue(mockOfficer as any);
 
-      await officerRepository.deleteOfficer("delete@example.com");
+      await officerRepository.deleteOfficer(1);
 
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { email: "delete@example.com" } });
-      expect(mockRepo.remove).toHaveBeenCalledWith(mockOfficer);
+      expect(mockOfficerRepo.find).toHaveBeenCalledWith({
+        where: { id: 1 },
+        relations: ["roles"]
+      });
+      expect(mockOfficerRepo.remove).toHaveBeenCalledWith(mockOfficer);
     });
 
-    it("dovrebbe lanciare NotFoundError se l'officer non esiste", async () => {
-      mockRepo.find.mockResolvedValue([]);
+    it("should throw error if officer to delete does not exist", async () => {
+      mockOfficerRepo.find.mockResolvedValue([]);
 
-      await expect(officerRepository.deleteOfficer("nonexistent@example.com"))
+      await expect(officerRepository.deleteOfficer(999))
         .rejects
-        .toThrow(NotFoundError);
+        .toThrow("Officer with id '999' not found");
+
+      expect(mockOfficerRepo.remove).not.toHaveBeenCalled();
+    });
+
+    it("should delete officer with multiple roles", async () => {
+      const mockOfficer = {
+        id: 2,
+        username: "multirole",
+        roles: [
+          { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR },
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF }
+        ]
+      };
+
+      mockOfficerRepo.find.mockResolvedValue([mockOfficer] as any);
+      mockOfficerRepo.remove.mockResolvedValue(mockOfficer as any);
+
+      await officerRepository.deleteOfficer(2);
+
+      expect(mockOfficerRepo.remove).toHaveBeenCalledWith(mockOfficer);
     });
   });
 });
