@@ -7,13 +7,14 @@ import { OfficerRole } from "../../src/models/enums/OfficerRole";
 import { OfficeType } from "../../src/models/enums/OfficeType";
 import { RoleDAO } from "../../src/models/dao/RoleDAO";
 import { MaintainerDAO } from "../../src/models/dao/MaintainerDAO";
-
+import { NotificationDAO } from "../../src/models/dao/NotificationDAO";
+import { InternalMessageDAO } from "../../src/models/dao/InternalMessageDAO";
 // Database in memoria SQLite per i test
 export const TestDataSource = new DataSource({
   type: "sqlite",
   database: ":memory:",
   dropSchema: true,
-  entities: [UserDAO, OfficerDAO, ReportDAO, RoleDAO, MaintainerDAO],
+  entities: [UserDAO, OfficerDAO, ReportDAO, RoleDAO, MaintainerDAO, NotificationDAO, InternalMessageDAO],
   synchronize: true,
   logging: false // Abilito per vedere cosa succede
 });
@@ -51,11 +52,23 @@ export async function closeTestDatabase() {
 
 export async function clearDatabase() {
   if (TestDataSource.isInitialized) {
-    const entities = TestDataSource.entityMetadatas;
+    const queryRunner = TestDataSource.createQueryRunner();
     
-    for (const entity of entities) {
-      const repository = TestDataSource.getRepository(entity.name);
-      await repository.clear();
+    try {
+      // Disable foreign key constraints
+      await queryRunner.query('PRAGMA foreign_keys = OFF;');
+      
+      const entities = TestDataSource.entityMetadatas;
+      
+      for (const entity of entities) {
+        const repository = TestDataSource.getRepository(entity.name);
+        await repository.clear();
+      }
+      
+      // Re-enable foreign key constraints
+      await queryRunner.query('PRAGMA foreign_keys = ON;');
+    } finally {
+      await queryRunner.release();
     }
   }
 }
