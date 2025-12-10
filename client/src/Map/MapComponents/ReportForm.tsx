@@ -17,7 +17,6 @@ const ReportForm: React.FC = () => {
     latitude: null,
     longitude: null,
   });
-
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
   const [touched, setTouched] = useState({
     title: false,
@@ -30,9 +29,9 @@ const ReportForm: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
   const navigate = useNavigate();
   const location = useLocation();
+
   useEffect(() => {
     // 1. Prefer location.state.position if present
     if (location && (location as any).state && (location as any).state.position) {
@@ -90,8 +89,8 @@ const ReportForm: React.FC = () => {
   const validateForm = (): boolean => {
     return (
       report.title.trim() !== '' &&
-  report.description.trim() !== '' &&
-  report.description.trim().length >= 30 &&
+      report.description.trim() !== '' &&
+      report.description.trim().length >= 30 &&
       report.category !== '' &&
       report.photos.length >= 1 &&
       report.photos.length <= 3 &&
@@ -102,7 +101,6 @@ const ReportForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) {
       setTouched({
         title: true,
@@ -114,14 +112,11 @@ const ReportForm: React.FC = () => {
       alert('Please fill in all required fields and select a location');
       return;
     }
-
     setIsLoading(true);
-
     try {
       await createReport(report);
       alert('Report submitted successfully!');
       navigate('/map');
-
       setReport({
         title: '',
         description: '',
@@ -150,7 +145,6 @@ const ReportForm: React.FC = () => {
   const isFieldValid = (fieldName: string): boolean => {
     // if not touched yet, consider valid to avoid showing errors immediately
     if (!((touched as any)[fieldName])) return true;
-
     switch (fieldName) {
       case 'title':
         return report.title.trim() !== '';
@@ -166,6 +160,13 @@ const ReportForm: React.FC = () => {
         return true;
     }
   };
+
+  // Extracted nested ternary operation into an independent statement
+  const buttonText = isLoading 
+    ? '⏳ Submitting...' 
+    : validateForm() 
+      ? '✅ Submit New Report' 
+      : '⚠️ Complete All Fields';
 
   return (
     <div className="report-form-container">
@@ -194,7 +195,6 @@ const ReportForm: React.FC = () => {
             />
           </div>
         </div>
-
         <div>
           <div className="form-section">
             <h3 className="form-title">📝 Submit New Report</h3>
@@ -217,7 +217,6 @@ const ReportForm: React.FC = () => {
                   <p className="form-error">Please provide a title for your report</p>
                 )}
               </div>
-
               <div className="form-group">
                 <label htmlFor="category" className="form-label">
                   Issue Category *
@@ -240,7 +239,6 @@ const ReportForm: React.FC = () => {
                   <p className="form-error">Please select a category</p>
                 )}
               </div>
-
               <div className="form-group">
                 <label htmlFor="description" className="form-label">
                   Detailed Description *
@@ -258,7 +256,6 @@ const ReportForm: React.FC = () => {
                   <p className="form-error">Please provide a detailed description (minimum 30 characters)</p>
                 )}
               </div>
-
               <div className="form-group">
                 <PhotoUpload
                   photos={report.photos}
@@ -270,7 +267,6 @@ const ReportForm: React.FC = () => {
                   <p className="form-error">Please upload between 1 and 3 photos (JPG/PNG/WebP).</p>
                 )}
               </div>
-
               <div className="location-status">
                 <h4 className="location-status-title">Location *</h4>
                 {report.latitude && report.longitude ? (
@@ -287,19 +283,17 @@ const ReportForm: React.FC = () => {
                   </div>
                 )}
               </div>
-
               <button
                 type="submit"
                 disabled={!validateForm() || isLoading}
                 className="submit-btn"
               >
-                {isLoading ? '⏳ Submitting...' : validateForm() ? '✅ Submit New Report' : '⚠️ Complete All Fields'}
+                {buttonText}
               </button>
             </form>
           </div>
         </div>
       </div>
-
       <Snackbar 
         open={showSuccess} 
         autoHideDuration={6000} 
@@ -314,7 +308,6 @@ const ReportForm: React.FC = () => {
           🎉 Report submitted successfully! Redirecting to map...
         </Alert>
       </Snackbar>
-
       <Snackbar 
         open={showError} 
         autoHideDuration={6000} 

@@ -8,7 +8,7 @@ import type { Report } from '../types/report';
 // @ts-ignore
 import turinData from '../../data/turin_boundaries.json';
 
-const TURIN_COORDINATES: [number, number] = [45.0703, 7.6600];
+const TURIN_COORDINATES: [number, number] = [45.0703, 7.66];
 
 // Get Turin bounds from the actual boundary data
 const getTurinBounds = () => {
@@ -33,11 +33,11 @@ const getTurinMask = () => {
   
   // Larger bounding box covering area around Turin [Lon, Lat]
   const outerCoords = [
-    [6.50, 46.60], // Top Left
-    [9.30, 46.60], // Top Right
-    [9.30, 44.00], // Bottom Right
-    [6.50, 44.00], // Bottom Left
-    [6.50, 46.60]  // Close the polygon
+    [6.5, 46.6], // Top Left
+    [9.3, 46.6], // Top Right
+    [9.3, 44], // Bottom Right
+    [6.5, 44], // Bottom Left
+    [6.5, 46]  // Close the polygon
   ];
 
   let cityCoords: any[] = [];
@@ -70,7 +70,14 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const createCustomIcon = (category: string | undefined, status?: 'pending' | 'in-progress' | 'resolved') => {
-  const emoji = status === 'in-progress' ? '📌' : status === 'resolved' ? '✅' : '📍';
+  let emoji: string;
+if (status === 'in-progress') {
+  emoji = '📌';
+} else if (status === 'resolved') {
+  emoji = '✅';
+} else {
+  emoji = '📍';
+}
   const color = (category && CATEGORY_COLORS[category]) || '#6b7280';
   const html = `<div class="report-marker" style="background:${color}">${emoji}</div>`;
   return L.divIcon({
@@ -316,7 +323,7 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
                         <img
                           key={index}
                           src={URL.createObjectURL(photo)}
-                          alt={`${report.title} - Photo ${index + 1}`}
+                          alt=""   // Decorative thumbnails
                           className="photo-thumbnail"
                         />
                       ))}
@@ -327,7 +334,8 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
                       </div>
                     )}
                   </div>
-                )}
+                  )}
+
 
                 <div className="report-popup-footer">
                   <div className="popup-location">
