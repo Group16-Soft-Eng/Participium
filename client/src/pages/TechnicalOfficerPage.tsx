@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup, Dialog, DialogTitle, DialogContent, FormControl, InputLabel, Select, MenuItem, DialogActions } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, ButtonGroup, Dialog, DialogTitle, DialogContent, FormControl, InputLabel, Select, MenuItem, DialogActions, IconButton, Badge } from '@mui/material';
+import ChatIcon from '@mui/icons-material/Chat';
 import ReportDetailDialog from '../components/ReportDetailDialog';
 import { assignReportToMaintainer, getMaintainersByCategory, getMyAssignedReports, updateReportStatus } from '../services/reportService';
 import type { Maintainer, OfficerReport } from '../services/reportService';
@@ -24,14 +26,12 @@ const TechnicalOfficerPage: React.FC = () => {
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selected, setSelected] = useState<OfficerReport | null>(null);
-  const [snackOpen, setSnackOpen] = useState(false);
-  const [snackMessage, setSnackMessage] = useState('');
-  const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedReportForAssignment, setSelectedReportForAssignment] = useState<OfficerReport | null>(null);
   const [selectedMaintainerId, setSelectedMaintainerId] = useState<number | null>(null);
   const [maintainers, setMaintainers] = useState<Maintainer[]>([]);
   const [loadingMaintainers, setLoadingMaintainers] = useState(false);
+  const navigate = useNavigate();
   // Filter state
   const [statusFilter, setStatusFilter] = useState<ReportStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<ReportCategory | 'all' | null>('all');
@@ -53,14 +53,7 @@ const TechnicalOfficerPage: React.FC = () => {
   const handleStatusChange = async (reportId: number, newStatus: 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED') => {
     const success = await updateReportStatus(reportId, newStatus);
     if (success) {
-      setSnackMessage(`Report status updated to ${newStatus.replace('_', ' ')}`);
-      setSnackSeverity('success');
-      setSnackOpen(true);
       fetchAssigned(); // Refresh the list
-    } else {
-      setSnackMessage('Failed to update report status');
-      setSnackSeverity('error');
-      setSnackOpen(true);
     }
   };
 
@@ -90,16 +83,14 @@ const TechnicalOfficerPage: React.FC = () => {
 
     const success = await assignReportToMaintainer(selectedReportForAssignment.id, selectedMaintainerId);
     if (success) {
-      setSnackMessage('Report successfully assigned to external maintainer');
-      setSnackSeverity('success');
-      setSnackOpen(true);
-      fetchAssigned(); // Refresh the list
+      handleCloseAssignDialog();
+      // Small delay to ensure DB is updated
+      setTimeout(() => {
+        fetchAssigned(); // Refresh the list
+      }, 300);
     } else {
-      setSnackMessage('Failed to assign report to maintainer');
-      setSnackSeverity('error');
-      setSnackOpen(true);
+      alert('Failed to assign report to maintainer');
     }
-    handleCloseAssignDialog();
   };
 
   // Extract unique categories from officer's assigned reports (dynamic filtering)
@@ -113,12 +104,27 @@ const TechnicalOfficerPage: React.FC = () => {
     return Array.from(cats);
   }, [reports]);
 
+  // Map status for display: if assigned but no maintainer -> show as "Awaiting maintainer"
+  const withDisplayStatus = useMemo(() => {
+    return reports.map(r => ({
+      ...r,
+      displayState: r.state === 'ASSIGNED' && !r.assignedMaintainerId ? 'AWAITING_MAINTAINER' : r.state
+    }));
+  }, [reports]);
+
   // Filtered reports based on status and category
   const filteredReports = useMemo(() => {
-    return reports.filter(report => {
+    return withDisplayStatus.filter(report => {
       // Status filter
-      if (statusFilter !== 'all' && report.state !== statusFilter) {
-        return false;
+      if (statusFilter !== 'all') {
+        if (statusFilter === 'AWAITING_MAINTAINER') {
+          if (!(report.state === 'ASSIGNED' && !report.assignedMaintainerId)) return false;
+        } else if (statusFilter === 'ASSIGNED') {
+          // Show in ASSIGNED tab only if already assigned to an external maintainer
+          if (report.state !== 'ASSIGNED' || !report.assignedMaintainerId) return false;
+        } else if (report.state !== statusFilter) {
+          return false;
+        }
       }
       // Category filter
       if (categoryFilter && categoryFilter !== 'all' && report.category !== categoryFilter) {
@@ -126,7 +132,7 @@ const TechnicalOfficerPage: React.FC = () => {
       }
       return true;
     });
-  }, [reports, statusFilter, categoryFilter]);
+  }, [withDisplayStatus, statusFilter, categoryFilter]);
 
   // group filtered reports by category for a compact overview
   const grouped = filteredReports.reduce((acc: Record<string, OfficerReport[]>, r) => {
@@ -137,6 +143,27 @@ const TechnicalOfficerPage: React.FC = () => {
   }, {} as Record<string, OfficerReport[]>);
   const categories = Object.keys(grouped);
   const singleCategory = categories.length === 1 ? categories[0] : null;
+
+  const renderStatusChip = (state?: string, hasMaintainer?: boolean) => {
+    const effective = state === 'ASSIGNED' && !hasMaintainer ? 'AWAITING_MAINTAINER' : state;
+    const label = effective === 'AWAITING_MAINTAINER' ? 'Awaiting maintainer' : (effective || 'ASSIGNED');
+    const color = effective === 'AWAITING_MAINTAINER'
+      ? 'warning'
+      : effective === 'RESOLVED'
+        ? 'success'
+        : effective === 'IN_PROGRESS'
+          ? 'primary'
+          : effective === 'SUSPENDED'
+            ? 'warning'
+            : 'default';
+    return (
+      <Chip
+        label={label}
+        size="small"
+        color={color as any}
+      />
+    );
+  };
 
   return (
     <Box>
@@ -196,21 +223,33 @@ const TechnicalOfficerPage: React.FC = () => {
                           <TableCell sx={{ width: 60 }}>{r.id}</TableCell>
                           <TableCell>{r.title}</TableCell>
                           <TableCell>
-                            <Chip
-                              label={r.state || 'ASSIGNED'}
-                              size="small"
-                              color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
-                            />
+                            {renderStatusChip(r.state, !!r.assignedMaintainerId)}
                           </TableCell>
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                           <TableCell align="right">
+
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                            <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
-                            <ButtonGroup size="small" variant="contained">
-                              <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
-                              <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
-                              <Button color="success" onClick={() => handleStatusChange(r.id, 'RESOLVED')}>Resolve</Button>
-                            </ButtonGroup>
+
+                            {r.assignedMaintainerId ? (
+                              <>
+                                <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                                  <Badge badgeContent={0} color="error">
+                                    <ChatIcon />
+                                  </Badge>
+                                </IconButton>
+                                <Typography variant="body2" color="text.secondary">Report assigned to external maintainer {r.assignedMaintainerId}</Typography>
+                              </>
+                            ) : (
+                              <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
+                            )}
+
+                            {!r.assignedMaintainerId && (
+                              <ButtonGroup size="small" variant="contained">
+                                <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
+                                <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
+                                <Button color="success" onClick={() => handleStatusChange(r.id, 'RESOLVED')}>Resolve</Button>
+                              </ButtonGroup>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -244,16 +283,21 @@ const TechnicalOfficerPage: React.FC = () => {
                             <TableCell sx={{ width: 60 }}>{r.id}</TableCell>
                             <TableCell>{r.title}</TableCell>
                             <TableCell>
-                              <Chip
-                                label={r.state || 'ASSIGNED'}
-                                size="small"
-                                color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
-                              />
+                              {renderStatusChip(r.state, !!r.assignedMaintainerId)}
                             </TableCell>
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
                               <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                              <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
+                              {r.assignedMaintainerId && (
+                                <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                                  <Badge badgeContent={0} color="error">
+                                    <ChatIcon />
+                                  </Badge>
+                                </IconButton>
+                              )}
+                              {r.state === 'ASSIGNED' && !r.assignedMaintainerId && (
+                                <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
+                              )}
                               <ButtonGroup size="small" variant="contained">
                                 <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                                 <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
@@ -275,11 +319,6 @@ const TechnicalOfficerPage: React.FC = () => {
           <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>No reports match the selected filters.</Typography>
         )}
       </Paper>
-      <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
-          {snackMessage}
-        </Alert>
-      </Snackbar>
 
       <ReportDetailDialog open={selected !== null} report={selected} onClose={() => setSelected(null)} />
 

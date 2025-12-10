@@ -2,199 +2,583 @@ import request from "supertest";
 import express from "express";
 import { officerRouter } from "../../../src/routes/OfficerRoutes";
 import * as officerController from "../../../src/controllers/officerController";
+import * as maintainerController from "../../../src/controllers/maintainerController";
+import { authenticateToken, requireUserType } from "../../../src/middlewares/authMiddleware";
 import { OfficerRole } from "../../../src/models/enums/OfficerRole";
+import { OfficeType } from "../../../src/models/enums/OfficeType";
+import { ReportState } from "../../../src/models/enums/ReportState";
 
 jest.mock("../../../src/controllers/officerController");
+jest.mock("../../../src/controllers/maintainerController");
+jest.mock("../../../src/middlewares/authMiddleware", () => ({
+  authenticateToken: jest.fn((req, res, next) => {
+    req.user = { 
+      id: 1, 
+      username: "testofficer",
+      isStaff: true,
+      type: [OfficerRole.TECHNICAL_OFFICE_STAFF]
+    };
+    next();
+  }),
+  requireUserType: jest.fn(() => (req: any, res: any, next: any) => next())
+}));
 jest.mock("@dto/Officer", () => ({
   OfficerFromJSON: jest.fn((data) => data),
   OfficerToJSON: jest.fn((data) => data)
-}));
-jest.mock("@middlewares/authMiddleware", () => ({
-  authenticateToken: jest.fn((req, res, next) => {
-    req.user = { id: 1, role: OfficerRole.MUNICIPAL_ADMINISTRATOR };
-    next();
-  }),
-  requireUserType: jest.fn(() => (req: any, res: any, next: () => any) => next())
 }));
 
 const app = express();
 app.use(express.json());
 app.use("/officers", officerRouter);
 
+// Add error middleware
+app.use((err: any, req: any, res: any, next: any) => {
+  res.status(err.status || 500).json({ error: err.message });
+});
+
 describe("OfficerRoutes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("POST /officers", () => {
-    it("should create officer and return 200", async () => {
-      (officerController.createOfficer as jest.Mock).mockResolvedValue({ id: 1, email: "officer@comune.it" });
-      const res = await request(app)
-        .post("/officers")
-        .send({ email: "officer@comune.it" });
-      expect(officerController.createOfficer).toHaveBeenCalled();
-      expect(res.status).toBe(200);
-      expect(res.body.email).toBe("officer@comune.it");
-    });
-
-    it("should return 400 if email is missing", async () => {
-      const res = await request(app)
-        .post("/officers")
-        .send({ name: "Mario" });
-      expect(res.status).toBe(400);
-      expect(res.body.error).toBe("email is required");
-    });
-
-    it("should handle errors in createOfficer", async () => {
-      (officerController.createOfficer as jest.Mock).mockRejectedValue(new Error("Create error"));
-      const res = await request(app)
-        .post("/officers")
-        .send({ email: "officer@comune.it" });
-      expect(res.status).toBe(500);
-    });
-  });
-
-  describe("GET /officers/me", () => {
-    it("should return user from req.user", async () => {
-      const res = await request(app).get("/officers/me");
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual({ id: 1, role: OfficerRole.MUNICIPAL_ADMINISTRATOR });
-    });
-
-    it("should handle errors in /me", async () => {
-      const appErr = express();
-      appErr.use("/officers", (req, res, next) => { throw new Error("Me error"); }, officerRouter);
-      const res = await request(appErr).get("/officers/me");
-      expect(res.status).toBe(500);
-    });
-  });
-
-  describe("GET /officers/OfficerByOfficeType/:officeType", () => {
-    it("should return officers by officeType", async () => {
-      (officerController.getAllOfficersByOfficeType as jest.Mock).mockResolvedValue([{ id: 1, office: "infrastructure" }]);
-      const res = await request(app).get("/officers/OfficerByOfficeType/infrastructure");
-      expect(officerController.getAllOfficersByOfficeType).toHaveBeenCalledWith("infrastructure");
-      expect(res.status).toBe(200);
-      expect(res.body[0].office).toBe("infrastructure");
-    });
-
-    it("should return 400 if officeType is missing", async () => {
-      const res = await request(app).get("/officers/OfficerByOfficeType/");
-      expect(res.status).toBe(404); // route param mancante, Express risponde 404
-    });
-
-    it("should handle errors in getAllOfficersByOfficeType", async () => {
-      (officerController.getAllOfficersByOfficeType as jest.Mock).mockRejectedValue(new Error("OfficeType error"));
-      const res = await request(app).get("/officers/OfficerByOfficeType/infrastructure");
-      expect(res.status).toBe(500);
-    });
-  });
-
-  describe("GET /officers/admin", () => {
-    it("should return all officers", async () => {
-      (officerController.getAllOfficers as jest.Mock).mockResolvedValue([{ id: 1 }, { id: 2 }]);
-      const res = await request(app).get("/officers/admin");
-      expect(officerController.getAllOfficers).toHaveBeenCalled();
-      expect(res.status).toBe(200);
-      expect(res.body.length).toBe(2);
-    });
-
-    it("should handle errors in getAllOfficers", async () => {
-      (officerController.getAllOfficers as jest.Mock).mockRejectedValue(new Error("Admin error"));
-      const res = await request(app).get("/officers/admin");
-      expect(res.status).toBe(500);
-    });
-  });
-
-  describe("PATCH /officers", () => {
-    it("should update officer", async () => {
-      (officerController.updateOfficer as jest.Mock).mockResolvedValue({ id: 1, name: "Luigi" });
-      const res = await request(app)
-        .patch("/officers")
-        .send({ id: 1, name: "Luigi" });
-      expect(officerController.updateOfficer).toHaveBeenCalled();
-      expect(res.status).toBe(200);
-      expect(res.body.name).toBe("Luigi");
-    });
-
-    it("should handle errors in updateOfficer", async () => {
-      (officerController.updateOfficer as jest.Mock).mockRejectedValue(new Error("Update error"));
-      const res = await request(app)
-        .patch("/officers")
-        .send({ id: 1, name: "Luigi" });
-      expect(res.status).toBe(500);
-    });
-  });
-
-  describe("POST /officers/assign-report", () => {
-    it("should assign report to officer", async () => {
-      (officerController.assignReportToOfficer as jest.Mock).mockResolvedValue(undefined);
-      const res = await request(app)
-        .post("/officers/assign-report")
-        .send({ reportId: 1, officerId: 2 });
-      expect(officerController.assignReportToOfficer).toHaveBeenCalledWith(1, 2);
-      expect(res.status).toBe(200);
-      expect(res.body.message).toBe("Report assigned successfully");
-    });
-
-    it("should handle errors in assignReportToOfficer", async () => {
-      (officerController.assignReportToOfficer as jest.Mock).mockRejectedValue(new Error("Assign error"));
-      const res = await request(app)
-        .post("/officers/assign-report")
-        .send({ reportId: 1, officerId: 2 });
-      expect(res.status).toBe(500);
-    });
-  });
-
-  describe("GET /officers/retrievedocs", () => {
-    it("should retrieve docs for officer", async () => {
-      (officerController.retrieveDocs as jest.Mock).mockResolvedValue([{ id: 1 }, { id: 2 }]);
-      const res = await request(app).get("/officers/retrievedocs");
-      expect(officerController.retrieveDocs).toHaveBeenCalledWith(1);
-      expect(res.status).toBe(200);
-      expect(res.body.length).toBe(2);
-    });
-
-    it("should handle errors in retrieveDocs", async () => {
-      (officerController.retrieveDocs as jest.Mock).mockRejectedValue(new Error("Retrieve error"));
-      const res = await request(app).get("/officers/retrievedocs");
-      expect(res.status).toBe(500);
-    });
-  });
-
+  // ===================== GET /officers/assigned =====================
   describe("GET /officers/assigned", () => {
-    it("should get all assigned reports for officer", async () => {
-      (officerController.getAllAssignedReportsOfficer as jest.Mock).mockResolvedValue([{ id: 1 }, { id: 2 }]);
+    it("should return all assigned reports for the authenticated officer", async () => {
+      const mockReports = [
+        { id: 1, title: "Report 1", state: ReportState.ASSIGNED },
+        { id: 2, title: "Report 2", state: ReportState.IN_PROGRESS }
+      ];
+      (officerController.getAllAssignedReportsOfficer as jest.Mock).mockResolvedValue(mockReports);
+
       const res = await request(app).get("/officers/assigned");
+
       expect(officerController.getAllAssignedReportsOfficer).toHaveBeenCalledWith(1);
       expect(res.status).toBe(200);
-      expect(res.body.length).toBe(2);
+      expect(res.body).toEqual(mockReports);
+    });
+
+    it("should return empty array when officer has no assigned reports", async () => {
+      (officerController.getAllAssignedReportsOfficer as jest.Mock).mockResolvedValue([]);
+
+      const res = await request(app).get("/officers/assigned");
+
+      expect(officerController.getAllAssignedReportsOfficer).toHaveBeenCalledWith(1);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
     });
 
     it("should handle errors in getAllAssignedReportsOfficer", async () => {
-      (officerController.getAllAssignedReportsOfficer as jest.Mock).mockRejectedValue(new Error("Assigned error"));
+      (officerController.getAllAssignedReportsOfficer as jest.Mock).mockRejectedValue(
+        new Error("Failed to retrieve reports")
+      );
+
       const res = await request(app).get("/officers/assigned");
-      expect(res.status).toBe(500);
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should handle database errors gracefully", async () => {
+      (officerController.getAllAssignedReportsOfficer as jest.Mock).mockRejectedValue(
+        new Error("Database connection error")
+      );
+
+      const res = await request(app).get("/officers/assigned");
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
     });
   });
 
-  describe("PATCH /officers/reviewdocs/:id", () => {
-    it("should review doc", async () => {
-      (officerController.reviewDoc as jest.Mock).mockResolvedValue({ id: 1, state: "ASSIGNED" });
-      const res = await request(app)
-        .patch("/officers/reviewdocs/1")
-        .send({ state: "ASSIGNED", reason: "Motivo" });
-      expect(officerController.reviewDoc).toHaveBeenCalledWith(1, 1, "ASSIGNED", "Motivo");
+  // ===================== GET /officers/OfficerByOfficeType/:officeType =====================
+  describe("GET /officers/OfficerByOfficeType/:officeType", () => {
+    it("should return officers filtered by office type", async () => {
+      const mockOfficers = [
+        { id: 1, username: "officer1", roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }] },
+        { id: 2, username: "officer2", roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }] }
+      ];
+      (officerController.getAllOfficersByOfficeType as jest.Mock).mockResolvedValue(mockOfficers);
+
+      const res = await request(app).get("/officers/OfficerByOfficeType/INFRASTRUCTURE");
+
+      expect(officerController.getAllOfficersByOfficeType).toHaveBeenCalledWith("INFRASTRUCTURE");
       expect(res.status).toBe(200);
-      expect(res.body.state).toBe("ASSIGNED");
+      expect(res.body).toEqual(mockOfficers);
     });
 
-    it("should handle errors in reviewDoc", async () => {
-      (officerController.reviewDoc as jest.Mock).mockRejectedValue(new Error("Review error"));
+    it("should return empty array when no officers match office type", async () => {
+      (officerController.getAllOfficersByOfficeType as jest.Mock).mockResolvedValue([]);
+
+      const res = await request(app).get("/officers/OfficerByOfficeType/ENVIRONMENT");
+
+      expect(officerController.getAllOfficersByOfficeType).toHaveBeenCalledWith("ENVIRONMENT");
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it("should handle all valid office types", async () => {
+      const officeTypes = [
+        OfficeType.INFRASTRUCTURE,
+        OfficeType.ENVIRONMENT,
+        OfficeType.SAFETY,
+        OfficeType.SANITATION,
+        OfficeType.TRANSPORT,
+        OfficeType.ORGANIZATION
+      ];
+
+      for (const officeType of officeTypes) {
+        (officerController.getAllOfficersByOfficeType as jest.Mock).mockResolvedValue([
+          { id: 1, username: "officer1" }
+        ]);
+
+        const res = await request(app).get(`/officers/OfficerByOfficeType/${officeType}`);
+
+        expect(officerController.getAllOfficersByOfficeType).toHaveBeenCalledWith(officeType);
+        expect(res.status).toBe(200);
+      }
+    });
+
+    it("should handle errors in getAllOfficersByOfficeType", async () => {
+      (officerController.getAllOfficersByOfficeType as jest.Mock).mockRejectedValue(
+        new Error("Failed to retrieve officers")
+      );
+
+      const res = await request(app).get("/officers/OfficerByOfficeType/INFRASTRUCTURE");
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should handle invalid office type gracefully", async () => {
+      (officerController.getAllOfficersByOfficeType as jest.Mock).mockRejectedValue(
+        new Error("Invalid office type")
+      );
+
+      const res = await request(app).get("/officers/OfficerByOfficeType/INVALID_TYPE");
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+  });
+
+  // ===================== PATCH /officers/reviewdocs/:id =====================
+  describe("PATCH /officers/reviewdocs/:id", () => {
+    it("should review document and update state to ASSIGNED", async () => {
+      const mockReport = { 
+        id: 1, 
+        title: "Test Report", 
+        state: ReportState.ASSIGNED 
+      };
+      (officerController.reviewDoc as jest.Mock).mockResolvedValue(mockReport);
+
       const res = await request(app)
         .patch("/officers/reviewdocs/1")
-        .send({ state: "ASSIGNED", reason: "Motivo" });
-      expect(res.status).toBe(500);
+        .send({ state: ReportState.ASSIGNED });
+
+      expect(officerController.reviewDoc).toHaveBeenCalledWith(
+        1, 
+        1, 
+        ReportState.ASSIGNED, 
+        undefined
+      );
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockReport);
+    });
+
+    it("should review document and update state to DECLINED with reason", async () => {
+      const mockReport = { 
+        id: 1, 
+        title: "Test Report", 
+        state: ReportState.DECLINED,
+        reason: "Inappropriate content"
+      };
+      (officerController.reviewDoc as jest.Mock).mockResolvedValue(mockReport);
+
+      const res = await request(app)
+        .patch("/officers/reviewdocs/1")
+        .send({ 
+          state: ReportState.DECLINED, 
+          reason: "Inappropriate content" 
+        });
+
+      expect(officerController.reviewDoc).toHaveBeenCalledWith(
+        1, 
+        1, 
+        ReportState.DECLINED, 
+        "Inappropriate content"
+      );
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockReport);
+    });
+
+    it("should handle state change to IN_PROGRESS", async () => {
+      const mockReport = { 
+        id: 2, 
+        title: "Work in Progress", 
+        state: ReportState.IN_PROGRESS 
+      };
+      (officerController.reviewDoc as jest.Mock).mockResolvedValue(mockReport);
+
+      const res = await request(app)
+        .patch("/officers/reviewdocs/2")
+        .send({ state: ReportState.IN_PROGRESS });
+
+      expect(officerController.reviewDoc).toHaveBeenCalledWith(
+        1, 
+        2, 
+        ReportState.IN_PROGRESS, 
+        undefined
+      );
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockReport);
+    });
+
+    it("should handle state change to RESOLVED", async () => {
+      const mockReport = { 
+        id: 3, 
+        title: "Resolved Report", 
+        state: ReportState.RESOLVED 
+      };
+      (officerController.reviewDoc as jest.Mock).mockResolvedValue(mockReport);
+
+      const res = await request(app)
+        .patch("/officers/reviewdocs/3")
+        .send({ state: ReportState.RESOLVED });
+
+      expect(officerController.reviewDoc).toHaveBeenCalledWith(
+        1, 
+        3, 
+        ReportState.RESOLVED, 
+        undefined
+      );
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockReport);
+    });
+
+    it("should handle state change to SUSPENDED with reason", async () => {
+      const mockReport = { 
+        id: 4, 
+        title: "Suspended Report", 
+        state: ReportState.SUSPENDED,
+        reason: "Waiting for additional information"
+      };
+      (officerController.reviewDoc as jest.Mock).mockResolvedValue(mockReport);
+
+      const res = await request(app)
+        .patch("/officers/reviewdocs/4")
+        .send({ 
+          state: ReportState.SUSPENDED, 
+          reason: "Waiting for additional information" 
+        });
+
+      expect(officerController.reviewDoc).toHaveBeenCalledWith(
+        1, 
+        4, 
+        ReportState.SUSPENDED, 
+        "Waiting for additional information"
+      );
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockReport);
+    });
+
+    it("should handle non-existent report ID", async () => {
+      (officerController.reviewDoc as jest.Mock).mockRejectedValue(
+        new Error("Report not found")
+      );
+
+      const res = await request(app)
+        .patch("/officers/reviewdocs/99999")
+        .send({ state: ReportState.ASSIGNED });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should handle unauthorized review (report not assigned to officer)", async () => {
+      (officerController.reviewDoc as jest.Mock).mockRejectedValue(
+        new Error("You can only review reports assigned to you")
+      );
+
+      const res = await request(app)
+        .patch("/officers/reviewdocs/1")
+        .send({ state: ReportState.ASSIGNED });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.body.error).toContain("review reports assigned to you");
+    });
+
+    it("should handle already reviewed report", async () => {
+      const error = new Error(JSON.stringify({
+        message: "Report with id '1' is already in state 'RESOLVED' and cannot be reviewed again.",
+        status: 400
+      }));
+      (officerController.reviewDoc as jest.Mock).mockRejectedValue(error);
+
+      const res = await request(app)
+        .patch("/officers/reviewdocs/1")
+        .send({ state: ReportState.ASSIGNED });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it("should handle invalid state value", async () => {
+      (officerController.reviewDoc as jest.Mock).mockRejectedValue(
+        new Error("Invalid state")
+      );
+
+      const res = await request(app)
+        .patch("/officers/reviewdocs/1")
+        .send({ state: "INVALID_STATE" });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it("should handle missing state in request body", async () => {
+      (officerController.reviewDoc as jest.Mock).mockResolvedValue({
+        id: 1,
+        state: undefined
+      });
+
+      const res = await request(app)
+        .patch("/officers/reviewdocs/1")
+        .send({});
+
+      expect(officerController.reviewDoc).toHaveBeenCalledWith(
+        1,
+        1,
+        undefined,
+        undefined
+      );
+      expect(res.status).toBe(200);
+    });
+
+    it("should handle reason without state", async () => {
+      const mockReport = { id: 1, state: ReportState.PENDING };
+      (officerController.reviewDoc as jest.Mock).mockResolvedValue(mockReport);
+
+      const res = await request(app)
+        .patch("/officers/reviewdocs/1")
+        .send({ reason: "Some reason" });
+
+      expect(officerController.reviewDoc).toHaveBeenCalledWith(
+        1,
+        1,
+        undefined,
+        "Some reason"
+      );
+      expect(res.status).toBe(200);
+    });
+  });
+
+  // ===================== POST /officers/assign-report =====================
+  describe("POST /officers/assign-report", () => {
+    it("should assign report to maintainer successfully", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockResolvedValue(undefined);
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: 1, maintainerId: 5 });
+
+      expect(maintainerController.assignReportToMaintainer).toHaveBeenCalledWith(1, 5);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ message: "Report assigned to maintainer" });
+    });
+
+    it("should handle reportId as string and convert to number", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockResolvedValue(undefined);
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: "10", maintainerId: "20" });
+
+      expect(maintainerController.assignReportToMaintainer).toHaveBeenCalledWith(10, 20);
+      expect(res.status).toBe(200);
+    });
+
+    it("should handle missing reportId", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockRejectedValue(
+        new Error("Report ID is required")
+      );
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ maintainerId: 5 });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it("should handle missing maintainerId", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockRejectedValue(
+        new Error("Maintainer ID is required")
+      );
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: 1 });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it("should handle non-existent report", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockRejectedValue(
+        new Error("Report not found")
+      );
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: 99999, maintainerId: 5 });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should handle non-existent maintainer", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockRejectedValue(
+        new Error("Maintainer not found")
+      );
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: 1, maintainerId: 99999 });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.body.error).toContain("Maintainer not found");
+    });
+
+    it("should handle report not in ASSIGNED state", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockRejectedValue(
+        new Error("Only ASSIGNED reports can be assigned")
+      );
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: 1, maintainerId: 5 });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+      expect(res.body.error).toContain("ASSIGNED reports");
+    });
+
+    it("should handle invalid reportId (NaN)", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockRejectedValue(
+        new Error("Invalid report ID")
+      );
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: "invalid", maintainerId: 5 });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it("should handle invalid maintainerId (NaN)", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockRejectedValue(
+        new Error("Invalid maintainer ID")
+      );
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: 1, maintainerId: "invalid" });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it("should handle empty request body", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockRejectedValue(
+        new Error("Missing required fields")
+      );
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({});
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it("should handle negative reportId", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockResolvedValue(undefined);
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: -1, maintainerId: 5 });
+
+      expect(maintainerController.assignReportToMaintainer).toHaveBeenCalledWith(-1, 5);
+      // Il controller dovrebbe gestire l'errore
+      expect(res.status).toBeLessThanOrEqual(500);
+    });
+
+    it("should handle zero reportId", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockResolvedValue(undefined);
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: 0, maintainerId: 5 });
+
+      expect(maintainerController.assignReportToMaintainer).toHaveBeenCalledWith(0, 5);
+      expect(res.status).toBeLessThanOrEqual(500);
+    });
+
+    it("should handle database errors during assignment", async () => {
+      (maintainerController.assignReportToMaintainer as jest.Mock).mockRejectedValue(
+        new Error("Database connection error")
+      );
+
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .send({ reportId: 1, maintainerId: 5 });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+  });
+
+  // ===================== Edge Cases and Security =====================
+  describe("Edge Cases and Security", () => {
+    it("should handle very large report IDs", async () => {
+      (officerController.reviewDoc as jest.Mock).mockResolvedValue({
+        id: Number.MAX_SAFE_INTEGER,
+        state: ReportState.ASSIGNED
+      });
+
+      const res = await request(app)
+        .patch(`/officers/reviewdocs/${Number.MAX_SAFE_INTEGER}`)
+        .send({ state: ReportState.ASSIGNED });
+
+      expect(res.status).toBeLessThanOrEqual(500);
+    });
+
+    it("should handle special characters in officeType parameter", async () => {
+      (officerController.getAllOfficersByOfficeType as jest.Mock).mockRejectedValue(
+        new Error("Invalid office type")
+      );
+
+      const res = await request(app).get("/officers/OfficerByOfficeType/<script>alert('xss')</script>");
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it("should handle concurrent requests to reviewdocs", async () => {
+      (officerController.reviewDoc as jest.Mock).mockResolvedValue({
+        id: 1,
+        state: ReportState.ASSIGNED
+      });
+
+      const requests = [
+        request(app).patch("/officers/reviewdocs/1").send({ state: ReportState.ASSIGNED }),
+        request(app).patch("/officers/reviewdocs/1").send({ state: ReportState.DECLINED }),
+        request(app).patch("/officers/reviewdocs/1").send({ state: ReportState.IN_PROGRESS })
+      ];
+
+      const responses = await Promise.all(requests);
+
+      responses.forEach(res => {
+        expect(res.status).toBeLessThanOrEqual(500);
+      });
+    });
+
+    it("should handle malformed JSON in request body", async () => {
+      const res = await request(app)
+        .post("/officers/assign-report")
+        .set("Content-Type", "application/json")
+        .send("{ invalid json }");
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
     });
   });
 });

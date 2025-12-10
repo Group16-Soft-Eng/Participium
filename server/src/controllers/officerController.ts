@@ -130,6 +130,10 @@ export async function removeRoleFromOfficer(
   const officerRepo = new OfficerRepository();
   const current = await officerRepo.getOfficerById(officerId);
 
+  const reportRepo = new ReportRepository();
+  if(role === OfficerRole.TECHNICAL_OFFICE_STAFF)
+    await reportRepo.resetPartialReportsAssignmentByOfficer(officerId, office);
+
   // Tipizza office come OfficeType | null per compatibilità
   const filtered: { role: OfficerRole; office: OfficeType | null }[] =
     (current.roles ?? [])
@@ -138,6 +142,8 @@ export async function removeRoleFromOfficer(
         office: (r.officeType as OfficeType) ?? null
       }))
       .filter(r => !(r.role === role && r.office === office));
+  
+
 
   await officerRepo.updateOfficerRoles(officerId, filtered);
 
@@ -145,13 +151,14 @@ export async function removeRoleFromOfficer(
   return mapOfficerDAOToDTO(refreshed);
 }
 
+
 export async function assignReportToOfficer(reportId: number, officerId: number): Promise<void> {
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
 
   const report = await reportRepo.getReportById(reportId);
-  if (report.state !== ReportState.ASSIGNED) {
-    throw new Error("Only ASSIGNED reports can be assigned");
+  if (report.state !== ReportState.PENDING) {
+    throw new Error("Only PENDING reports can be assigned");
   }
 
   const officer = await officerRepo.getOfficerById(officerId);
@@ -220,7 +227,17 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
   return mapReportDAOToDTO(updatedReport);
 }
 
-export async function deleteOfficer(email: string): Promise<void> {
+export async function deleteOfficer(id: number): Promise<void> {
   const officerRepo = new OfficerRepository();
-  await officerRepo.deleteOfficer(email);
+  const existingOfficer = await officerRepo.getOfficerById(id);
+  if (!existingOfficer) {
+    throw new Error(`Officer with id '${id}' does not exist.`);
+  }
+  const reportRepo = new ReportRepository();
+  for(const role of existingOfficer.roles ?? []) {
+    if(role.officerRole === OfficerRole.TECHNICAL_OFFICE_STAFF) {
+      await reportRepo.resetReportsAssignmentByOfficer(existingOfficer.id );
+    }
+  }
+  await officerRepo.deleteOfficer(id);
 }

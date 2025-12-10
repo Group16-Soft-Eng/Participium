@@ -8,7 +8,8 @@ export type ReportStatus =
   | 'DECLINED' 
   | 'IN_PROGRESS' 
   | 'SUSPENDED' 
-  | 'RESOLVED';
+  | 'RESOLVED'
+  | 'AWAITING_MAINTAINER';
 
 export interface StatusOption {
   value: ReportStatus | 'all';
@@ -25,6 +26,7 @@ export const REVIEW_STATUSES: StatusOption[] = [
 // Default status options for Technical Officer (work flow)
 export const TECHNICAL_STATUSES: StatusOption[] = [
   { value: 'all', label: 'All' },
+  { value: 'AWAITING_MAINTAINER', label: 'Awaiting maintainer', color: '#f59e0b' },
   { value: 'ASSIGNED', label: 'Assigned', color: '#3b82f6' },
   { value: 'IN_PROGRESS', label: 'In Progress', color: '#8b5cf6' },
   { value: 'SUSPENDED', label: 'Suspended', color: '#f59e0b' },

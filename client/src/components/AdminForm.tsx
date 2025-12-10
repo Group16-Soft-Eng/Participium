@@ -13,6 +13,12 @@ type RegisterState =
     | { success: boolean }
     | { error: string };
 
+function formatString(str: string) {
+  return str
+    .replaceAll(/_/g, " ")            
+    .toLowerCase()                 
+    .replaceAll(/\b\w/g, c => c.toUpperCase());
+}
 
 export function AdminForm({ setShowForm }: AdminFormProps) {
     const [officeTypes, setOfficeTypes] = useState<string[]>([]);
@@ -172,7 +178,7 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                         <Grid size={12}>
                             <Select id="role" name="role" label="Officer Role" variant="outlined" fullWidth defaultValue={''} required
                                 onChange={(e) => setRole(e.target.value)}> {
-                                    officerTypes.map((type) => (<MenuItem key={type} value={type}>{type.replaceAll('_', ' ')}</MenuItem>
+                                    officerTypes.map((type) => (<MenuItem key={type} value={type}>{formatString(type)}</MenuItem>
                                     ))
                                 }
                             </Select>
@@ -183,7 +189,7 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                             <InputLabel id="office-select-label">{role === 'technical_office_staff' ? 'Office' : 'Category'}</InputLabel>
                             <Grid size={12}>
                                 <Select id="office" name="office" label={role === 'technical_office_staff' ? 'Office' : 'Category'} variant="outlined" fullWidth defaultValue={''} required> {
-                                    officeTypes.map((type) => (<MenuItem key={type} value={type}>{type}</MenuItem>
+                                    officeTypes.map((type) => (<MenuItem key={type} value={type}>{formatString(type)}</MenuItem>
                                     ))
                                 }
                                 </Select>

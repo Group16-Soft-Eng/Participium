@@ -24,6 +24,8 @@
     "pg": "^8.11.3",
     "redis": "^4.6.7",
     "reflect-metadata": "^0.1.13",
+    "socket": "^1.1.44",
+    "socket.io": "^4.8.1",
     "sqlite3": "^5.1.7",
     "swagger-ui-express": "^5.0.0",
     "tsconfig-paths": "^4.2.0",

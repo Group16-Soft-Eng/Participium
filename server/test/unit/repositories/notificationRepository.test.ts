@@ -1,367 +1,663 @@
-import "reflect-metadata";
-import { NotificationRepository } from "../../../src/repositories/NotificationRepository";
-import { NotificationDAO } from "../../../src/models/dao/NotificationDAO";
-import { UserDAO } from "../../../src/models/dao/UserDAO";
-import { ReportDAO } from "../../../src/models/dao/ReportDAO";
-import { Repository } from "typeorm";
-import { ReportState } from "../../../src/models/enums/ReportState";
+import { NotificationRepository } from '../../../src/repositories/NotificationRepository';
+import { Repository } from 'typeorm';
+import { NotificationDAO } from '../../../src/models/dao/NotificationDAO';
+import { ReportDAO } from '../../../src/models/dao/ReportDAO';
+import { UserDAO } from '../../../src/models/dao/UserDAO';
+import { AppDataSource } from '../../../src/database/connection';
 
-// Mock TypeORM Repository
-jest.mock("typeorm", () => {
-  const actual = jest.requireActual("typeorm");
-  return {
-    ...actual,
-    getRepository: jest.fn(),
-  };
-});
+jest.mock('../../../src/database/connection', () => ({
+    AppDataSource: {
+        getRepository: jest.fn()
+    }
+}));
 
-describe("NotificationRepository", () => {
-  let notificationRepo: NotificationRepository;
-  let mockRepo: jest.Mocked<Repository<NotificationDAO>>;
+describe('NotificationRepository', () => {
+    let notificationRepo: NotificationRepository;
+    let mockRepo: jest.Mocked<Repository<NotificationDAO>>;
 
-  beforeEach(() => {
-    mockRepo = {
-      find: jest.fn(),
-      findOne: jest.fn(),
-      findOneBy: jest.fn(),
-      findOneByOrFail: jest.fn(),
-      save: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
-    } as any;
+    beforeEach(() => {
+        mockRepo = {
+            find: jest.fn(),
+            findOneByOrFail: jest.fn(),
+            save: jest.fn(),
+            create: jest.fn()
+        } as any;
 
-    notificationRepo = new NotificationRepository();
-    (notificationRepo as any).repo = mockRepo;
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe("findByUserId", () => {
-    it("should return all notifications for a user", async () => {
-      const userId = 1;
-      const mockNotifications: NotificationDAO[] = [
-        {
-          id: 1,
-          userId: userId,
-          reportId: 1,
-          title: "Report Approved",
-          message: "Your report has been approved",
-          type: "REPORT_APPROVED",
-          read: false,
-          createdAt: new Date(),
-        } as NotificationDAO,
-        {
-          id: 2,
-          userId: userId,
-          reportId: 2,
-          title: "Report Declined",
-          message: "Your report has been declined",
-          type: "REPORT_DECLINED",
-          read: true,
-          createdAt: new Date(),
-        } as NotificationDAO,
-      ];
-
-      mockRepo.find.mockResolvedValue(mockNotifications);
-
-      const result = await notificationRepo.listByUser(userId);
-
-      expect(result).toEqual(mockNotifications);
-      expect(result).toHaveLength(2);
+        (AppDataSource.getRepository as jest.Mock).mockReturnValue(mockRepo);
+        notificationRepo = new NotificationRepository();
     });
 
-    it("should return empty array if user has no notifications", async () => {
-      const userId = 999;
-      mockRepo.find.mockResolvedValue([]);
-
-      const result = await notificationRepo.listByUser(userId);
-
-      expect(result).toEqual([]);
-      expect(mockRepo.find).toHaveBeenCalledWith({
-        where: { userId },
-        order: { createdAt: "DESC" },
-      });
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
-    it("should filter unread notifications when specified", async () => {
-      const userId = 1;
-      const unreadNotifications: NotificationDAO[] = [
-        {
-          id: 1,
-          userId: userId,
-          reportId: 1,
-          title: "Report Approved",
-          message: "Your report has been approved",
-          type: "REPORT_APPROVED",
-          read: false,
-          createdAt: new Date(),
-        } as NotificationDAO,
-      ];
+    // ===================== listByUser =====================
+    describe('listByUser', () => {
+        it('should return all notifications for a user ordered by createdAt DESC', async () => {
+            const userId = 1;
+            const mockNotifications: NotificationDAO[] = [
+                {
+                    id: 2,
+                    userId: 1,
+                    reportId: 10,
+                    type: 'STATUS_CHANGE',
+                    message: 'Report updated',
+                    createdAt: new Date('2025-01-02'),
+                    read: false
+                },
+                {
+                    id: 1,
+                    userId: 1,
+                    reportId: 5,
+                    type: 'OFFICER_MESSAGE',
+                    message: 'Message from officer',
+                    createdAt: new Date('2025-01-01'),
+                    read: true
+                }
+            ];
 
-      mockRepo.find.mockResolvedValue(unreadNotifications);
+            mockRepo.find.mockResolvedValue(mockNotifications);
 
-      const result = await notificationRepo.listByUser(userId, true);
+            const result = await notificationRepo.listByUser(userId);
 
-      expect(mockRepo.find).toHaveBeenCalledWith({
-        where: { userId, read: false },
-        order: { createdAt: "DESC" },
-      });
-      expect(result).toEqual(unreadNotifications);
-      expect(result.every((n) => n.read === false)).toBe(true);
-    });
-  });
+            expect(mockRepo.find).toHaveBeenCalledWith({
+                where: { userId },
+                order: { createdAt: 'DESC' }
+            });
+            expect(result).toEqual(mockNotifications);
+            expect(result).toHaveLength(2);
+        });
 
-  describe("markRead", () => {
-    it("should mark notification as read", async () => {
-      const notificationId = 1;
-      const userId = 1;
-      const mockNotification: NotificationDAO = {
-        id: notificationId,
-        userId: userId,
-        reportId: 1,
-        title: "Test",
-        message: "Test",
-        type: "REPORT_APPROVED",
-        read: false,
-        createdAt: new Date(),
-      } as NotificationDAO;
+        it('should return only unread notifications when unreadOnly is true', async () => {
+            const userId = 1;
+            const mockNotifications: NotificationDAO[] = [
+                {
+                    id: 2,
+                    userId: 1,
+                    reportId: 10,
+                    type: 'STATUS_CHANGE',
+                    message: 'Report updated',
+                    createdAt: new Date('2025-01-02'),
+                    read: false
+                }
+            ];
 
-      const mockUpdatedNotification: NotificationDAO = {
-        ...mockNotification,
-        read: true,
-      };
+            mockRepo.find.mockResolvedValue(mockNotifications);
 
-      mockRepo.findOneByOrFail.mockResolvedValue(mockNotification);
-      mockRepo.update.mockResolvedValue({ affected: 1 } as any);
-      mockRepo.findOneBy.mockResolvedValue(mockUpdatedNotification);
+            const result = await notificationRepo.listByUser(userId, true);
 
-      const result = await notificationRepo.markRead(notificationId, userId);
-      expect(mockRepo.findOneByOrFail).toHaveBeenCalledWith({
-        id: 1,
-      })
-    });
+            expect(mockRepo.find).toHaveBeenCalledWith({
+                where: { userId, read: false },
+                order: { createdAt: 'DESC' }
+            });
+            expect(result).toEqual(mockNotifications);
+            expect(result.every(n => !n.read)).toBe(true);
+        });
 
-    it("should return null if notification not found", async () => {
-      const userId = 1;
-      const notificationId = 999;
-      
-      mockRepo.findOneByOrFail.mockRejectedValue(new Error("Entity not found"));
+        it('should return empty array if no notifications exist for user', async () => {
+            const userId = 999;
+            mockRepo.find.mockResolvedValue([]);
 
-      await expect(
-        notificationRepo.markRead(notificationId, userId)
-      ).rejects.toThrow();
-    });
+            const result = await notificationRepo.listByUser(userId);
 
-    it("should throw error if notification belongs to different user", async () => {
-      const userId = 1;
-      const notificationId = 1;
-      const mockNotification: NotificationDAO = {
-        id: notificationId,
-        userId: 999,
-        reportId: 1,
-        title: "Test",
-        message: "Test",
-        type: "REPORT_APPROVED",
-        read: false,
-        createdAt: new Date(),
-      } as NotificationDAO;
+            expect(mockRepo.find).toHaveBeenCalledWith({
+                where: { userId },
+                order: { createdAt: 'DESC' }
+            });
+            expect(result).toEqual([]);
+        });
 
-      mockRepo.findOneByOrFail.mockResolvedValue(mockNotification);
+        it('should handle unreadOnly=false correctly (return all notifications)', async () => {
+            const userId = 1;
+            const mockNotifications: NotificationDAO[] = [
+                {
+                    id: 1,
+                    userId: 1,
+                    reportId: 5,
+                    type: 'STATUS_CHANGE',
+                    message: 'Test',
+                    createdAt: new Date(),
+                    read: true
+                },
+                {
+                    id: 2,
+                    userId: 1,
+                    reportId: 6,
+                    type: 'OFFICER_MESSAGE',
+                    message: 'Test 2',
+                    createdAt: new Date(),
+                    read: false
+                }
+            ];
 
-      await expect(
-        notificationRepo.markRead(notificationId, userId)
-      ).rejects.toThrow("Not allowed to modify this notification");
-    });
-  });
+            mockRepo.find.mockResolvedValue(mockNotifications);
 
-  describe("createStatusChangeNotification", () => {
-    it("should create notification for approved report", async () => {
-      const mockReport: Partial<ReportDAO> = {
-        id: 1,
-        author: { id: 10 } as UserDAO,
-        state: ReportState.RESOLVED,
-        title: "Test Report",
-      };
+            const result = await notificationRepo.listByUser(userId, false);
 
-      const mockNotification: NotificationDAO = {
-        id: 1,
-        userId: 10,
-        reportId: 1,
-        title: "Report Approved",
-        message: "Your report 'Test Report' has been approved",
-        type: "REPORT_APPROVED",
-        read: false,
-        createdAt: new Date(),
-      } as NotificationDAO;
-
-      mockRepo.create.mockReturnValue(mockNotification);
-      mockRepo.save.mockResolvedValue(mockNotification);
-
-      const result = await notificationRepo.createStatusChangeNotification(
-        mockReport as ReportDAO
-      );
-      console.log(result);
-      expect(mockRepo.create).toHaveBeenCalledWith({
-        id: 1,
-        userId: 10,
-      reportId: 1,
-      title: 'Report Completed',
-      message: "Your report 'Test Report 4' has been completed",
-      type: 'REPORT_COMPLETED',
-      read: false,
-      createdAt: expect.any(Date)
-      });
-      expect(mockRepo.save).toHaveBeenCalled();
-      expect(result).toEqual(mockNotification);
+            expect(mockRepo.find).toHaveBeenCalledWith({
+                where: { userId },
+                order: { createdAt: 'DESC' }
+            });
+            expect(result).toHaveLength(2);
+        });
     });
 
-    it("should create notification for declined report", async () => {
-      const mockReport: Partial<ReportDAO> = {
-        id: 2,
-        author: { id: 20 } as UserDAO,
-        state: ReportState.DECLINED,
-        title: "Test Report 2",
-      };
+    // ===================== markRead =====================
+    describe('markRead', () => {
+        it('should mark a notification as read successfully', async () => {
+            const notificationId = 1;
+            const userId = 1;
+            const mockNotification: NotificationDAO = {
+                id: notificationId,
+                userId: userId,
+                reportId: 10,
+                type: 'STATUS_CHANGE',
+                message: 'Report updated',
+                createdAt: new Date(),
+                read: false
+            };
 
-      const mockNotification: NotificationDAO = {
-        id: 2,
-        userId: 20,
-        reportId: 2,
-        title: "Report Declined",
-        message: "Your report 'Test Report 2' has been declined",
-        type: "REPORT_DECLINED",
-        read: false,
-        createdAt: new Date(),
-      } as NotificationDAO;
+            const updatedNotification = { ...mockNotification, read: true };
 
-      mockRepo.create.mockReturnValue(mockNotification);
-      mockRepo.save.mockResolvedValue(mockNotification);
+            mockRepo.findOneByOrFail.mockResolvedValue(mockNotification);
+            mockRepo.save.mockResolvedValue(updatedNotification as NotificationDAO);
 
-      const result = await notificationRepo.createStatusChangeNotification(
-        mockReport as ReportDAO
-      );
+            const result = await notificationRepo.markRead(notificationId, userId);
 
-      expect(mockRepo.create).toHaveBeenCalledWith({
-        userId: 20,
-        reportId: 2,
-        title: "Report Declined",
-        message: expect.stringContaining("declined"),
-        type: "REPORT_DECLINED",
-        read: false,
-      });
-      expect(result).toEqual(mockNotification);
+            expect(mockRepo.findOneByOrFail).toHaveBeenCalledWith({ id: notificationId });
+            expect(mockRepo.save).toHaveBeenCalledWith(expect.objectContaining({ read: true }));
+            expect(result.read).toBe(true);
+        });
+
+        it('should throw error if notification does not belong to user', async () => {
+            const notificationId = 1;
+            const userId = 1;
+            const wrongUserId = 2;
+            const mockNotification: NotificationDAO = {
+                id: notificationId,
+                userId: wrongUserId,
+                reportId: 10,
+                type: 'STATUS_CHANGE',
+                message: 'Report updated',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.findOneByOrFail.mockResolvedValue(mockNotification);
+
+            await expect(notificationRepo.markRead(notificationId, userId))
+                .rejects.toThrow('Not allowed to modify this notification');
+            expect(mockRepo.save).not.toHaveBeenCalled();
+        });
+
+        it('should throw error if notification does not exist', async () => {
+            const notificationId = 999;
+            const userId = 1;
+
+            mockRepo.findOneByOrFail.mockRejectedValue(new Error('Entity not found'));
+
+            await expect(notificationRepo.markRead(notificationId, userId))
+                .rejects.toThrow('Entity not found');
+            expect(mockRepo.save).not.toHaveBeenCalled();
+        });
+
+        it('should mark an already read notification as read (idempotent)', async () => {
+            const notificationId = 1;
+            const userId = 1;
+            const mockNotification: NotificationDAO = {
+                id: notificationId,
+                userId: userId,
+                reportId: 10,
+                type: 'STATUS_CHANGE',
+                message: 'Report updated',
+                createdAt: new Date(),
+                read: true // Already read
+            };
+
+            mockRepo.findOneByOrFail.mockResolvedValue(mockNotification);
+            mockRepo.save.mockResolvedValue(mockNotification);
+
+            const result = await notificationRepo.markRead(notificationId, userId);
+
+            expect(result.read).toBe(true);
+            expect(mockRepo.save).toHaveBeenCalled();
+        });
     });
 
-    it("should create notification for assigned report", async () => {
-      const mockReport: Partial<ReportDAO> = {
-        id: 3,
-        author: { id: 30 } as UserDAO,
-        state: ReportState.ASSIGNED,
-        title: "Test Report 3",
-      };
+    // ===================== createNotification =====================
+    describe('createNotification', () => {
+        it('should create a new notification successfully', async () => {
+            const notificationData: Partial<NotificationDAO> = {
+                userId: 1,
+                reportId: 10,
+                type: 'STATUS_CHANGE',
+                message: 'Test notification',
+                read: false
+            };
 
-      const mockNotification: NotificationDAO = {
-        id: 3,
-        userId: 30,
-        reportId: 3,
-        title: "Report Assigned",
-        message: "Your report 'Test Report 3' has been assigned to a technical staff",
-        type: "REPORT_ASSIGNED",
-        read: false,
-        createdAt: new Date(),
-      } as NotificationDAO;
+            const createdNotification: NotificationDAO = {
+                id: 1,
+                userId: 1,
+                reportId: 10,
+                type: 'STATUS_CHANGE',
+                message: 'Test notification',
+                createdAt: new Date(),
+                read: false
+            };
 
-      mockRepo.create.mockReturnValue(mockNotification);
-      mockRepo.save.mockResolvedValue(mockNotification);
+            mockRepo.create.mockReturnValue(createdNotification);
+            mockRepo.save.mockResolvedValue(createdNotification);
 
-      const result = await notificationRepo.createStatusChangeNotification(
-        mockReport as ReportDAO
-      );
+            const result = await notificationRepo.createNotification(notificationData);
 
-      expect(mockRepo.create).toHaveBeenCalledWith({
-        userId: 30,
-        reportId: 3,
-        title: "Report Assigned",
-        message: expect.stringContaining("assigned"),
-        type: "REPORT_ASSIGNED",
-        read: false,
-      });
-      expect(result).toEqual(mockNotification);
+            expect(mockRepo.create).toHaveBeenCalledWith(notificationData);
+            expect(mockRepo.save).toHaveBeenCalledWith(createdNotification);
+            expect(result).toEqual(createdNotification);
+        });
+
+        it('should create notification with minimal data', async () => {
+            const notificationData: Partial<NotificationDAO> = {
+                userId: 1,
+                type: 'OFFICER_MESSAGE',
+                message: 'Simple message'
+            };
+
+            const createdNotification: NotificationDAO = {
+                id: 1,
+                userId: 1,
+                reportId: null,
+                type: 'OFFICER_MESSAGE',
+                message: 'Simple message',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.create.mockReturnValue(createdNotification);
+            mockRepo.save.mockResolvedValue(createdNotification);
+
+            const result = await notificationRepo.createNotification(notificationData);
+
+            expect(mockRepo.create).toHaveBeenCalledWith(notificationData);
+            expect(result).toEqual(createdNotification);
+        });
+
+        it('should create notification with null reportId', async () => {
+            const notificationData: Partial<NotificationDAO> = {
+                userId: 5,
+                reportId: null,
+                type: 'STATUS_CHANGE',
+                message: 'General notification',
+                read: false
+            };
+
+            const createdNotification: NotificationDAO = {
+                id: 10,
+                ...notificationData as any,
+                createdAt: new Date()
+            };
+
+            mockRepo.create.mockReturnValue(createdNotification);
+            mockRepo.save.mockResolvedValue(createdNotification);
+
+            const result = await notificationRepo.createNotification(notificationData);
+
+            expect(result.reportId).toBeNull();
+            expect(mockRepo.save).toHaveBeenCalled();
+        });
     });
 
-    it("should create notification for completed report", async () => {
-      const mockReport: Partial<ReportDAO> = {
-        id: 4,
-        author: { id: 40 } as UserDAO,
-        state: ReportState.RESOLVED,
-        title: "Test Report 4",
-      };
+    // ===================== createStatusChangeNotification =====================
+    describe('createStatusChangeNotification', () => {
+        it('should create status change notification for non-anonymous report', async () => {
+            const mockReport: ReportDAO = {
+                id: 10,
+                title: 'Test Report',
+                author: { id: 1, username: 'user1' } as UserDAO,
+                state: 'ASSIGNED',
+                reason: null
+            } as any;
 
-      const mockNotification: NotificationDAO = {
-        id: 4,
-        userId: 40,
-        reportId: 4,
-        title: "Report Completed",
-        message: "Your report 'Test Report 4' has been completed",
-        type: "REPORT_COMPLETED",
-        read: false,
-        createdAt: new Date(),
-      } as NotificationDAO;
+            const expectedNotification: NotificationDAO = {
+                id: 1,
+                userId: 1,
+                reportId: 10,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #10 is now ASSIGNED',
+                createdAt: new Date(),
+                read: false
+            };
 
-      mockRepo.create.mockReturnValue(mockNotification);
-      mockRepo.save.mockResolvedValue(mockNotification);
+            mockRepo.save.mockResolvedValue(expectedNotification);
 
-      const result = await notificationRepo.createStatusChangeNotification(
-        mockReport as ReportDAO
-      );
-      console.log(result);
-      expect(mockRepo.create).toHaveBeenCalledWith({id: 4,
-      userId: 40,
-      reportId: 4,
-      title: 'Report Completed',
-      message: "Your report 'Test Report 4' has been completed",
-      type: 'REPORT_COMPLETED',
-      read: false,
-      createdAt: expect.any(Date)});
-      expect(result).toEqual(mockNotification);
+            const result = await notificationRepo.createStatusChangeNotification(mockReport);
+
+            expect(mockRepo.save).toHaveBeenCalledWith({
+                userId: 1,
+                reportId: 10,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #10 is now ASSIGNED',
+                read: false
+            });
+            expect(result).toEqual(expectedNotification);
+        });
+
+        it('should create notification with declined reason', async () => {
+            const mockReport: ReportDAO = {
+                id: 15,
+                title: 'Test Report',
+                author: { id: 2, username: 'user2' } as UserDAO,
+                state: 'DECLINED',
+                reason: 'Insufficient information'
+            } as any;
+
+            const expectedNotification: NotificationDAO = {
+                id: 2,
+                userId: 2,
+                reportId: 15,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #15 has been DECLINED. Reason: Insufficient information',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+
+            const result = await notificationRepo.createStatusChangeNotification(mockReport);
+
+            expect(mockRepo.save).toHaveBeenCalledWith({
+                userId: 2,
+                reportId: 15,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #15 has been DECLINED. Reason: Insufficient information',
+                read: false
+            });
+            expect(result?.message).toContain('DECLINED');
+            expect(result?.message).toContain('Insufficient information');
+        });
+
+        it('should create notification with N/A reason when declined without reason', async () => {
+            const mockReport: ReportDAO = {
+                id: 20,
+                title: 'Test Report',
+                author: { id: 3, username: 'user3' } as UserDAO,
+                state: 'DECLINED',
+                reason: null
+            } as any;
+
+            const expectedNotification: NotificationDAO = {
+                id: 3,
+                userId: 3,
+                reportId: 20,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #20 has been DECLINED. Reason: N/A',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+
+            const result = await notificationRepo.createStatusChangeNotification(mockReport);
+
+            expect(result?.message).toContain('Reason: N/A');
+        });
+
+        it('should return null for anonymous report (no author)', async () => {
+            const mockReport: ReportDAO = {
+                id: 25,
+                title: 'Anonymous Report',
+                author: null,
+                state: 'PENDING',
+                anonymity: true
+            } as any;
+
+            const result = await notificationRepo.createStatusChangeNotification(mockReport);
+
+            expect(result).toBeNull();
+            expect(mockRepo.save).not.toHaveBeenCalled();
+        });
+
+        it('should return null for report with author but no author id', async () => {
+            const mockReport: ReportDAO = {
+                id: 30,
+                title: 'Test Report',
+                author: { username: 'user4' } as UserDAO, // No id
+                state: 'PENDING'
+            } as any;
+
+            const result = await notificationRepo.createStatusChangeNotification(mockReport);
+
+            expect(result).toBeNull();
+            expect(mockRepo.save).not.toHaveBeenCalled();
+        });
+
+        it('should create notification for IN_PROGRESS state', async () => {
+            const mockReport: ReportDAO = {
+                id: 35,
+                title: 'Test Report',
+                author: { id: 5, username: 'user5' } as UserDAO,
+                state: 'IN_PROGRESS',
+                reason: null
+            } as any;
+
+            const expectedNotification: NotificationDAO = {
+                id: 4,
+                userId: 5,
+                reportId: 35,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #35 is now IN_PROGRESS',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+
+            const result = await notificationRepo.createStatusChangeNotification(mockReport);
+
+            expect(result?.message).toBe('Your report #35 is now IN_PROGRESS');
+        });
+
+        it('should create notification for RESOLVED state', async () => {
+            const mockReport: ReportDAO = {
+                id: 40,
+                title: 'Test Report',
+                author: { id: 6, username: 'user6' } as UserDAO,
+                state: 'RESOLVED',
+                reason: null
+            } as any;
+
+            const expectedNotification: NotificationDAO = {
+                id: 5,
+                userId: 6,
+                reportId: 40,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #40 is now RESOLVED',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+
+            const result = await notificationRepo.createStatusChangeNotification(mockReport);
+
+            expect(result?.message).toBe('Your report #40 is now RESOLVED');
+        });
     });
 
-    it("should return null for anonymous report", async () => {
-      const mockReport: Partial<ReportDAO> = {
-        id: 5,
-        author: null,
-        state: ReportState.RESOLVED,
-        title: "Anonymous Report",
-        anonymity: true,
-      };
+    // ===================== createOfficerMessageNotification =====================
+    describe('createOfficerMessageNotification', () => {
+        it('should create officer message notification for non-anonymous report', async () => {
+            const mockReport: ReportDAO = {
+                id: 10,
+                title: 'Test Report',
+                author: { id: 1, username: 'user1' } as UserDAO,
+                state: 'ASSIGNED'
+            } as any;
 
-      const result = await notificationRepo.createStatusChangeNotification(
-        mockReport as ReportDAO
-      );
+            const officerId = 5;
+            const messageText = 'Please provide more details';
 
-      expect(result).toBeNull();
-      expect(mockRepo.create).not.toHaveBeenCalled();
-      expect(mockRepo.save).not.toHaveBeenCalled();
+            const expectedNotification: NotificationDAO = {
+                id: 1,
+                userId: 1,
+                reportId: 10,
+                type: 'OFFICER_MESSAGE',
+                message: 'Message from officer #5: Please provide more details',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+
+            const result = await notificationRepo.createOfficerMessageNotification(
+                mockReport,
+                officerId,
+                messageText
+            );
+
+            expect(mockRepo.save).toHaveBeenCalledWith({
+                userId: 1,
+                reportId: 10,
+                type: 'OFFICER_MESSAGE',
+                message: 'Message from officer #5: Please provide more details',
+                read: false
+            });
+            expect(result).toEqual(expectedNotification);
+            expect(result?.message).toContain(`officer #${officerId}`);
+            expect(result?.message).toContain(messageText);
+        });
+
+        it('should return null for anonymous report', async () => {
+            const mockReport: ReportDAO = {
+                id: 15,
+                title: 'Anonymous Report',
+                author: null,
+                state: 'PENDING',
+                anonymity: true
+            } as any;
+
+            const result = await notificationRepo.createOfficerMessageNotification(
+                mockReport,
+                5,
+                'Test message'
+            );
+
+            expect(result).toBeNull();
+            expect(mockRepo.save).not.toHaveBeenCalled();
+        });
+
+        it('should return null for report with author but no author id', async () => {
+            const mockReport: ReportDAO = {
+                id: 20,
+                title: 'Test Report',
+                author: { username: 'user2' } as UserDAO, // No id
+                state: 'ASSIGNED'
+            } as any;
+
+            const result = await notificationRepo.createOfficerMessageNotification(
+                mockReport,
+                10,
+                'Test message'
+            );
+
+            expect(result).toBeNull();
+            expect(mockRepo.save).not.toHaveBeenCalled();
+        });
+
+        it('should create notification with long message text', async () => {
+            const mockReport: ReportDAO = {
+                id: 25,
+                title: 'Test Report',
+                author: { id: 3, username: 'user3' } as UserDAO,
+                state: 'IN_PROGRESS'
+            } as any;
+
+            const longMessage = 'This is a very long message that contains a lot of information about the report and what needs to be done to resolve it properly.';
+            const officerId = 15;
+
+            const expectedNotification: NotificationDAO = {
+                id: 2,
+                userId: 3,
+                reportId: 25,
+                type: 'OFFICER_MESSAGE',
+                message: `Message from officer #${officerId}: ${longMessage}`,
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+
+            const result = await notificationRepo.createOfficerMessageNotification(
+                mockReport,
+                officerId,
+                longMessage
+            );
+
+            expect(result?.message).toContain(longMessage);
+            expect(result?.message.length).toBeGreaterThan(100);
+        });
+
+        it('should create notification with special characters in message', async () => {
+            const mockReport: ReportDAO = {
+                id: 30,
+                title: 'Test Report',
+                author: { id: 4, username: 'user4' } as UserDAO,
+                state: 'ASSIGNED'
+            } as any;
+
+            const messageText = 'Test with special chars: @#$%^&*()';
+            const officerId = 20;
+
+            const expectedNotification: NotificationDAO = {
+                id: 3,
+                userId: 4,
+                reportId: 30,
+                type: 'OFFICER_MESSAGE',
+                message: `Message from officer #${officerId}: ${messageText}`,
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+
+            const result = await notificationRepo.createOfficerMessageNotification(
+                mockReport,
+                officerId,
+                messageText
+            );
+
+            expect(result?.message).toContain(messageText);
+        });
+
+        it('should create notification with empty message text', async () => {
+            const mockReport: ReportDAO = {
+                id: 35,
+                title: 'Test Report',
+                author: { id: 5, username: 'user5' } as UserDAO,
+                state: 'ASSIGNED'
+            } as any;
+
+            const officerId = 25;
+            const emptyMessage = '';
+
+            const expectedNotification: NotificationDAO = {
+                id: 4,
+                userId: 5,
+                reportId: 35,
+                type: 'OFFICER_MESSAGE',
+                message: `Message from officer #${officerId}: `,
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+
+            const result = await notificationRepo.createOfficerMessageNotification(
+                mockReport,
+                officerId,
+                emptyMessage
+            );
+
+            expect(result?.message).toBe(`Message from officer #${officerId}: `);
+        });
     });
-
-    it("should return null for pending report", async () => {
-      const mockReport: Partial<ReportDAO> = {
-        id: 6,
-        author: { id: 60 } as UserDAO,
-        state: ReportState.PENDING,
-        title: "Pending Report",
-      };
-
-      const result = await notificationRepo.createStatusChangeNotification(
-        mockReport as ReportDAO
-      );
-
-      expect(result).toBeUndefined();
-      expect(mockRepo.create).not.toHaveBeenCalled();
-    });
-  });
 });

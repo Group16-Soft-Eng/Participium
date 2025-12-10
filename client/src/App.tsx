@@ -1,11 +1,11 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import './App.css'
 import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import UserMenu from './components/UserMenu';
 import NotificationBell from './components/NotificationBell';
 import { useEffect, useState } from 'react';
-import { getToken, getRole, getRoleFromToken } from './services/auth';
+import { getToken, getRole } from './services/auth';
 import { LoginScreen } from './pages/LoginScreen';
 
 import ReportForm from './Map/MapComponents/ReportForm';
@@ -17,8 +17,10 @@ import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePu
 import { AdminScreen } from './pages/AdminPage';
 import { NotificationProvider } from './contexts/NotificationContext';
 import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
-import ExternalMaintainersPage from './pages/ExternalMaintainer';
 import { UserPage } from './pages/UserPage';
+
+import { ReportDetailsPage } from './pages/ReportDetailsPage';
+import MaintainerDashboardPage from './pages/MaintainerDashboardPage';
 
 
 type OfficerProps = {
@@ -49,7 +51,7 @@ function PublicRelationsButton() {
     component={Link}
     to="/officer"
     variant="contained"
-    color="primary"
+    color="secondary"
     sx={{
       px: 2.2,
       py: 0.7,
@@ -125,12 +127,12 @@ function App() {
   }, []);
 
   const isLoggedIn = Boolean(auth.token);
-  const isAdmin = auth.role === 'municipal_administrator';
-  const isPROfficer = auth.role === 'municipal_public_relations_officer';
-  const isTechnicalOfficer = auth.role === 'technical_office_staff';
-  const isMaintainer = auth.role === 'external_maintainer';
-  const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';
-  const isCitizen = auth.role === 'citizen';
+  const isAdmin = auth.role?.includes('municipal_administrator');
+  const isPROfficer = auth.role?.includes('municipal_public_relations_officer');
+  const isTechnicalOfficer = auth.role?.includes('technical_office_staff');
+  const isMaintainer = auth.role?.includes('external_maintainer');
+  const isOfficer = isPROfficer || isTechnicalOfficer
+  const isCitizen = auth.role?.includes('citizen');
 
   return (
     <NotificationProvider>
@@ -140,7 +142,10 @@ function App() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {/* small inline logo */}
               <Box className="app-logo" component={Link} to="/map" sx={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
-                <img src="/assets/StemmaTorino.svg" width="34" height="34" alt="Participium logo" />
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                  <circle cx="12" cy="12" r="10" fill="#1976d2" />
+                  <text x="12" y="16" textAnchor="middle" fontSize="12" fontFamily="Poppins, sans-serif" fill="#fff" fontWeight="600">P</text>
+                </svg>
               </Box>
 
 
@@ -156,20 +161,14 @@ function App() {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button className="flex-mobile" id="map-button" component={Link} to="/map" color="inherit">Map</Button>
-              {isLoggedIn && !isOfficer && !isAdmin && !isMaintainer && (
-                <Button component={Link} to="/messages" color="inherit">Messages</Button>
-              )}
-              {
-              /*isOfficer && (
-                <Button component={Link} to="/officer/messages" color="inherit">Messages</Button>
-              )*/}
 
               {/* Show different button based on user role */}
-              {isOfficer && (
-                isPROfficer ? (
-                  <PublicRelationsButton />
-                ) :
-                  <OfficerButton technical={isTechnicalOfficer} />
+              {isPROfficer && (
+                <PublicRelationsButton />
+              )
+              }
+              {isTechnicalOfficer && (
+                <OfficerButton technical={isTechnicalOfficer} />
               )
               }
               {isMaintainer && (
@@ -187,18 +186,21 @@ function App() {
                     boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
                   }}
                 >
-                  Maintainer Workspace
+                  Maintainer Dashboard
                 </Button>
               )}
-              {isAdmin && <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />}
-              {isCitizen && (
-                <UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
+
+              {isCitizen && (<UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
+              )}
+
+              {isAdmin && (
+                <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
               )}
 
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
               {isLoggedIn ? (
                 <>
-                  {!isOfficer && !isAdmin && !isMaintainer && <NotificationBell />}
+                  {!isOfficer && !isAdmin && <NotificationBell />}
                   <UserMenu />
                 </>
               ) : (
@@ -220,7 +222,8 @@ function App() {
             <Route path="/officer/messages" element={<RequireTechnical><OfficerMessagesPage /></RequireTechnical>} />
             <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
             <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
-            <Route path="/maintainer" element={<RequireMaintainer><ExternalMaintainersPage /></RequireMaintainer>} />
+            <Route path="/maintainer" element={<RequireMaintainer><MaintainerDashboardPage /></RequireMaintainer>} />
+            <Route path="/reports/:reportId/details" element={<RequireLogin><ReportDetailsPage /></RequireLogin>} />
           </Routes>
         </Box>
 

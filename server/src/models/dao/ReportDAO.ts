@@ -63,4 +63,10 @@ export class ReportDAO {
 
   @Column({ type: "integer", nullable: true })
   assignedMaintainerId!: number | null;
+
+  @Column({ type: "text", nullable: true })
+  reviewStatus!: string | null;
+
+  @Column({ type: "text", nullable: true })
+  explanation!: string | null;
 }

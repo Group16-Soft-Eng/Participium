@@ -45,7 +45,6 @@ router.get("/me", authenticateToken, async (req, res, next) => {
 
 //? PATCH /users/me (update personal account info story 9)
 router.patch("/me", authenticateToken, uploadAvatar, async (req, res, next) => {
-  console.log("PATCH /users/me called");
   try {
     const userId = (req as any).user?.id;
     // body may come in req.body (fields) and req.file (avatar)
@@ -89,8 +88,8 @@ router.post("/generateotp", async (req, res, next) => {
     await sendMail({
       to: email,
       subject: "Your Participium OTP code",
-      text: `OTP code: ${code} (valid for 5 minutes)`,
-      html: `<p>OTP code: <b>${code}</b></p><p>Valid for 5 minutes.</p>`,
+      text: `OTP code: ${code} (valid for 30 minutes)`,
+      html: `<p>OTP code: <b>${code}</b></p><p>Valid for 30 minutes.</p>`,
     });
 
     return res.status(200).json({ sent: true });

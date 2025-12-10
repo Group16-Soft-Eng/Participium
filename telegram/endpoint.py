@@ -1,9 +1,6 @@
 from __future__ import annotations
 import os
-import socket
 from typing import List, Dict
-from urllib.parse import urlparse
-import asyncio
 from telegram import InputFile
 import aiofiles
 import io
@@ -18,7 +15,7 @@ from telegram.ext import (
     ContextTypes,
 )
 import httpx
-
+from urllib.parse import urlparse
 # ------------------------------------------------------------------ #
 # Configuration / State
 # ------------------------------------------------------------------ #
@@ -27,19 +24,18 @@ def _normalize_server_url(raw: str) -> str:
     if not raw:
         return "http://localhost:5000"
     if not raw.startswith(("http://", "https://")):
+        # default a http se porta 5000 (tipico dev server)
         raw = f"http://{raw}"
     parsed = urlparse(raw)
-    # Se manca hostname, fallback
-    if not parsed.hostname:
-        return "http://localhost:5000"
+    if not parsed.scheme:
+        raw = f"http://{raw}"
     return raw
 
-SERVER_URL = _normalize_server_url(os.getenv("SERVER_URL", "http://localhost:5000"))
+server_base_url = "http://127.0.0.1:5000"  # Use IP to avoid DNS issues
+SERVER_URL = _normalize_server_url(os.getenv("SERVER_URL", server_base_url))
 BASE_URL = SERVER_URL.rstrip("/") + "/api/v1"
 print(f"[telegram] BASE_URL={BASE_URL}")
-str_ch_category = "Choose a category:"
-str_send_location = "Now send your location."
-str_going_back = "Going back..."
+
 sessions: Dict[int, str] = {}
 categories: List[str] = []
 
@@ -65,15 +61,7 @@ async def load_categories() -> None:
     """Load categories asynchronously at startup."""
     global categories
     try:
-        # Verifica DNS una volta e logga errore chiaro
-        host = urlparse(SERVER_URL).hostname
-        try:
-            socket.gethostbyname(host)
-        except Exception:
-            print(f"Failed to resolve server host: {host}. Using cached/empty categories.")
-            categories = []
-            return
-
+        # Remove DNS pre-check; just try to fetch
         response = await _httpx_with_retry("GET", f"{BASE_URL}/info-types")
         response.raise_for_status()
         data = response.json()
@@ -82,7 +70,6 @@ async def load_categories() -> None:
     except Exception as e:
         print("Failed to load categories:", e)
         categories = []
-
 # Conversation states
 WAITING_TITLE = 1
 WAITING_DESCRIPTION = 2
@@ -102,7 +89,8 @@ def build_back_cancel_row(prefix: str) -> list[InlineKeyboardButton]:
         InlineKeyboardButton("⬅️ Back", callback_data=f"back_{prefix}"),
         InlineKeyboardButton("❌ Cancel", callback_data="cancel_report"),
     ]
-
+def build_cancel_button() -> InlineKeyboardButton:
+    return [InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
 def build_back_cancel_keyboard(prefix: str) -> InlineKeyboardMarkup:
     # Se vuoi l'intero markup (non usarlo dentro altre tastiere)
     return InlineKeyboardMarkup([build_back_cancel_row(prefix)])
@@ -199,7 +187,8 @@ async def sendReport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if chat_id not in sessions:
         await update.message.reply_text("You must first log in with /login.")
         return ConversationHandler.END
-    keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]]
+    # Use only the Cancel button, properly wrapped as a single row
+    keyboard = [build_cancel_button()]
     await update.message.reply_text(
         "Let's start. Please send the report title.",
         reply_markup=InlineKeyboardMarkup(keyboard)
@@ -208,12 +197,10 @@ async def sendReport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def receiveTitle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["title"] = update.message.text.strip()
-    keyboard = [
-        [InlineKeyboardButton("⬅️ Back", callback_data="back_title"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
-    ]
+    # build_back_cancel_keyboard returns InlineKeyboardMarkup; pass it directly
     await update.message.reply_text(
         "Title received. Now send the description.",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        reply_markup=build_back_cancel_keyboard("title")
     )
     return WAITING_DESCRIPTION
 
@@ -275,7 +262,7 @@ async def receivePhoto(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     # Show Done button after first photo
     keyboard = [
         [InlineKeyboardButton("✅ Done", callback_data="done_photos")],
-        [InlineKeyboardButton("⬅️ Back", callback_data="back_photos"), InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]
+        build_back_cancel_row("photos")
     ]
     await update.message.reply_text(
         f"Photo {num}/3 received. Send another photo or tap Done.",
@@ -348,7 +335,8 @@ async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     if target == "title":
         # Already at first step; just re-prompt title
         await query.edit_message_text(str_going_back)
-        keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]]
+        # Use only the Cancel button, properly wrapped
+        keyboard = [build_cancel_button()]
         await query.message.reply_text(
             "Send the report title again:",
             reply_markup=InlineKeyboardMarkup(keyboard)
@@ -485,7 +473,8 @@ async def handle_start_report(update: Update, context: ContextTypes.DEFAULT_TYPE
         await query.edit_message_text("You must first log in with /login.")
         return ConversationHandler.END
     await query.edit_message_text("Starting report submission...")
-    keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_report")]]
+    # Each row must be a sequence of InlineKeyboardButton
+    keyboard = [build_cancel_button()]  # single-row with only Cancel
     await context.bot.send_message(
         chat_id=chat_id,
         text="Let's start the report submission process. Please send the report title.",

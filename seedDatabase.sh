@@ -22,13 +22,13 @@ fi
 echo "📋 Checking for users in database..."
 USER_IDS=($(sqlite3 "$DB_PATH" "SELECT id FROM users;"))
 
-if [[ ${#USER_IDS[[@]]} -eq 0 ]]; then
+if [[ ${#USER_IDS[@]} -eq 0 ]]; then
     echo "❌ No users found in database."
     echo "Please create at least one user before seeding reports."
     exit 1
 fi
 
-echo "✅ Found ${#USER_IDS[[@]]} user(s)"
+echo "✅ Found ${#USER_IDS[@]} user(s)"
 echo ""
 
 # Clear existing reports
@@ -81,8 +81,8 @@ insert_report() {
     local date=$(date -d "$days_ago days ago" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -v-${days_ago}d '+%Y-%m-%d %H:%M:%S')
     
     # Assign user (cycle through available users)
-    local user_index=$((report_count % ${#USER_IDS[[@]]}))
-    local author_id=${USER_IDS[[$user_index]]}
+    local user_index=$((report_count % ${#USER_IDS[@]}))
+    local author_id=${USER_IDS[$user_index]}
     
     # Random anonymity (30% chance of being anonymous)
     local anonymity=0
