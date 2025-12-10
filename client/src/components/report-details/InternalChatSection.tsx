@@ -98,11 +98,11 @@ export function InternalChatSection({ reportId }: InternalChatSectionProps) {
 
   const handleSend = async () => {
     if (!newMessage.trim()) return;
-    
+
     try {
       setLoading(true);
       const token = getToken();
-      
+
       // Send message to API - receiver is automatically determined from report assignment
       const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/internal-messages`, {
         method: 'POST',
@@ -142,7 +142,7 @@ export function InternalChatSection({ reportId }: InternalChatSectionProps) {
     const now = new Date();
     const diffMs = now.getTime() - d.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
@@ -171,9 +171,9 @@ export function InternalChatSection({ reportId }: InternalChatSectionProps) {
         ) : (
           <Stack spacing={2}>
             {messages.map((msg) => (
-              <MessageBubble 
-                key={msg.id} 
-                message={msg} 
+              <MessageBubble
+                key={msg.id}
+                message={msg}
                 formatTime={formatTime}
                 currentUserRole={currentRole}
                 currentUserName={authorName}
@@ -198,8 +198,8 @@ export function InternalChatSection({ reportId }: InternalChatSectionProps) {
             onKeyPress={handleKeyPress}
             disabled={loading}
           />
-          <IconButton 
-            color="primary" 
+          <IconButton
+            color="primary"
             onClick={handleSend}
             disabled={!newMessage.trim() || loading}
           >
@@ -216,10 +216,10 @@ export function InternalChatSection({ reportId }: InternalChatSectionProps) {
 
 function EmptyState() {
   return (
-    <Box 
-      display="flex" 
-      flexDirection="column" 
-      alignItems="center" 
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
       justifyContent="center"
       height="100%"
       color="text.secondary"
@@ -241,9 +241,18 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message, formatTime, currentUserRole, currentUserName }: MessageBubbleProps) {
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  const getInitials = (name?: string) => {
+    if (!name || typeof name !== "string") return "";
+
+    return name
+      .trim()
+      .split(/\s+/)
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
+
 
   const getRoleColor = (role: string) => {
     if (role.includes('TECHNICAL')) return 'primary.main';
@@ -252,7 +261,7 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
   };
 
   // Check if message is sent by current user
-  const isSentByMe = 
+  const isSentByMe =
     (currentUserRole === 'technical_office_staff' && (message.authorRole === 'TECHNICAL_OFFICE_STAFF' || message.authorRole === 'technical_office_staff')) ||
     (currentUserRole === 'maintainer' && message.authorRole === 'MAINTAINER') ||
     (currentUserRole === 'external_maintainer' && message.authorRole === 'MAINTAINER');
@@ -263,9 +272,9 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
   return (
     <Box display="flex" gap={1.5} justifyContent={isSentByMe ? 'flex-end' : 'flex-start'}>
       {!isSentByMe && (
-        <Avatar 
-          sx={{ 
-            width: 36, 
+        <Avatar
+          sx={{
+            width: 36,
             height: 36,
             bgcolor: getRoleColor(message.authorRole),
             fontSize: '0.875rem'
@@ -275,10 +284,10 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
         </Avatar>
       )}
       <Box sx={{ maxWidth: '70%' }}>
-        <Box 
-          display="flex" 
-          alignItems="center" 
-          gap={1} 
+        <Box
+          display="flex"
+          alignItems="center"
+          gap={1}
           mb={0.5}
           justifyContent={isSentByMe ? 'flex-end' : 'flex-start'}
         >
@@ -289,10 +298,10 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
             {formatTime(message.createdAt)}
           </Typography>
         </Box>
-        <Paper 
-          variant="outlined" 
-          sx={{ 
-            p: 1.5, 
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 1.5,
             bgcolor: isSentByMe ? 'primary.main' : 'grey.50',
             color: isSentByMe ? 'white' : 'text.primary',
             borderRadius: 2,
@@ -305,9 +314,9 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
         </Paper>
       </Box>
       {isSentByMe && (
-        <Avatar 
-          sx={{ 
-            width: 36, 
+        <Avatar
+          sx={{
+            width: 36,
             height: 36,
             bgcolor: getRoleColor(message.authorRole),
             fontSize: '0.875rem'
