@@ -1,7 +1,7 @@
 import React from 'react';
 import { IconButton, Avatar, Menu, MenuItem, Typography, Box } from '@mui/material';
 import { getPicture, getRole, getToken, getUserFromToken, logout } from '../services/auth';
-import { useNavigate } from 'react-router-dom';
+import { href, useNavigate } from 'react-router-dom';
 import { static_ip_address } from '../API/API';
 
 const UserMenu: React.FC = () => {
@@ -36,7 +36,11 @@ const UserMenu: React.FC = () => {
       </IconButton>
 
       <Menu id="user-menu" anchorEl={anchorEl} open={open} onClose={handleClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
-        {role?.includes('citizen') && <MenuItem onClick={() => navigate('/user')}>Account Settings</MenuItem>}
+        {role?.includes('citizen') && <>
+        <MenuItem onClick={() => navigate('/user')}>Account Settings</MenuItem>
+        <MenuItem onClick={() => window.open('https://t.me/participium_g16_bot', '_blank')}>Telegram Bot</MenuItem>
+        </>
+        }
         {/* Role-specific shortcuts */}
         {/*
         {role === 'technical_office_staff' && (
