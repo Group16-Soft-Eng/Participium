@@ -24,6 +24,8 @@ tags:
     description: Reports Operation
   - name: Telegram
   - name: Notifications
+  - name: Internal Messages
+    description: Internal messaging between officers and maintainers
 paths:
   /auth/users:
     post:
@@ -1091,6 +1093,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /admin/officers/{id}:
+    delete:
+      tags:
+        - Admin
+      summary: Admin deletes an officer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Officer with id '1' deleted successfully"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /admin/officers:
     get:
       tags:
@@ -1128,6 +1158,73 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /internal-messages:
+    post:
+      tags:
+        - Internal Messages
+      summary: Send an internal message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reportId:
+                  type: integer
+                receiverType:
+                  $ref: "#/components/schemas/OfficerRole"
+                receiverId:
+                  type: integer
+                message:
+                  type: string
+              required:
+                - reportId
+                - receiverType
+                - receiverId
+                - message
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    $ref: "#/components/schemas/InternalMessage"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /internal-messages/report/{reportId}:
+    get:
+      tags:
+        - Internal Messages
+      summary: List internal messages for a report
+      parameters:
+        - in: path
+          name: reportId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InternalMessage"
         default:
           description: Unexpected error
           content:
@@ -1298,6 +1395,26 @@ components:
             $ref: "#/components/schemas/OfficeType"
         active:
           type: boolean
+    InternalMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        reportId:
+          type: integer
+        senderType:
+            $ref: "#/components/schemas/OfficerRole"
+        senderId:
+            type: integer
+        receiverType:
+            $ref: "#/components/schemas/OfficerRole"
+        receiverId:
+            type: integer
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
     ApiResponse:
       type: object
       properties:

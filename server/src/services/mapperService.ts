@@ -70,6 +70,7 @@ export function mapReportDAOToDTO(dao: ReportDAO): Report {
     },
     state: dao.state,
     assignedOfficerId: dao.assignedOfficerId ?? undefined,
+    assignedMaintainerId: dao.assignedMaintainerId ?? undefined,
     reason: dao.reason ?? undefined
   };
 }

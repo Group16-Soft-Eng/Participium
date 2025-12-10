@@ -93,4 +93,11 @@ export class MaintainerRepository {
         Object.assign(m, fields);
         return this.repo.save(m);
     }
+    async deleteMaintainer(id: number): Promise<void> {
+        const maintainer = await this.getMaintainerById(id);
+        if (!maintainer) {
+            throw new Error(`Maintainer with id '${id}' not found`);
+        }
+        await this.repo.remove(maintainer);
+    }  
 }

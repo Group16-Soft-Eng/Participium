@@ -3,6 +3,9 @@ import { CONFIG } from "@config";
 import { initializeDatabase, initializeRedis } from "@database";
 import * as fs from "fs";
 import * as path from "path";
+import * as http from "http";
+import { Server as IOServer, Socket } from "socket.io";
+import { setIO } from "@services/ioService";
 
 let server;
 
@@ -24,8 +27,21 @@ async function startServer() {
 
     await initializeDatabase();
     await initializeRedis();
-    app.listen(CONFIG.APP_PORT);
+
+    // app.listen(CONFIG.APP_PORT);
+
+    // Create HTTP server and attach Socket.IO
+    const httpServer = http.createServer(app);
+    const io = new IOServer(httpServer, { cors: { origin: "*" } });
+    setIO(io);
+
+    io.on("connection", (socket: Socket) => {
+      socket.on("join-report", (reportId: number) => socket.join(`report:${reportId}`));
+    });
+
+    httpServer.listen(CONFIG.APP_PORT);
     console.log("Server Started on port", CONFIG.APP_PORT);
+    
   } catch (error) {
     console.error("Failed to start server:", error);
     process.exit(1);

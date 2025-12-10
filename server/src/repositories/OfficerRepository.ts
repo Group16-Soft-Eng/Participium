@@ -177,8 +177,8 @@ export class OfficerRepository {
     return this.getOfficerById(id);
   }
 
-  async deleteOfficer(email: string): Promise<void> {
-    const officer = await this.getOfficerByEmail(email);
+  async deleteOfficer(id: number): Promise<void> {
+    const officer = await this.getOfficerById(id);
     await this.repo.remove(officer);
   }
 }

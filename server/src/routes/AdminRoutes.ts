@@ -5,6 +5,7 @@ import {
   updateOfficer,
   addRoleToOfficer,
   removeRoleFromOfficer,
+  deleteOfficer
 } from "@controllers/officerController";
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware";
 import { OfficerFromJSON, OfficerToJSON } from "@dto/Officer";
@@ -69,6 +70,17 @@ router.patch("/role/remove", authenticateToken, requireUserType([OfficerRole.MUN
     }
     const result = await removeRoleFromOfficer(officerId, role as OfficerRole, officeType as OfficeType);
     res.status(200).json(OfficerToJSON(result));
+  } catch (error) {
+    next(error);
+  }
+}
+);
+router.delete("/officers/:id", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR]), async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: "id is required" });
+    await deleteOfficer(id);
+    res.status(200).json({ message: `Officer with id '${id}' deleted successfully` });
   } catch (error) {
     next(error);
   }

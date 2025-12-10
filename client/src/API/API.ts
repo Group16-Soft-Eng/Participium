@@ -465,5 +465,147 @@ async function markNotificationAsRead(notificationId: number): Promise<{ id: num
 }
 
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister };
+
+async function getAllOfficers() {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/admin/admin`, {
+        method: 'GET',
+        headers: headers,
+    });
+    if (response.ok) {
+        const profile = await response.json();
+        return profile;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+
+async function getAllMaintainers() {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/maintainers/list`, {
+        method: 'GET',
+        headers: headers,
+    });
+    if (response.ok) {
+        const profile = await response.json();
+        return profile;
+    }
+    else {
+        const err = await response.text()
+        throw err;
+    }
+}
+
+async function updateMaintainers(maintainer: Maintainer, id: number) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/admin/maintainers/${id}`, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify(maintainer),
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to update maintainer');
+    }
+}
+
+
+async function updateOfficer(officer: Officer) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/admin`, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify(officer),
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to update officer');
+    }
+}
+
+
+
+async function deleteOfficer(id: number) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/admin/officers/${id}`, {
+        method: 'DELETE',
+        headers: headers,
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to delete officer');
+    }
+}
+
+
+async function deleteMaintainer(id: number) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/maintainers/${id}`, {
+        method: 'DELETE',
+        headers: headers,
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to delete maintainer');
+    }
+}
+
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer };
 export type { Notification };

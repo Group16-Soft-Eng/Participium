@@ -120,3 +120,14 @@ export async function updateReportStatusByMaintainer(
    return mapReportDAOToDTO(updatedReport);
   
 }
+
+export async function deleteMaintainer(id: number) {
+  const repo = new MaintainerRepository();
+  const reportRepo = new ReportRepository();
+
+  // Prima di eliminare il maintainer, resetta l'assegnazione dei report
+  await reportRepo.resetReportsAssignmentByMaintainer(id);
+
+  // Ora elimina il maintainer
+  await repo.deleteMaintainer(id);
+}

@@ -8,6 +8,7 @@ export type ReportCategory =
   | 'safety' 
   | 'sanitation' 
   | 'transport' 
+  | 'organization'
   | 'other';
 
 export const ALL_CATEGORIES: { value: ReportCategory; label: string; color: string }[] = [
@@ -16,6 +17,7 @@ export const ALL_CATEGORIES: { value: ReportCategory; label: string; color: stri
   { value: 'safety', label: 'Safety', color: '#ef4444' },
   { value: 'sanitation', label: 'Sanitation', color: '#f59e0b' },
   { value: 'transport', label: 'Transport', color: '#3b82f6' },
+  { value: 'organization', label: 'Organization', color: '#af589bff' },
   { value: 'other', label: 'Other', color: '#6b7280' },
 ];
 

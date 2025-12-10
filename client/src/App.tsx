@@ -49,7 +49,7 @@ function PublicRelationsButton() {
     component={Link}
     to="/officer"
     variant="contained"
-    color="primary"
+    color="secondary"
     sx={{
       px: 2.2,
       py: 0.7,
@@ -125,12 +125,12 @@ function App() {
   }, []);
 
   const isLoggedIn = Boolean(auth.token);
-  const isAdmin = auth.role === 'municipal_administrator';
-  const isPROfficer = auth.role === 'municipal_public_relations_officer';
-  const isTechnicalOfficer = auth.role === 'technical_office_staff';
-  const isMaintainer = auth.role === 'external_maintainer';
-  const isOfficer = isPROfficer || isTechnicalOfficer || auth.role === 'officer';
-  const isCitizen = auth.role === 'citizen';
+  const isAdmin = auth.role?.includes('municipal_administrator');
+  const isPROfficer = auth.role?.includes('municipal_public_relations_officer');
+  const isTechnicalOfficer = auth.role?.includes('technical_office_staff');
+  const isMaintainer = auth.role?.includes('external_maintainer');
+  const isOfficer = isPROfficer || isTechnicalOfficer
+  const isCitizen = auth.role?.includes('citizen');
 
   return (
     <NotificationProvider>
@@ -165,11 +165,12 @@ function App() {
               )*/}
 
               {/* Show different button based on user role */}
-              {isOfficer && (
-                isPROfficer ? (
-                  <PublicRelationsButton />
-                ) :
-                  <OfficerButton technical={isTechnicalOfficer} />
+              {isPROfficer && (
+                <PublicRelationsButton />
+              )
+              }
+              {isTechnicalOfficer && (
+                <OfficerButton technical={isTechnicalOfficer} />
               )
               }
               {isMaintainer && (
