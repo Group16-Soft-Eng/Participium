@@ -252,7 +252,7 @@ describe("Internal Message Controller Integration Tests", () => {
         expect.objectContaining({
           message: "Socket test message",
           senderType: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          recipientType: OfficerRole.MAINTAINER
+          receiverType: OfficerRole.MAINTAINER // Cambiato da recipientType
         })
       );
     });
@@ -516,10 +516,10 @@ describe("Internal Message Controller Integration Tests", () => {
       ).rejects.toThrow("Report with id '99999' not found");
     });
 
-    it("should return empty array for non-existent report conversation", async () => {
-      const messages = await internalMessageController.listConversation(99999);
-
-      expect(messages).toEqual([]);
+    it("should throw error when listing conversation for non-existent report", async () => {
+      await expect(
+        internalMessageController.listConversation(99999)
+      ).rejects.toThrow("Report with id '99999' not found");
     });
   });
 
