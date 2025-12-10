@@ -165,7 +165,7 @@ export function InternalChatSection({ reportId }: InternalChatSectionProps) {
       </Box>
 
       {/* Messages Area */}
-      <Box sx={{ flex: 1, overflowY: 'auto', py: 2, maxHeight: '50vh' }}>
+      <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', py: 2, maxHeight: '50vh' }}>
         {messages.length === 0 ? (
           <EmptyState />
         ) : (
@@ -305,10 +305,13 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
             bgcolor: isSentByMe ? 'primary.main' : 'grey.50',
             color: isSentByMe ? 'white' : 'text.primary',
             borderRadius: 2,
-            borderColor: isSentByMe ? 'primary.main' : 'divider'
+            borderColor: isSentByMe ? 'primary.main' : 'divider',
+            // Ensure long unbroken text wraps and doesn't create horizontal scroll
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word'
           }}
         >
-          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
             {message.content}
           </Typography>
         </Paper>
