@@ -35,7 +35,9 @@ server_base_url = "http://127.0.0.1:5000"  # Use IP to avoid DNS issues
 SERVER_URL = _normalize_server_url(os.getenv("SERVER_URL", server_base_url))
 BASE_URL = SERVER_URL.rstrip("/") + "/api/v1"
 print(f"[telegram] BASE_URL={BASE_URL}")
-
+str_ch_category = "Please choose a category for your report:"
+str_going_back = "Going back to the previous step."
+str_send_location = "Please send your location (must be within Turin area)."
 sessions: Dict[int, str] = {}
 categories: List[str] = []
 
