@@ -165,7 +165,18 @@ export function InternalChatSection({ reportId }: InternalChatSectionProps) {
       </Box>
 
       {/* Messages Area */}
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', py: 2 }}>
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          py: 2,
+          // On small screens constrain height so the messages area remains scrollable
+          maxHeight: { xs: '60vh', md: undefined }
+        }}
+      >
         {messages.length === 0 ? (
           <EmptyState />
         ) : (
