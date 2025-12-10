@@ -33,8 +33,16 @@ export async function listConversation(reportId: number) {
   }
   
   if (report?.assignedMaintainerId) {
+    // Try maintainer repository first (maintainers table). If not found,
+    // fall back to OfficerRepository because some setups store maintainers as officers.
     const maintainer = await maintainerRepo.getMaintainerById(report.assignedMaintainerId);
-    if (maintainer) maintainerName = maintainer.name;
+    if (maintainer) {
+      maintainerName = maintainer.name;
+    } else {
+      // Fallback: try to find an officer with that id and use its name
+      const officerAsMaintainer = await officerRepo.getOfficerById(report.assignedMaintainerId);
+      if (officerAsMaintainer) maintainerName = officerAsMaintainer.name;
+    }
   }
   
   return list.map(m => ({
