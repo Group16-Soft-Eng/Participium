@@ -134,7 +134,7 @@ def build_main_menu() -> InlineKeyboardMarkup:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Welcome to the Participium Bot! Use /login to authenticate.")
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    image_path = os.path.join(script_dir, "welcome.png")
+    image_path = os.path.join(script_dir, "ParticipiumLogo.webp")
     if os.path.exists(image_path):
         # Use asynchronous file I/O to read the image
         async with aiofiles.open(image_path, "rb") as f:
