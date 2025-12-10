@@ -1,29 +1,36 @@
-name: SonarCloud analysis
+name: Backend Tests + SonarCloud
+
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches: [main]
+  push:
+    branches: [main]
 
 jobs:
-  sonarqube:
-    name: SonarQube
+  analysis:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-      - name: Run tests
-        run: npm test
+      - name: Install backend
+        run: |
+          cd server
+          npm install
 
-      - name: SonarQube Scan
+      - name: Run backend tests with coverage
+        run: |
+          cd server
+          npm run test:coverage
+
+      - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
