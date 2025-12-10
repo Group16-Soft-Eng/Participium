@@ -8,7 +8,7 @@ import { getIO } from "@services/ioService";
 import { OfficerRepository } from "@repositories/OfficerRepository";
 import { MaintainerRepository } from "@repositories/MaintainerRepository";
 
-type Participant = {
+export type Participant = {
     type: OfficerRole.TECHNICAL_OFFICE_STAFF | OfficerRole.MAINTAINER;
     id: number
 };

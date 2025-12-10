@@ -5,6 +5,8 @@ import {
   getAllOfficers,
   getAllOfficersByOfficeType,
   updateOfficer,
+  addRoleToOfficer,
+  removeRoleFromOfficer,
   assignReportToOfficer,
   retrieveDocs,
   getAssignedReports,
@@ -41,21 +43,25 @@ describe("OfficerController Unit Tests", () => {
   });
 
   describe("createOfficer", () => {
-    it("dovrebbe creare un nuovo officer con successo", async () => {
+    it("dovrebbe creare un nuovo officer con un singolo ruolo", async () => {
       const officerDto = {
         username: "officer1",
         name: "Luigi",
         surname: "Bianchi",
         email: "luigi@office.com",
         password: "password123",
-        role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-        office: OfficeType.INFRASTRUCTURE
+        roles: [
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }
+        ]
       };
 
-      const mockCreatedOfficer = { ...officerDto, id: 1 };
+      const mockCreatedOfficer = { id: 1, username: "officer1", email: "luigi@office.com" };
+      const mockFinalOfficer = { ...mockCreatedOfficer, roles: officerDto.roles };
       
       mockOfficerRepo.createOfficer = jest.fn().mockResolvedValue(mockCreatedOfficer);
-      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockCreatedOfficer);
+      mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockFinalOfficer);
+      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockFinalOfficer);
 
       const result = await createOfficer(officerDto as any);
 
@@ -64,11 +70,77 @@ describe("OfficerController Unit Tests", () => {
         "Luigi",
         "Bianchi",
         "luigi@office.com",
-        "password123",
-        OfficerRole.TECHNICAL_OFFICE_STAFF,
-        OfficeType.INFRASTRUCTURE
+        "password123"
       );
-      expect(result).toEqual(mockCreatedOfficer);
+      expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalled();
+      expect(result).toEqual(mockFinalOfficer);
+    });
+
+    it("dovrebbe creare un officer con multipli ruoli", async () => {
+      const officerDto = {
+        username: "officer2",
+        name: "Mario",
+        surname: "Rossi",
+        email: "mario@office.com",
+        password: "password456",
+        roles: [
+          { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT }
+        ]
+      };
+
+      const mockCreatedOfficer = { id: 2, username: "officer2", email: "mario@office.com" };
+      const mockFinalOfficer = { ...mockCreatedOfficer, roles: officerDto.roles };
+      
+      mockOfficerRepo.createOfficer = jest.fn().mockResolvedValue(mockCreatedOfficer);
+      mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockFinalOfficer);
+      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockFinalOfficer);
+
+      const result = await createOfficer(officerDto as any);
+
+      expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalledTimes(2);
+      expect(result).toEqual(mockFinalOfficer);
+    });
+
+    it("dovrebbe lanciare errore se nessun ruolo è fornito", async () => {
+      const officerDto = {
+        username: "officer3",
+        name: "Test",
+        surname: "User",
+        email: "test@office.com",
+        password: "password",
+        roles: []
+      };
+
+      await expect(createOfficer(officerDto as any))
+        .rejects
+        .toThrow("At least one role is required to create an officer");
+    });
+
+    it("dovrebbe gestire ruoli senza office (null)", async () => {
+      const officerDto = {
+        username: "officer4",
+        name: "Admin",
+        surname: "User",
+        email: "admin@office.com",
+        password: "adminpass",
+        roles: [
+          { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null }
+        ]
+      };
+
+      const mockCreatedOfficer = { id: 4, username: "officer4" };
+      const mockFinalOfficer = { ...mockCreatedOfficer, roles: officerDto.roles };
+      
+      mockOfficerRepo.createOfficer = jest.fn().mockResolvedValue(mockCreatedOfficer);
+      mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockFinalOfficer);
+      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockFinalOfficer);
+
+      const result = await createOfficer(officerDto as any);
+
+      expect(result).toEqual(mockFinalOfficer);
     });
   });
 
@@ -87,6 +159,15 @@ describe("OfficerController Unit Tests", () => {
       expect(mockOfficerRepo.getAllOfficers).toHaveBeenCalled();
       expect(result).toHaveLength(2);
     });
+
+    it("dovrebbe restituire array vuoto se non ci sono officers", async () => {
+      mockOfficerRepo.getAllOfficers = jest.fn().mockResolvedValue([]);
+      (mapOfficerDAOToDTO as jest.Mock).mockImplementation((officer) => officer);
+
+      const result = await getAllOfficers();
+
+      expect(result).toHaveLength(0);
+    });
   });
 
   describe("getAllOfficersByOfficeType", () => {
@@ -99,8 +180,23 @@ describe("OfficerController Unit Tests", () => {
       (mapOfficerDAOToDTO as jest.Mock).mockImplementation((officer) => officer);
 
       const result = await getAllOfficersByOfficeType("INFRASTRUCTURE");
+      
       expect(mockOfficerRepo.getOfficersByOffice).toHaveBeenCalledWith("INFRASTRUCTURE");
       expect(result).toHaveLength(2);
+    });
+
+    it("dovrebbe gestire diverse categorie di officeType", async () => {
+      const categories = [OfficeType.ENVIRONMENT, OfficeType.SAFETY, OfficeType.TRANSPORT];
+      
+      for (const category of categories) {
+        const mockOfficers = [{ id: 1, office: category }];
+        mockOfficerRepo.getOfficersByOffice = jest.fn().mockResolvedValue(mockOfficers);
+        (mapOfficerDAOToDTO as jest.Mock).mockImplementation((officer) => officer);
+
+        const result = await getAllOfficersByOfficeType(category);
+        
+        expect(mockOfficerRepo.getOfficersByOffice).toHaveBeenCalledWith(category);
+      }
     });
   });
 
@@ -111,27 +207,55 @@ describe("OfficerController Unit Tests", () => {
       (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockOfficer);
 
       const result = await getOfficer("officer@office.com");
+      
       expect(mockOfficerRepo.getOfficerByEmail).toHaveBeenCalledWith("officer@office.com");
       expect(result).toEqual(mockOfficer);
     });
   });
 
   describe("updateOfficer", () => {
-    it("dovrebbe aggiornare officer", async () => {
+    it("dovrebbe aggiornare officer con ruoli", async () => {
       const officerDto = {
         id: 1,
         username: "officer1",
         name: "Luigi",
         surname: "Bianchi",
         email: "luigi@office.com",
-        role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-        office: OfficeType.INFRASTRUCTURE
+        roles: [
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }
+        ]
       };
+      
       const mockUpdatedOfficer = { ...officerDto };
       mockOfficerRepo.updateOfficer = jest.fn().mockResolvedValue(mockUpdatedOfficer);
+      mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockUpdatedOfficer);
       (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedOfficer);
 
       const result = await updateOfficer(officerDto as any);
+      
+      expect(mockOfficerRepo.updateOfficer).toHaveBeenCalled();
+      expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalled();
+      expect(result).toEqual(mockUpdatedOfficer);
+    });
+
+    it("dovrebbe usare default role se nessun ruolo fornito", async () => {
+      const officerDto = {
+        id: 1,
+        username: "officer1",
+        name: "Luigi",
+        surname: "Bianchi",
+        email: "luigi@office.com",
+        roles: []
+      };
+      
+      const mockUpdatedOfficer = { ...officerDto };
+      mockOfficerRepo.updateOfficer = jest.fn().mockResolvedValue(mockUpdatedOfficer);
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockUpdatedOfficer);
+      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedOfficer);
+
+      const result = await updateOfficer(officerDto as any);
+      
       expect(mockOfficerRepo.updateOfficer).toHaveBeenCalledWith(
         1,
         "officer1",
@@ -139,9 +263,144 @@ describe("OfficerController Unit Tests", () => {
         "Bianchi",
         "luigi@office.com",
         OfficerRole.TECHNICAL_OFFICE_STAFF,
-        OfficeType.INFRASTRUCTURE
+        null
       );
+    });
+  });
+
+  describe("addRoleToOfficer", () => {
+    it("dovrebbe aggiungere un nuovo ruolo all'officer", async () => {
+      const mockCurrentOfficer = {
+        id: 1,
+        roles: [
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE }
+        ]
+      };
+      const mockUpdatedOfficer = {
+        ...mockCurrentOfficer,
+        roles: [
+          ...mockCurrentOfficer.roles,
+          { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null }
+        ]
+      };
+
+      mockOfficerRepo.getOfficerById = jest.fn()
+        .mockResolvedValueOnce(mockCurrentOfficer)
+        .mockResolvedValueOnce(mockUpdatedOfficer);
+      mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
+      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedOfficer);
+
+      const result = await addRoleToOfficer(1, OfficerRole.MUNICIPAL_ADMINISTRATOR);
+
+      expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalled();
       expect(result).toEqual(mockUpdatedOfficer);
+    });
+
+    it("non dovrebbe aggiungere un ruolo duplicato", async () => {
+      const mockCurrentOfficer = {
+        id: 1,
+        roles: [
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE }
+        ]
+      };
+
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockCurrentOfficer);
+      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockCurrentOfficer);
+
+      const result = await addRoleToOfficer(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.INFRASTRUCTURE);
+
+      expect(mockOfficerRepo.updateOfficerRoles).not.toHaveBeenCalled();
+      expect(result).toEqual(mockCurrentOfficer);
+    });
+
+    it("dovrebbe gestire ruoli senza office", async () => {
+      const mockCurrentOfficer = {
+        id: 1,
+        roles: []
+      };
+      const mockUpdatedOfficer = {
+        ...mockCurrentOfficer,
+        roles: [{ officerRole: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, officeType: null }]
+      };
+
+      mockOfficerRepo.getOfficerById = jest.fn()
+        .mockResolvedValueOnce(mockCurrentOfficer)
+        .mockResolvedValueOnce(mockUpdatedOfficer);
+      mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
+      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedOfficer);
+
+      const result = await addRoleToOfficer(1, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER);
+
+      expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalled();
+    });
+  });
+
+  describe("removeRoleFromOfficer", () => {
+    it("dovrebbe rimuovere un ruolo dall'officer", async () => {
+      const mockCurrentOfficer = {
+        id: 1,
+        roles: [
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE },
+          { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null }
+        ]
+      };
+      const mockUpdatedOfficer = {
+        ...mockCurrentOfficer,
+        roles: [{ officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null }]
+      };
+
+      mockOfficerRepo.getOfficerById = jest.fn()
+        .mockResolvedValueOnce(mockCurrentOfficer)
+        .mockResolvedValueOnce(mockUpdatedOfficer);
+      mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
+      mockReportRepo.resetPartialReportsAssignmentByOfficer = jest.fn().mockResolvedValue(undefined);
+      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedOfficer);
+
+      const result = await removeRoleFromOfficer(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.INFRASTRUCTURE);
+
+      expect(mockReportRepo.resetPartialReportsAssignmentByOfficer).toHaveBeenCalledWith(1, OfficeType.INFRASTRUCTURE);
+      expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalled();
+      expect(result).toEqual(mockUpdatedOfficer);
+    });
+
+    it("non dovrebbe resettare report se il ruolo non è TECHNICAL_OFFICE_STAFF", async () => {
+      const mockCurrentOfficer = {
+        id: 1,
+        roles: [
+          { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null },
+          { officerRole: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, officeType: null }
+        ]
+      };
+      const mockUpdatedOfficer = {
+        ...mockCurrentOfficer,
+        roles: [{ officerRole: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, officeType: null }]
+      };
+
+      mockOfficerRepo.getOfficerById = jest.fn()
+        .mockResolvedValueOnce(mockCurrentOfficer)
+        .mockResolvedValueOnce(mockUpdatedOfficer);
+      mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
+      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedOfficer);
+
+      const result = await removeRoleFromOfficer(1, OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficeType.INFRASTRUCTURE);
+
+      expect(mockReportRepo.resetPartialReportsAssignmentByOfficer).not.toHaveBeenCalled();
+      expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalled();
+    });
+
+    it("dovrebbe gestire officer con ruoli null", async () => {
+      const mockCurrentOfficer = {
+        id: 1,
+        roles: null
+      };
+
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockCurrentOfficer);
+      mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
+      (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockCurrentOfficer);
+
+      await removeRoleFromOfficer(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.INFRASTRUCTURE);
+
+      expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalledWith(1, []);
     });
   });
 
@@ -196,6 +455,36 @@ describe("OfficerController Unit Tests", () => {
     });
   });
 
+  describe("retrieveDocs", () => {
+    it("dovrebbe restituire solo report PENDING non assegnati o assegnati all'officer", async () => {
+      const mockPendingReports = [
+        { id: 1, assignedOfficerId: null, state: ReportState.PENDING },
+        { id: 2, assignedOfficerId: 1, state: ReportState.PENDING },
+        { id: 3, assignedOfficerId: 2, state: ReportState.PENDING }
+      ];
+      (mapReportDAOToDTO as jest.Mock).mockImplementation((report) => report);
+      mockReportRepo.getReportsByState = jest.fn().mockResolvedValue(mockPendingReports);
+
+      const result = await retrieveDocs(1);
+      
+      expect(mockReportRepo.getReportsByState).toHaveBeenCalledWith(ReportState.PENDING);
+      expect(result).toHaveLength(2);
+      expect(result).toEqual([
+        { id: 1, assignedOfficerId: null, state: ReportState.PENDING },
+        { id: 2, assignedOfficerId: 1, state: ReportState.PENDING }
+      ]);
+    });
+
+    it("dovrebbe restituire array vuoto se non ci sono report pending", async () => {
+      mockReportRepo.getReportsByState = jest.fn().mockResolvedValue([]);
+      (mapReportDAOToDTO as jest.Mock).mockImplementation((report) => report);
+
+      const result = await retrieveDocs(1);
+
+      expect(result).toHaveLength(0);
+    });
+  });
+
   describe("getAssignedReports", () => {
     it("dovrebbe restituire i report assegnati all'officer", async () => {
       const mockReports = [
@@ -206,6 +495,7 @@ describe("OfficerController Unit Tests", () => {
       (mapReportDAOToDTO as jest.Mock).mockImplementation((report) => report);
 
       const result = await getAssignedReports(1);
+      
       expect(mockReportRepo.getReportsByAssignedOfficer).toHaveBeenCalledWith(1);
       expect(result).toHaveLength(2);
     });
@@ -221,66 +511,93 @@ describe("OfficerController Unit Tests", () => {
       (mapReportDAOToDTO as jest.Mock).mockImplementation((report) => report);
 
       const result = await getAllAssignedReportsOfficer(1);
+      
       expect(mockReportRepo.getReportsByAssignedOfficer).toHaveBeenCalledWith(1);
       expect(result).toHaveLength(2);
     });
   });
 
-  describe("deleteOfficer", () => {
-    it("dovrebbe eliminare un officer per email", async () => {
-      mockOfficerRepo.deleteOfficer = jest.fn().mockResolvedValue(undefined);
-      await deleteOfficer("officer@office.com");
-      expect(mockOfficerRepo.deleteOfficer).toHaveBeenCalledWith("officer@office.com");
-    });
-  });
-
-  describe("retrieveDocs", () => {
-    it("dovrebbe restituire solo report PENDING non assegnati o assegnati all'officer", async () => {
-      const mockPendingReports = [
-        { id: 1, assignedOfficerId: null, state: ReportState.PENDING },
-        { id: 2, assignedOfficerId: 1, state: ReportState.PENDING },
-        { id: 3, assignedOfficerId: 2, state: ReportState.PENDING }
-      ];
-      (mapReportDAOToDTO as jest.Mock).mockImplementation((report) => report);
-      mockReportRepo.getReportsByState = jest.fn().mockResolvedValue(mockPendingReports);
-
-      const result = await retrieveDocs(1);
-      expect(mockReportRepo.getReportsByState).toHaveBeenCalledWith(ReportState.PENDING);
-      expect(result).toEqual([
-        { id: 1, assignedOfficerId: null, state: ReportState.PENDING },
-        { id: 2, assignedOfficerId: 1, state: ReportState.PENDING }
-      ]);
-    });
-  });
-
   describe("reviewDoc", () => {
-    it("dovrebbe approvare un report", async () => {
+    it("dovrebbe approvare un report e assegnarlo a un officer", async () => {
       const mockReport = {
         id: 1,
         assignedOfficerId: 1,
+        state: ReportState.PENDING,
         category: OfficeType.INFRASTRUCTURE
       };
       const mockUpdatedReport = {
         ...mockReport,
-        state: ReportState.PENDING
+        state: ReportState.ASSIGNED
       };
-      const mockOfficers = [{ id: 2, office: OfficeType.INFRASTRUCTURE }];
+      const mockOfficers = [
+        { id: 2, roles: [{ officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF }] },
+        { id: 3, roles: [{ officerRole: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER }] }
+      ];
 
       mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
       mockReportRepo.updateReportState = jest.fn().mockResolvedValue(mockUpdatedReport);
       mockOfficerRepo.getOfficersByOffice = jest.fn().mockResolvedValue(mockOfficers);
       mockReportRepo.assignReportToOfficer = jest.fn().mockResolvedValue(mockUpdatedReport);
+      mockNotificationRepo.createStatusChangeNotification = jest.fn().mockResolvedValue(undefined);
       (mapReportDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedReport);
 
       const result = await reviewDoc(1, 1, ReportState.ASSIGNED);
 
       expect(mockReportRepo.updateReportState).toHaveBeenCalledWith(1, ReportState.ASSIGNED, undefined);
+      expect(mockOfficerRepo.getOfficersByOffice).toHaveBeenCalledWith(OfficeType.INFRASTRUCTURE);
+      expect(mockReportRepo.assignReportToOfficer).toHaveBeenCalledWith(1, 2);
+      expect(mockNotificationRepo.createStatusChangeNotification).toHaveBeenCalled();
+    });
+
+    it("dovrebbe assegnare al primo officer se nessuno ha ruolo TECHNICAL_OFFICE_STAFF", async () => {
+      const mockReport = {
+        id: 1,
+        assignedOfficerId: null,
+        state: ReportState.PENDING,
+        category: OfficeType.ENVIRONMENT
+      };
+      const mockUpdatedReport = { ...mockReport, state: ReportState.ASSIGNED };
+      const mockOfficers = [
+        { id: 3, roles: [{ officerRole: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER }] }
+      ];
+
+      mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
+      mockReportRepo.updateReportState = jest.fn().mockResolvedValue(mockUpdatedReport);
+      mockOfficerRepo.getOfficersByOffice = jest.fn().mockResolvedValue(mockOfficers);
+      mockReportRepo.assignReportToOfficer = jest.fn().mockResolvedValue(mockUpdatedReport);
+      mockNotificationRepo.createStatusChangeNotification = jest.fn().mockResolvedValue(undefined);
+      (mapReportDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedReport);
+
+      await reviewDoc(1, 1, ReportState.ASSIGNED);
+
+      expect(mockReportRepo.assignReportToOfficer).toHaveBeenCalledWith(1, 3);
+    });
+
+    it("non dovrebbe assegnare se non ci sono officers disponibili", async () => {
+      const mockReport = {
+        id: 1,
+        assignedOfficerId: null,
+        state: ReportState.PENDING,
+        category: OfficeType.SAFETY
+      };
+      const mockUpdatedReport = { ...mockReport, state: ReportState.ASSIGNED };
+
+      mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
+      mockReportRepo.updateReportState = jest.fn().mockResolvedValue(mockUpdatedReport);
+      mockOfficerRepo.getOfficersByOffice = jest.fn().mockResolvedValue([]);
+      mockNotificationRepo.createStatusChangeNotification = jest.fn().mockResolvedValue(undefined);
+      (mapReportDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedReport);
+
+      await reviewDoc(1, 1, ReportState.ASSIGNED);
+
+      expect(mockReportRepo.assignReportToOfficer).not.toHaveBeenCalled();
     });
 
     it("dovrebbe rifiutare un report con motivazione", async () => {
       const mockReport = {
         id: 1,
-        assignedOfficerId: 1
+        assignedOfficerId: 1,
+        state: ReportState.PENDING
       };
       const mockUpdatedReport = {
         ...mockReport,
@@ -290,6 +607,7 @@ describe("OfficerController Unit Tests", () => {
 
       mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
       mockReportRepo.updateReportState = jest.fn().mockResolvedValue(mockUpdatedReport);
+      mockNotificationRepo.createStatusChangeNotification = jest.fn().mockResolvedValue(undefined);
       (mapReportDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedReport);
 
       const result = await reviewDoc(1, 1, ReportState.DECLINED, "Motivo del rifiuto");
@@ -299,12 +617,13 @@ describe("OfficerController Unit Tests", () => {
         ReportState.DECLINED, 
         "Motivo del rifiuto"
       );
+      expect(mockNotificationRepo.createStatusChangeNotification).toHaveBeenCalled();
     });
 
     it("dovrebbe lanciare errore se il report è assegnato a un altro officer", async () => {
       const mockReport = {
         id: 1,
-        assignedOfficerId: 2 // Diverso dall'officer che sta reviewando
+        assignedOfficerId: 2
       };
 
       mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
@@ -314,7 +633,7 @@ describe("OfficerController Unit Tests", () => {
         .toThrow("You can only review reports assigned to you");
     });
 
-    it("dovrebbe lanciare errore se il report è già risolto o rifiutato", async () => {
+    it("dovrebbe lanciare errore se il report è già risolto", async () => {
       const mockReport = {
         id: 1,
         assignedOfficerId: 1,
@@ -327,53 +646,115 @@ describe("OfficerController Unit Tests", () => {
         .toThrow(/already in state 'RESOLVED'/);
     });
 
-    it("dovrebbe assegnare il report a un officer preferito se stato ASSIGNED", async () => {
-      const mockReport = {
-        id: 1,
-        assignedOfficerId: null,
-        state: ReportState.PENDING,
-        category: OfficeType.INFRASTRUCTURE
-      };
-      const mockUpdatedReport = { ...mockReport, state: ReportState.ASSIGNED };
-      const mockOfficers = [
-        { id: 2, role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE },
-        { id: 3, role: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, office: OfficeType.INFRASTRUCTURE }
-      ];
-
-      mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
-      mockReportRepo.updateReportState = jest.fn().mockResolvedValue(mockUpdatedReport);
-      mockOfficerRepo.getOfficersByOffice = jest.fn().mockResolvedValue(mockOfficers);
-      mockReportRepo.assignReportToOfficer = jest.fn().mockResolvedValue(mockUpdatedReport);
-      mockNotificationRepo.createStatusChangeNotification = jest.fn().mockResolvedValue(undefined);
-      (mapReportDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedReport);
-
-      const result = await reviewDoc(1, 1, ReportState.ASSIGNED);
-
-      expect(mockOfficerRepo.getOfficersByOffice).toHaveBeenCalledWith(OfficeType.INFRASTRUCTURE);
-      expect(mockReportRepo.assignReportToOfficer).toHaveBeenCalledWith(1, 2);
-      expect(mockNotificationRepo.createStatusChangeNotification).toHaveBeenCalledWith(mockUpdatedReport);
-      expect(result).toEqual(mockUpdatedReport);
-    });
-
-    it("dovrebbe aggiornare lo stato e notificare", async () => {
+    it("dovrebbe lanciare errore se il report è già declined", async () => {
       const mockReport = {
         id: 1,
         assignedOfficerId: 1,
-        state: ReportState.PENDING,
-        category: OfficeType.INFRASTRUCTURE
+        state: ReportState.DECLINED
       };
-      const mockUpdatedReport = { ...mockReport, state: ReportState.DECLINED, reason: "Motivo" };
+      mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
+
+      await expect(reviewDoc(1, 1, ReportState.ASSIGNED))
+        .rejects
+        .toThrow(/already in state 'DECLINED'/);
+    });
+
+    it("dovrebbe permettere review di report non assegnati", async () => {
+      const mockReport = {
+        id: 1,
+        assignedOfficerId: null,
+        state: ReportState.PENDING
+      };
+      const mockUpdatedReport = { ...mockReport, state: ReportState.DECLINED };
 
       mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
       mockReportRepo.updateReportState = jest.fn().mockResolvedValue(mockUpdatedReport);
       mockNotificationRepo.createStatusChangeNotification = jest.fn().mockResolvedValue(undefined);
       (mapReportDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedReport);
 
-      const result = await reviewDoc(1, 1, ReportState.DECLINED, "Motivo");
+      const result = await reviewDoc(1, 1, ReportState.DECLINED, "Reason");
 
-      expect(mockReportRepo.updateReportState).toHaveBeenCalledWith(1, ReportState.DECLINED, "Motivo");
-      expect(mockNotificationRepo.createStatusChangeNotification).toHaveBeenCalledWith(mockUpdatedReport);
       expect(result).toEqual(mockUpdatedReport);
+    });
+  });
+
+  describe("deleteOfficer", () => {
+    it("dovrebbe eliminare un officer e resettare i suoi report assegnati", async () => {
+      const mockOfficer = {
+        id: 1,
+        roles: [
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE }
+        ]
+      };
+
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockOfficer);
+      mockReportRepo.resetReportsAssignmentByOfficer = jest.fn().mockResolvedValue(undefined);
+      mockOfficerRepo.deleteOfficer = jest.fn().mockResolvedValue(undefined);
+
+      await deleteOfficer(1);
+
+      expect(mockOfficerRepo.getOfficerById).toHaveBeenCalledWith(1);
+      expect(mockReportRepo.resetReportsAssignmentByOfficer).toHaveBeenCalledWith(1);
+      expect(mockOfficerRepo.deleteOfficer).toHaveBeenCalledWith(1);
+    });
+
+    it("non dovrebbe resettare report se l'officer non ha ruolo TECHNICAL_OFFICE_STAFF", async () => {
+      const mockOfficer = {
+        id: 1,
+        roles: [
+          { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null }
+        ]
+      };
+
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockOfficer);
+      mockOfficerRepo.deleteOfficer = jest.fn().mockResolvedValue(undefined);
+
+      await deleteOfficer(1);
+
+      expect(mockReportRepo.resetReportsAssignmentByOfficer).not.toHaveBeenCalled();
+      expect(mockOfficerRepo.deleteOfficer).toHaveBeenCalledWith(1);
+    });
+
+    it("dovrebbe lanciare errore se l'officer non esiste", async () => {
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(null);
+
+      await expect(deleteOfficer(1))
+        .rejects
+        .toThrow("Officer with id '1' does not exist.");
+    });
+
+    it("dovrebbe gestire officer con multipli ruoli TECHNICAL_OFFICE_STAFF", async () => {
+      const mockOfficer = {
+        id: 1,
+        roles: [
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE },
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ENVIRONMENT },
+          { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null }
+        ]
+      };
+
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockOfficer);
+      mockReportRepo.resetReportsAssignmentByOfficer = jest.fn().mockResolvedValue(undefined);
+      mockOfficerRepo.deleteOfficer = jest.fn().mockResolvedValue(undefined);
+
+      await deleteOfficer(1);
+
+      expect(mockReportRepo.resetReportsAssignmentByOfficer).toHaveBeenCalledTimes(2);
+    });
+
+    it("dovrebbe gestire officer senza ruoli", async () => {
+      const mockOfficer = {
+        id: 1,
+        roles: null
+      };
+
+      mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockOfficer);
+      mockOfficerRepo.deleteOfficer = jest.fn().mockResolvedValue(undefined);
+
+      await deleteOfficer(1);
+
+      expect(mockReportRepo.resetReportsAssignmentByOfficer).not.toHaveBeenCalled();
+      expect(mockOfficerRepo.deleteOfficer).toHaveBeenCalledWith(1);
     });
   });
 });

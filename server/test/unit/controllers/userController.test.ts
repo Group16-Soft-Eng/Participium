@@ -6,7 +6,9 @@ import {
   deleteUser,
   getMyProfile,
   updateMyProfile,
-  logoutUser
+  logoutUser,
+  activateAccount,
+  isActive
 } from "../../../src/controllers/userController";
 import { UserRepository } from "../../../src/repositories/UserRepository";
 import { mapUserDAOToDTO } from "../../../src/services/mapperService";
@@ -60,6 +62,40 @@ describe("UserController Unit Tests", () => {
         password: "password123"
       };
       await expect(createUser(userDto as any)).rejects.toThrow("Invalid email format");
+    });
+
+    it("dovrebbe lanciare errore con statusCode 400 per email invalida", async () => {
+      const userDto = {
+        username: "newuser",
+        firstName: "Mario",
+        lastName: "Rossi",
+        email: "no-at-sign",
+        password: "password123"
+      };
+      try {
+        await createUser(userDto as any);
+      } catch (err: any) {
+        expect(err.message).toBe("Invalid email format");
+        expect(err.statusCode).toBe(400);
+      }
+    });
+
+    it("dovrebbe gestire email con formato valido ma casi limite", async () => {
+      const userDto = {
+        username: "newuser",
+        firstName: "Mario",
+        lastName: "Rossi",
+        email: "test+tag@example.co.uk",
+        password: "password123"
+      };
+      const mockCreatedUser = { ...userDto, id: 1 };
+      mockUserRepo.createUser = jest.fn().mockResolvedValue(mockCreatedUser);
+      (mapUserDAOToDTO as jest.Mock).mockReturnValue(mockCreatedUser);
+
+      const result = await createUser(userDto as any);
+
+      expect(mockUserRepo.createUser).toHaveBeenCalled();
+      expect(result).toEqual(mockCreatedUser);
     });
   });
 
@@ -125,6 +161,14 @@ describe("UserController Unit Tests", () => {
 
       expect(mockUserRepo.deleteUser).toHaveBeenCalledWith("testuser");
     });
+
+    it("dovrebbe gestire l'eliminazione di utente non esistente", async () => {
+      mockUserRepo.deleteUser = jest.fn().mockResolvedValue(undefined);
+
+      await deleteUser("nonexistent");
+
+      expect(mockUserRepo.deleteUser).toHaveBeenCalledWith("nonexistent");
+    });
   });
 
   describe("getMyProfile", () => {
@@ -169,6 +213,25 @@ describe("UserController Unit Tests", () => {
       expect(result.avatar).toBeNull();
       expect(result.telegramUsername).toBeNull();
       expect(result.emailNotifications).toBe(true);
+    });
+
+    it("dovrebbe gestire emailNotifications esplicitamente false", async () => {
+      const mockUser = {
+        id: 3,
+        username: "testuser3",
+        firstName: "Test3",
+        lastName: "User3",
+        email: "test3@example.com",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false
+      };
+      mockUserRepo.getUserById = jest.fn().mockResolvedValue(mockUser);
+      (mapUserDAOToDTO as jest.Mock).mockReturnValue({ ...mockUser });
+
+      const result = await getMyProfile(3);
+
+      expect(result.emailNotifications).toBe(false);
     });
   });
 
@@ -222,6 +285,157 @@ describe("UserController Unit Tests", () => {
       expect(getSession).not.toHaveBeenCalled();
       expect(blacklistUserSessions).not.toHaveBeenCalled();
       expect(result.telegramUsername).toBe("same_telegram");
+    });
+
+    it("dovrebbe invalidare la sessione se telegramUsername cambia e non c'è sessione attiva", async () => {
+      const mockUser = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        avatar: "/avatar.png",
+        telegramUsername: "old_telegram",
+        emailNotifications: true
+      };
+      mockUserRepo.getUserById = jest.fn().mockResolvedValue(mockUser);
+      mockUserRepo.updateProfile = jest.fn().mockResolvedValue({ ...mockUser, telegramUsername: "new_telegram" });
+      (mapUserDAOToDTO as jest.Mock).mockReturnValue({ ...mockUser, telegramUsername: "new_telegram" });
+      (getSession as jest.Mock).mockResolvedValue(null);
+
+      const result = await updateMyProfile(1, { telegramUsername: "new_telegram" });
+
+      expect(getSession).toHaveBeenCalledWith(1, "telegram");
+      expect(blacklistUserSessions).not.toHaveBeenCalled();
+      expect(result.telegramUsername).toBe("new_telegram");
+    });
+
+    it("dovrebbe gestire telegramUsername impostato a null", async () => {
+      const mockUser = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        avatar: "/avatar.png",
+        telegramUsername: "old_telegram",
+        emailNotifications: true
+      };
+      mockUserRepo.getUserById = jest.fn().mockResolvedValue(mockUser);
+      mockUserRepo.updateProfile = jest.fn().mockResolvedValue({ ...mockUser, telegramUsername: null });
+      (mapUserDAOToDTO as jest.Mock).mockReturnValue({ ...mockUser, telegramUsername: null });
+      (getSession as jest.Mock).mockResolvedValue({ token: "t", sessionType: "telegram", createdAt: Date.now() });
+      (blacklistUserSessions as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await updateMyProfile(1, { telegramUsername: null });
+
+      expect(getSession).toHaveBeenCalledWith(1, "telegram");
+      expect(blacklistUserSessions).toHaveBeenCalledWith(1, "telegram", "telegram_username_changed");
+      expect(result.telegramUsername).toBeNull();
+    });
+
+    it("dovrebbe aggiornare solo emailNotifications", async () => {
+      const mockUser = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        avatar: "/avatar.png",
+        telegramUsername: "telegram_user",
+        emailNotifications: true
+      };
+      mockUserRepo.getUserById = jest.fn().mockResolvedValue(mockUser);
+      mockUserRepo.updateProfile = jest.fn().mockResolvedValue({ ...mockUser, emailNotifications: false });
+      (mapUserDAOToDTO as jest.Mock).mockReturnValue({ ...mockUser, emailNotifications: false });
+
+      const result = await updateMyProfile(1, { emailNotifications: false });
+
+      expect(mockUserRepo.updateProfile).toHaveBeenCalledWith(1, {
+        telegramUsername: undefined,
+        emailNotifications: false,
+        avatarPath: undefined
+      });
+      expect(result.emailNotifications).toBe(false);
+    });
+
+    it("dovrebbe aggiornare solo avatarPath", async () => {
+      const mockUser = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        avatar: "/old-avatar.png",
+        telegramUsername: "telegram_user",
+        emailNotifications: true
+      };
+      mockUserRepo.getUserById = jest.fn().mockResolvedValue(mockUser);
+      mockUserRepo.updateProfile = jest.fn().mockResolvedValue({ ...mockUser, avatar: "/new-avatar.png" });
+      (mapUserDAOToDTO as jest.Mock).mockReturnValue({ ...mockUser, avatar: "/new-avatar.png" });
+
+      const result = await updateMyProfile(1, { avatarPath: "/new-avatar.png" });
+
+      expect(mockUserRepo.updateProfile).toHaveBeenCalledWith(1, {
+        telegramUsername: undefined,
+        emailNotifications: undefined,
+        avatarPath: "/new-avatar.png"
+      });
+      expect(result.avatar).toBe("/new-avatar.png");
+    });
+  });
+
+  describe("activateAccount", () => {
+    it("dovrebbe attivare un account per email", async () => {
+      mockUserRepo.activateUser = jest.fn().mockResolvedValue(undefined);
+
+      await activateAccount("test@example.com");
+
+      expect(mockUserRepo.activateUser).toHaveBeenCalledWith("test@example.com");
+    });
+
+    it("dovrebbe gestire attivazione di account già attivo", async () => {
+      mockUserRepo.activateUser = jest.fn().mockResolvedValue(undefined);
+
+      await activateAccount("active@example.com");
+
+      expect(mockUserRepo.activateUser).toHaveBeenCalledWith("active@example.com");
+    });
+  });
+
+  describe("isActive", () => {
+    it("dovrebbe restituire true se l'account è attivo", async () => {
+      const mockUser = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        isActive: true
+      };
+      mockUserRepo.getUserByEmail = jest.fn().mockResolvedValue(mockUser);
+
+      const result = await isActive("test@example.com");
+
+      expect(mockUserRepo.getUserByEmail).toHaveBeenCalledWith("test@example.com");
+      expect(result).toBe(true);
+    });
+
+    it("dovrebbe restituire false se l'account non è attivo", async () => {
+      const mockUser = {
+        id: 2,
+        username: "inactiveuser",
+        firstName: "Inactive",
+        lastName: "User",
+        email: "inactive@example.com",
+        isActive: false
+      };
+      mockUserRepo.getUserByEmail = jest.fn().mockResolvedValue(mockUser);
+
+      const result = await isActive("inactive@example.com");
+
+      expect(mockUserRepo.getUserByEmail).toHaveBeenCalledWith("inactive@example.com");
+      expect(result).toBe(false);
     });
   });
 
