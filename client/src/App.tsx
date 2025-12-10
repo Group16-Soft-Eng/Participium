@@ -1,11 +1,11 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import './App.css'
 import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import UserMenu from './components/UserMenu';
 import NotificationBell from './components/NotificationBell';
 import { useEffect, useState } from 'react';
-import { getToken, getRole, getRoleFromToken } from './services/auth';
+import { getToken, getRole } from './services/auth';
 import { LoginScreen } from './pages/LoginScreen';
 
 import ReportForm from './Map/MapComponents/ReportForm';
@@ -17,8 +17,10 @@ import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePu
 import { AdminScreen } from './pages/AdminPage';
 import { NotificationProvider } from './contexts/NotificationContext';
 import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
-import ExternalMaintainersPage from './pages/ExternalMaintainer';
 import { UserPage } from './pages/UserPage';
+
+import { ReportDetailsPage } from './pages/ReportDetailsPage';
+import MaintainerDashboardPage from './pages/MaintainerDashboardPage';
 
 
 type OfficerProps = {
@@ -118,11 +120,11 @@ function App() {
   const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
   const [showLoginDialog, setShowLoginDialog] = useState(false);
 
-  useEffect(() => {
-    const onAuth = () => setAuth({ token: getToken(), role: getRole() });
-    window.addEventListener('authChange', onAuth);
-    return () => window.removeEventListener('authChange', onAuth);
-  }, []);
+    useEffect(() => {
+      const onAuth = () => setAuth({ token: getToken(), role: getRole() });
+      window.addEventListener('authChange', onAuth);
+      return () => window.removeEventListener('authChange', onAuth);
+    }, []);
 
   const isLoggedIn = Boolean(auth.token);
   const isAdmin = auth.role?.includes('municipal_administrator');
@@ -132,7 +134,7 @@ function App() {
   const isOfficer = isPROfficer || isTechnicalOfficer
   const isCitizen = auth.role?.includes('citizen');
 
-  return (
+    return (
     <NotificationProvider>
       <Router>
         <AppBar position="fixed" color="default" elevation={1} className="app-bar">
@@ -140,11 +142,14 @@ function App() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {/* small inline logo */}
               <Box className="app-logo" component={Link} to="/map" sx={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}>
-                <img src="/assets/StemmaTorino.svg" width="34" height="34" alt="Participium logo" />
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                  <circle cx="12" cy="12" r="10" fill="#1976d2" />
+                  <text x="12" y="16" textAnchor="middle" fontSize="12" fontFamily="Poppins, sans-serif" fill="#fff" fontWeight="600">P</text>
+                </svg>
               </Box>
 
-
-              <Box id="app-title" component={Link} to="/map" sx={{ textDecoration: 'none' }}>
+              
+              <Box id = "app-title" component={Link} to="/map" sx={{ textDecoration: 'none' }}>
                 <Typography variant="h6" component="div" sx={{ color: '#222', fontWeight: 700 }}>
                   Participium
                 </Typography>
@@ -156,14 +161,7 @@ function App() {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button className="flex-mobile" id="map-button" component={Link} to="/map" color="inherit">Map</Button>
-              {isLoggedIn && !isOfficer && !isAdmin && !isMaintainer && (
-                <Button component={Link} to="/messages" color="inherit">Messages</Button>
-              )}
-              {
-              /*isOfficer && (
-                <Button component={Link} to="/officer/messages" color="inherit">Messages</Button>
-              )*/}
-
+              
               {/* Show different button based on user role */}
               {isPROfficer && (
                 <PublicRelationsButton />
@@ -188,18 +186,32 @@ function App() {
                     boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
                   }}
                 >
-                  Maintainer Workspace
+                  Maintainer Dashboard
                 </Button>
-              )}
-              {isAdmin && <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />}
-              {isCitizen && (
-                <UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
-              )}
-
+              ) : isLoggedIn ? (
+                <Button id="report-button"
+                  component={Link}
+                  to="/submitReport"
+                  variant="contained"
+                  color="secondary"
+                  sx={{
+                    px: 2.2,
+                    py: 0.7,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    boxShadow: '0 6px 18px rgba(25,118,210,0.18)',
+                    background: 'linear-gradient(90deg,#ff6b35,#ff3d00)'
+                  }}
+                >
+                  Write a report
+                </Button>
+              ) : null}
+              
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
               {isLoggedIn ? (
                 <>
-                  {!isOfficer && !isAdmin && !isMaintainer && <NotificationBell />}
+                  {!isOfficer && !isAdmin && <NotificationBell />}
                   <UserMenu />
                 </>
               ) : (
@@ -221,7 +233,8 @@ function App() {
             <Route path="/officer/messages" element={<RequireTechnical><OfficerMessagesPage /></RequireTechnical>} />
             <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
             <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
-            <Route path="/maintainer" element={<RequireMaintainer><ExternalMaintainersPage /></RequireMaintainer>} />
+            <Route path="/maintainer" element={<RequireMaintainer><MaintainerDashboardPage /></RequireMaintainer>} />
+            <Route path="/reports/:reportId/details" element={<RequireLogin><ReportDetailsPage /></RequireLogin>} />
           </Routes>
         </Box>
 
@@ -237,10 +250,10 @@ function App() {
             <Button onClick={() => setShowLoginDialog(false)} color="inherit">
               Cancel
             </Button>
-            <Button
-              component={Link}
-              to="/login"
-              variant="contained"
+            <Button 
+              component={Link} 
+              to="/login" 
+              variant="contained" 
               color="primary"
               onClick={() => setShowLoginDialog(false)}
             >

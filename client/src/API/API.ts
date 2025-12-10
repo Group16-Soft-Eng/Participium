@@ -465,7 +465,6 @@ async function markNotificationAsRead(notificationId: number): Promise<{ id: num
 }
 
 
-
 async function getAllOfficers() {
     const token = getToken();
 
@@ -564,7 +563,6 @@ async function updateOfficer(officer: Officer) {
 
 async function deleteOfficer(id: number) {
     const token = getToken();
-
     const headers: HeadersInit = {};
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;

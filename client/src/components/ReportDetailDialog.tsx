@@ -35,6 +35,7 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
                 <strong>Photos:</strong>
                 <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
                   {report.document.photos.map((p, idx) => {
+                    if (!p || typeof p !== 'string') return null;
                     const apiBase = (import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api/v1').replace(/\/api\/v1\/?$/i, '');
                     const src = p.startsWith('http') ? p : `${apiBase}${p}`;
                     return (

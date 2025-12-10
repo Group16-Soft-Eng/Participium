@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, ButtonGroup, IconButton, Badge } from '@mui/material';
 import ReportDetailDialog from '../components/ReportDetailDialog';
 import { getMaintainerAssignedReports, updateReportStatusByMaintainer } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
+import ChatIcon from '@mui/icons-material/Chat';
+import { useNavigate } from 'react-router-dom';
 
 // Category colors matching the map (kept small and consistent)
 const CATEGORY_COLORS: Record<string, string> = {
@@ -24,8 +26,8 @@ const ExternalMaintainersPage: React.FC = () => {
   const [selected, setSelected] = useState<OfficerReport | null>(null);
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState('');
-  const [snackSeverity, setSnackSeverity] = useState<'success'|'error'|'info'>('success');
-  
+  const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAssigned();
@@ -102,15 +104,20 @@ const ExternalMaintainersPage: React.FC = () => {
                           <TableCell sx={{ width: 60 }}>{r.id}</TableCell>
                           <TableCell>{r.title}</TableCell>
                           <TableCell>
-                            <Chip 
-                              label={r.state || 'ASSIGNED'} 
-                              size="small" 
+                            <Chip
+                              label={r.state || 'ASSIGNED'}
+                              size="small"
                               color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
                             />
                           </TableCell>
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                           <TableCell align="right">
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                            <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                              <Badge badgeContent={0} color="error">
+                                <ChatIcon />
+                              </Badge>
+                            </IconButton>
                             <ButtonGroup size="small" variant="contained">
                               <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                               <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
@@ -149,15 +156,20 @@ const ExternalMaintainersPage: React.FC = () => {
                             <TableCell sx={{ width: 60 }}>{r.id}</TableCell>
                             <TableCell>{r.title}</TableCell>
                             <TableCell>
-                              <Chip 
-                                label={r.state || 'ASSIGNED'} 
-                                size="small" 
+                              <Chip
+                                label={r.state || 'ASSIGNED'}
+                                size="small"
                                 color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
                               />
                             </TableCell>
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
                               <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                              <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                                <Badge badgeContent={0} color="error">
+                                  <ChatIcon />
+                                </Badge>
+                              </IconButton>
                               <ButtonGroup size="small" variant="contained">
                                 <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
                                 <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>

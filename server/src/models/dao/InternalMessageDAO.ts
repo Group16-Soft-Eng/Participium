@@ -1,4 +1,3 @@
-// ...existing code...
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Index } from "typeorm";
 import { ReportDAO } from "@models/dao/ReportDAO";
 import { OfficerRole } from "@models/enums/OfficerRole";
@@ -35,4 +34,7 @@ export class InternalMessageDAO {
 
   @Column({ type: "datetime", default: () => "CURRENT_TIMESTAMP" })
   createdAt!: Date;
+
+  @Column({ type: "boolean", default: false })
+  read!: boolean;
 }
