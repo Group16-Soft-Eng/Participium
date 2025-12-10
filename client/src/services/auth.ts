@@ -68,14 +68,14 @@ export function getRoleFromToken(token: string | null): Role[] | null {
   if (!data) return null;
 
   if (data.type && Array.isArray(data.type)) {
-    const allowedRoles: string[] = [
+    const allowedRoles = new Set([
       'technical_office_staff',
       'municipal_public_relations_officer',
       'municipal_administrator',
-    ];
-    
+    ]);
+
     data.type.forEach(typeStr => {
-      if (allowedRoles.includes(typeStr)) {
+      if (allowedRoles.has(typeStr)) {
         result.push(typeStr as Role);
       }
     });

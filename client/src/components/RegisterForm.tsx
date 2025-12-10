@@ -49,7 +49,7 @@ export function OtpForm({ username, email, password, setSnackMessage, setSnackSe
     return <form action={formAction}>
         <Grid container spacing={2} maxWidth="sm">
             You've received an OTP code at the email address {email}.
-            The code is valid for 5 minutes.
+            The code is valid for 30 minutes.
             Please enter it below to complete your registration.
             <Grid size={12}>
                 <TextField id="otp" name="otp" label="OTP" variant="outlined" fullWidth required />
