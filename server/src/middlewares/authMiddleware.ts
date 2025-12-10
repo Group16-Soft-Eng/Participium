@@ -43,8 +43,16 @@ export function requireUserType(allowedTypes: OfficerRole[] | string[]): (req: R
       if (!user) throw new UnauthorizedError("Authentication required");
 
       const userTypes: (OfficerRole | string)[] = Array.isArray(user.type) ? user.type : [user.type];
-
-      const allowed = allowedTypes.some(t => userTypes.includes(t));
+      
+      // Normalize allowedTypes: convert OfficerRole enum values to their string values
+      const normalizedAllowed = allowedTypes.map(t => {
+        if (t === OfficerRole.MAINTAINER || t === "MAINTAINER" || t === "external_maintainer") {
+          return ["MAINTAINER", "external_maintainer"];
+        }
+        return t;
+      }).flat();
+      
+      const allowed = normalizedAllowed.some(t => userTypes.includes(t));
       if (!allowed) {
         throw new ForbiddenError("You do not have permission to perform this operation");
       }

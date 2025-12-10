@@ -46,10 +46,10 @@ export async function assignReportToMaintainer(reportId: number, maintainerId: n
   const reportRepo = new ReportRepository();
   const maintainerRepo = new MaintainerRepository();
   
-    // Verifica che il report sia in stato ASSIGNED
+    // Verifica che il report non sia già risolto o rifiutato
     const report = await reportRepo.getReportById(reportId);
-    if (report.state !== ReportState.ASSIGNED) {
-      throw new Error("Only ASSIGNED reports can be assigned");
+    if (report.state === ReportState.RESOLVED || report.state === ReportState.DECLINED) {
+      throw new Error("Cannot assign resolved or declined reports");
     }
   
     // Verifica che il maintainer esista

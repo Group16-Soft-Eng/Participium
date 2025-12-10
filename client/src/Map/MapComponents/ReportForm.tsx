@@ -50,7 +50,7 @@ const ReportForm: React.FC = () => {
         if (typeof lat === 'number' && typeof lng === 'number') {
           handleLocationSelect(lat, lng);
         }
-      } catch {}
+      } catch { }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
@@ -182,12 +182,12 @@ const ReportForm: React.FC = () => {
         </div>
         <div className="header-spacer"></div>
       </div>
-      
+
       <div className="report-layout">
         <div>
           <div className="map-section">
             <h3 className="map-section-title">🗺️ Select Report Location</h3>
-            <MapWithPin 
+            <MapWithPin
               onLocationSelect={handleLocationSelect}
               initialPosition={selectedLocation || undefined}
               reports={[]}
@@ -198,7 +198,7 @@ const ReportForm: React.FC = () => {
         <div>
           <div className="form-section">
             <h3 className="form-title">📝 Submit New Report</h3>
-            
+
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="title" className="form-label">
@@ -267,6 +267,8 @@ const ReportForm: React.FC = () => {
                   <p className="form-error">Please upload between 1 and 3 photos (JPG/PNG/WebP).</p>
                 )}
               </div>
+
+              {/*
               <div className="location-status">
                 <h4 className="location-status-title">Location *</h4>
                 {report.latitude && report.longitude ? (
@@ -283,6 +285,7 @@ const ReportForm: React.FC = () => {
                   </div>
                 )}
               </div>
+*/}
               <button
                 type="submit"
                 disabled={!validateForm() || isLoading}
@@ -294,29 +297,31 @@ const ReportForm: React.FC = () => {
           </div>
         </div>
       </div>
-      <Snackbar 
-        open={showSuccess} 
-        autoHideDuration={6000} 
+
+      <Snackbar
+        open={showSuccess}
+        autoHideDuration={6000}
         onClose={() => setShowSuccess(false)}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={() => setShowSuccess(false)} 
-          severity="success" 
+        <Alert
+          onClose={() => setShowSuccess(false)}
+          severity="success"
           sx={{ width: '100%', fontSize: '1.1rem' }}
         >
           🎉 Report submitted successfully! Redirecting to map...
         </Alert>
       </Snackbar>
-      <Snackbar 
-        open={showError} 
-        autoHideDuration={6000} 
+
+      <Snackbar
+        open={showError}
+        autoHideDuration={6000}
         onClose={() => setShowError(false)}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={() => setShowError(false)} 
-          severity="error" 
+        <Alert
+          onClose={() => setShowError(false)}
+          severity="error"
           sx={{ width: '100%', fontSize: '1.1rem' }}
         >
           {errorMessage}

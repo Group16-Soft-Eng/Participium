@@ -1,11 +1,11 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import './App.css'
 import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import UserMenu from './components/UserMenu';
 import NotificationBell from './components/NotificationBell';
 import { useEffect, useState } from 'react';
-import { getToken, getRole, getRoleFromToken } from './services/auth';
+import { getToken, getRole } from './services/auth';
 import { LoginScreen } from './pages/LoginScreen';
 
 import ReportForm from './Map/MapComponents/ReportForm';
@@ -17,8 +17,10 @@ import { RequireAdmin, RequireLogin, RequireCitizen, RequireTechnical, RequirePu
 import { AdminScreen } from './pages/AdminPage';
 import { NotificationProvider } from './contexts/NotificationContext';
 import TechnicalOfficerPage from './pages/TechnicalOfficerPage';
-import ExternalMaintainersPage from './pages/ExternalMaintainer';
 import { UserPage } from './pages/UserPage';
+
+import { ReportDetailsPage } from './pages/ReportDetailsPage';
+import MaintainerDashboardPage from './pages/MaintainerDashboardPage';
 
 
 type OfficerProps = {
@@ -156,13 +158,6 @@ function App() {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button className="flex-mobile" id="map-button" component={Link} to="/map" color="inherit">Map</Button>
-              {isLoggedIn && !isOfficer && !isAdmin && !isMaintainer && (
-                <Button component={Link} to="/messages" color="inherit">Messages</Button>
-              )}
-              {
-              /*isOfficer && (
-                <Button component={Link} to="/officer/messages" color="inherit">Messages</Button>
-              )*/}
 
               {/* Show different button based on user role */}
               {isPROfficer && (
@@ -188,18 +183,21 @@ function App() {
                     boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
                   }}
                 >
-                  Maintainer Workspace
+                  Maintainer Dashboard
                 </Button>
               )}
-              {isAdmin && <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />}
-              {isCitizen && (
-                <UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
+
+              {isCitizen && (<UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
+              )}
+
+              {isAdmin && (
+                <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
               )}
 
               {/* show login button when not authenticated; transform into UserMenu (avatar) after login */}
               {isLoggedIn ? (
                 <>
-                  {!isOfficer && !isAdmin && !isMaintainer && <NotificationBell />}
+                  {!isOfficer && !isAdmin && <NotificationBell />}
                   <UserMenu />
                 </>
               ) : (
@@ -221,7 +219,8 @@ function App() {
             <Route path="/officer/messages" element={<RequireTechnical><OfficerMessagesPage /></RequireTechnical>} />
             <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
             <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
-            <Route path="/maintainer" element={<RequireMaintainer><ExternalMaintainersPage /></RequireMaintainer>} />
+            <Route path="/maintainer" element={<RequireMaintainer><MaintainerDashboardPage /></RequireMaintainer>} />
+            <Route path="/reports/:reportId/details" element={<RequireLogin><ReportDetailsPage /></RequireLogin>} />
           </Routes>
         </Box>
 
