@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { getAssignedReports, reviewReport } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
-import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Snackbar, Alert, Dialog, DialogContent } from '@mui/material';
+import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Snackbar, Alert, Dialog, DialogContent } from '@mui/material';
 import ReportDetailDialog from './ReportDetailDialog';
 import AssignOfficerDialog from './AssignOfficerDialog';
-import { Select, Container, Stack } from '@mui/material';
 import { CategoryFilter } from './filters';
 import type { ReportCategory } from './filters';
 
@@ -178,7 +177,13 @@ const OfficerReview: React.FC = () => {
                     <TableCell sx={{ width: 160 }}>
                       {r.anonymity
                         ? 'Anonymous'
-                        : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : '—')}
+                        : (() => {
+                            if (r.author) {
+                                return `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
+                            } else {
+                                return '—';
+                            }
+                        })()}
                     </TableCell>
                     <TableCell sx={{ width: 180 }}>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                     <TableCell align="right">

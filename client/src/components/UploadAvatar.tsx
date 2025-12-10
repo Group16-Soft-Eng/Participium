@@ -23,13 +23,24 @@ const UploadAvatar: React.FC<UploadAvatarProps> = ({ onPhotoSelected }) => {
         style={{ display: "none" }}
         onChange={handleSelect}
       />
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
         style={{
           position: "absolute",
           inset: 0,
           cursor: "pointer",
+          // Reset default button styles to inherit from div's styling
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          margin: 0,
+          font: 'inherit',
+          color: 'inherit',
+          textAlign: 'inherit',
+          textDecoration: 'none',
+          outline: 'none',
+          WebkitAppearance: 'none', // For Safari
+          MozAppearance: 'none',    // For Firefox
         }}
         onClick={() => fileInputRef.current?.click()}
         onKeyDown={(e) => {

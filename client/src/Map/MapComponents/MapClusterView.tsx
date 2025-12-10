@@ -9,7 +9,7 @@ import { getRole, getToken } from '../../services/auth';
 // @ts-ignore
 import turinData from '../../data/turin_boundaries.json';
 
-const TURIN_COORDINATES: [number, number] = [45.0703, 7.6600];
+const TURIN_COORDINATES: [number, number] = [45.0703, 7.66];
 
 // Get Turin bounds from the actual boundary data
 const getTurinBounds = () => {
@@ -34,11 +34,11 @@ const getTurinMask = () => {
   
   // Larger bounding box covering area around Turin [Lon, Lat]
   const outerCoords = [
-    [6.50, 46.60], // Top Left
-    [9.30, 46.60], // Top Right
-    [9.30, 44.00], // Bottom Right
-    [6.50, 44.00], // Bottom Left
-    [6.50, 46.60]  // Close the polygon
+    [6.5, 46.6], // Top Left
+    [9.3, 46.6], // Top Right
+    [9.3, 44], // Bottom Right
+    [6.5, 44], // Bottom Left
+    [6.5, 46.6]  // Close the polygon
   ];
 
   let cityCoords: any[] = [];
@@ -242,10 +242,10 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
       <>
         {clusters.map((c: any, i: number) => {
           const [lng, lat] = c.geometry.coordinates;
-          if (c.properties && c.properties.cluster) {
+          if (c.properties?.cluster) {
             const count = c.properties.point_count;
             return (
-              <Marker key={`cluster-${i}`} position={[lat, lng]} icon={createClusterIcon(count)}>
+              <Marker key={`cluster-${c.properties.cluster_id}`} position={[lat, lng]} icon={createClusterIcon(count)}>
                 <Popup>
                   <div style={{ maxWidth: 300 }}>
                     <strong>{count} reports</strong>
@@ -260,7 +260,13 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
           const report = reports.find(r => r.id === props.reportId);
           const reporterName = report?.anonymity 
             ? 'Anonymous' 
-            : (report?.author ? `${report.author.firstName || ''} ${report.author.lastName || ''}`.trim() : 'Unknown');
+            : (() => {
+                if (report?.author) {
+                    return `${report.author.firstName || ''} ${report.author.lastName || ''}`.trim();
+                } else {
+                    return 'Unknown';
+                }
+            })();
           
           return (
             <Marker key={`rep-${props.reportId || i}`} position={[lat, lng]} icon={createSimpleIcon(props.category)}>
@@ -304,19 +310,27 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
   }
 
   // FALLBACK: original grid clustering
-  const precision = zoom <= 10 ? 1 : zoom <= 12 ? 2 : 3; // tune precision for better grouping
-  const mapClusters: Record<string, { sumLat: number; sumLng: number; count: number; items: Report[] }> = {};
+  let precision;
+  if (zoom <= 10) {
+    precision = 1;
+  } else if (zoom <= 12) {
+    precision = 2;
+  } else {
+    precision = 3;
+  } // tune precision for better grouping
+  const mapClusters: Record<string, { id: string; sumLat: number; sumLng: number; count: number; items: Report[] }> = {};
   reports.forEach((r) => {
     const keyLat = Number(r.latitude).toFixed(precision);
     const keyLng = Number(r.longitude).toFixed(precision);
     const key = `${keyLat}:${keyLng}`;
-    if (!mapClusters[key]) mapClusters[key] = { sumLat: 0, sumLng: 0, count: 0, items: [] };
+    if (!mapClusters[key]) mapClusters[key] = { id: key, sumLat: 0, sumLng: 0, count: 0, items: [] };
     mapClusters[key].sumLat += r.latitude;
     mapClusters[key].sumLng += r.longitude;
     mapClusters[key].count += 1;
     mapClusters[key].items.push(r);
   });
   const clusters = Object.values(mapClusters).map((c) => ({
+    id: c.id, // Add id to cluster object
     lat: c.sumLat / c.count,
     lng: c.sumLng / c.count,
     items: c.items,
@@ -330,7 +344,13 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
           return c.items.map((r) => {
             const reporterName = r.anonymity 
               ? 'Anonymous' 
-              : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown');
+              : (() => {
+                  if (r.author) {
+                      return `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
+                  } else {
+                      return 'Unknown';
+                  }
+              })();
             return (
               <Marker key={`rep-${r.id}`} position={[r.latitude, r.longitude]} icon={createSimpleIcon(r.category)}>
                 <Popup>
@@ -350,7 +370,13 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
           const r = c.items[0];
           const reporterName = r.anonymity 
             ? 'Anonymous' 
-            : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown');
+            : (() => {
+                if (r.author) {
+                    return `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
+                } else {
+                    return 'Unknown';
+                }
+            })();
           return (
             <Marker key={`rep-${r.id}`} position={[r.latitude, r.longitude]} icon={createSimpleIcon(r.category)}>
               <Popup>
@@ -367,7 +393,7 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
 
         // cluster marker (only at zoom < 17)
         return (
-          <Marker key={`cluster-${i}`} position={[c.lat, c.lng]} icon={createClusterIcon(c.items.length)}>
+          <Marker key={c.id} position={[c.lat, c.lng]} icon={createClusterIcon(c.items.length)}>
             <Popup>
               <div style={{ maxWidth: 300 }}>
                 <strong>{c.items.length} reports</strong>
@@ -432,7 +458,7 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
         center={center} 
         zoom={zoom}
         maxBounds={TURIN_BOUNDS}
-        maxBoundsViscosity={1.0}
+        maxBoundsViscosity={1}
         minZoom={13.2}
         maxZoom={20}
         style={{ height: '100%', width: '100%' }}>

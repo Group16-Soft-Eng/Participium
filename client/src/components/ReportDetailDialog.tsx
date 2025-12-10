@@ -24,13 +24,19 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
               <strong>Reported by:</strong> {' '}
               {report?.anonymity
                 ? 'Anonymous'
-                : (report?.author ? `${report.author.firstName || ''} ${report.author.lastName || ''}`.trim() : 'Unknown')}
+                : (() => {
+                    if (report?.author) {
+                        return `${report.author.firstName || ''} ${report.author.lastName || ''}`.trim();
+                    } else {
+                        return 'Unknown';
+                    }
+                })()}
             </Box>
             <Box>
               <strong>Description:</strong> {report?.document?.description || report?.description || 'No description'}
             </Box>
 
-            {report?.document?.photos && report.document.photos.length > 0 && (
+            {report?.document?.photos?.length > 0 && (
               <Box>
                 <strong>Photos:</strong>
                 <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
@@ -39,20 +45,38 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
                     const apiBase = (import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api/v1').replace(/\/api\/v1\/?$/i, '');
                     const src = p.startsWith('http') ? p : `${apiBase}${p}`;
                     return (
-                      // eslint-disable-next-line jsx-a11y/alt-text
-                      <img
-                        role="button"
-                        tabIndex={0}
+                      <Button
+                        variant="text"
+                        component="button"
+                        onClick={() => setOpenImageIndex(idx)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             setOpenImageIndex(idx);
                           }
                         }}
-                        key={idx}
-                        src={src}
-                        style={{ width: 120, height: 90, objectFit: 'cover', borderRadius: 6, border: '1px solid #ddd', cursor: 'pointer' }}
-                        onClick={() => setOpenImageIndex(idx)}
-                      />
+                        key={p} // Use p as key for stability
+                        sx={{
+                          p: 0, // Remove padding from button
+                          minWidth: 0, // Remove minWidth
+                          width: 120,
+                          height: 90,
+                          borderRadius: 6,
+                          overflow: 'hidden',
+                          border: '1px solid #ddd',
+                          cursor: 'pointer',
+                          transition: 'transform 0.2s',
+                          '&:hover': {
+                            transform: 'scale(1.05)',
+                            backgroundColor: 'transparent', // Prevent default button hover effect
+                          },
+                        }}
+                      >
+                        <img
+                          src={src}
+                          alt={`Report ${idx + 1}`} // Add meaningful alt text
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </Button>
                     );
                   })}
                 </Box>
@@ -83,7 +107,7 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
 
       <Dialog open={openImageIndex !== null} onClose={() => setOpenImageIndex(null)} maxWidth="md" fullWidth>
         <DialogContent sx={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', p: 0, bgcolor: 'black' }}>
-          {report && report.document?.photos && openImageIndex !== null && (
+          {report?.document?.photos && openImageIndex !== null && (
             <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: '60vh' }}>
               <IconButton
                 onClick={() => setOpenImageIndex(i => (i !== null ? (i - 1 + report.document!.photos!.length) % report.document!.photos!.length : null))}

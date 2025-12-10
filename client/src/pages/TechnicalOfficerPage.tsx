@@ -147,15 +147,20 @@ const TechnicalOfficerPage: React.FC = () => {
   const renderStatusChip = (state?: string, hasMaintainer?: boolean) => {
     const effective = state === 'ASSIGNED' && !hasMaintainer ? 'AWAITING_MAINTAINER' : state;
     const label = effective === 'AWAITING_MAINTAINER' ? 'Awaiting maintainer' : (effective || 'ASSIGNED');
-    const color = effective === 'AWAITING_MAINTAINER'
-      ? 'warning'
-      : effective === 'RESOLVED'
-        ? 'success'
-        : effective === 'IN_PROGRESS'
-          ? 'primary'
-          : effective === 'SUSPENDED'
-            ? 'warning'
-            : 'default';
+    const color = (() => {
+      switch (effective) {
+        case 'AWAITING_MAINTAINER':
+          return 'warning';
+        case 'RESOLVED':
+          return 'success';
+        case 'IN_PROGRESS':
+          return 'primary';
+        case 'SUSPENDED':
+          return 'warning';
+        default:
+          return 'default';
+      }
+    })();
     return (
       <Chip
         label={label}
@@ -335,31 +340,39 @@ const TechnicalOfficerPage: React.FC = () => {
           <Typography variant="body2" gutterBottom>
             Available External Maintainers for {selectedReportForAssignment?.category || 'unknown'} category:
           </Typography>
-          {loadingMaintainers ? (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              Loading maintainers...
-            </Typography>
-          ) : maintainers.length === 0 ? (
-            <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-              No maintainers available for this category
-            </Typography>
-          ) : (
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel id="maintainer-select-label">Select a maintainer</InputLabel>
-              <Select
-                labelId="maintainer-select-label"
-                value={selectedMaintainerId || ''}
-                label="Select a maintainer"
-                onChange={(e) => setSelectedMaintainerId(Number(e.target.value))}
-              >
-                {maintainers.map((maintainer) => (
-                  <MenuItem key={maintainer.id} value={maintainer.id}>
-                    {maintainer.name} ({maintainer.email})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
+          {(() => {
+            if (loadingMaintainers) {
+              return (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                  Loading maintainers...
+                </Typography>
+              );
+            } else if (maintainers.length === 0) {
+              return (
+                <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+                  No maintainers available for this category
+                </Typography>
+              );
+            } else {
+              return (
+                <FormControl fullWidth sx={{ mt: 2 }}>
+                  <InputLabel id="maintainer-select-label">Select a maintainer</InputLabel>
+                  <Select
+                    labelId="maintainer-select-label"
+                    value={selectedMaintainerId || ''}
+                    label="Select a maintainer"
+                    onChange={(e) => setSelectedMaintainerId(Number(e.target.value))}
+                  >
+                    {maintainers.map((maintainer) => (
+                      <MenuItem key={maintainer.id} value={maintainer.id}>
+                        {maintainer.name} ({maintainer.email})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              );
+            }
+          })()}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleAssignToMaintainer} variant="contained" disabled={!selectedMaintainerId || loadingMaintainers}>

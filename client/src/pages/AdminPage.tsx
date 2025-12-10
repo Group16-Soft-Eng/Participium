@@ -1,7 +1,6 @@
 import { Box, Button, Container, Stack } from "@mui/material";
 import { useState } from "react";
-import { LoginForm } from "../components/LoginForm";
-import { RegisterForm } from "../components/RegisterForm";
+
 import { AdminForm } from "../components/AdminForm";
 import EditOfficersForm from "../components/EditOfficersForm";
 

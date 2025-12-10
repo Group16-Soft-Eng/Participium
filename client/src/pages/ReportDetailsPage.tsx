@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Button, Skeleton, Alert, Accordion, AccordionSummary, AccordionDetails, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -117,7 +117,7 @@ export function ReportDetailsPage() {
           flexDirection: 'column', 
           bgcolor: 'white' 
         }}>
-          <InternalChatSection reportId={parseInt(reportId!)} />
+          <InternalChatSection reportId={Number.parseInt(reportId!)} />
         </Box>
       </Box>
     </Box>

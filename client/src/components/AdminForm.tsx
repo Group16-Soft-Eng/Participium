@@ -1,9 +1,7 @@
-import { Alert, Box, Button, Container, FormControl, Grid, InputLabel, MenuItem, Select, Snackbar, Stack, TextField } from "@mui/material";
+import { Alert, Button, Container, FormControl, Grid, InputLabel, MenuItem, Select, Snackbar, TextField } from "@mui/material";
 import './Forms.css';
-import { Form, useNavigate } from "react-router-dom";
 import { useActionState, useEffect, useState } from "react";
-import { getAvailableOfficerTypes, maintainerRegister, officerRegister, userLogin, userRegister } from "../API/API";
-import { setRole, setToken } from "../services/auth";
+import { getAvailableOfficerTypes, maintainerRegister, officerRegister } from "../API/API";
 
 interface AdminFormProps {
     setShowForm: (show: boolean) => void;
@@ -15,7 +13,7 @@ type RegisterState =
 
 function formatString(str: string) {
   return str
-    .replaceAll(/_/g, " ")            
+    .replaceAll('_', " ")            
     .toLowerCase()                 
     .replaceAll(/\b\w/g, c => c.toUpperCase());
 }
@@ -45,7 +43,7 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
         fetchOfficerTypes();
     }, []);
 
-    const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
+    const [, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
 
     async function register(prevData: RegisterState, formData: FormData) {
 

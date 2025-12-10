@@ -1,9 +1,8 @@
-import { Box, Button, Checkbox, Container, FormControl, FormControlLabel, Stack, TextField } from "@mui/material";
+import { Box, Button, Checkbox, Container, FormControlLabel, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { useState } from "react";
-import { userLogin, officerLogin, updateUserProfile } from "../API/API";
-import { setToken, setRole, getRoleFromToken, setPicture } from '../services/auth';
-import { useNavigate } from 'react-router-dom';
+import {  updateUserProfile } from "../API/API";
+import {  setPicture } from '../services/auth';
 import UploadAvatar from "./UploadAvatar";
 
 interface EditUserFormProps {

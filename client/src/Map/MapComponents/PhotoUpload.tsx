@@ -17,13 +17,13 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
 
   // allowed mime types (match server-side acceptance)
-  const ALLOWED_MIME = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const ALLOWED_MIME = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     // filter only image files and allowed mime types
-    const imageFiles = files.filter(file => file.type.startsWith('image/') && ALLOWED_MIME.includes(file.type));
-    const rejected = files.filter(file => file.type.startsWith('image/') && !ALLOWED_MIME.includes(file.type));
+    const imageFiles = files.filter(file => file.type.startsWith('image/') && ALLOWED_MIME.has(file.type));
+    const rejected = files.filter(file => file.type.startsWith('image/') && !ALLOWED_MIME.has(file.type));
     if (rejected.length > 0) {
       alert('Some files were ignored because only JPG, PNG and WebP formats are allowed.');
     }
@@ -76,9 +76,8 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
       </label>
 
       {canAddMore && (
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               fileInputRef.current?.click();
@@ -107,12 +106,12 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
             onChange={handleFileSelect}
             className="upload-input"
           />
-        </div>
+        </button>
       )}
 
       <div className="photos-grid-preview">
         {photos.map((photo, index) => (
-          <div key={index} className="photo-preview-item">
+          <div key={`${photo.name}-${photo.lastModified}`} className="photo-preview-item">
             <img
               src={URL.createObjectURL(photo)}
               alt={`Preview ${index + 1}`}

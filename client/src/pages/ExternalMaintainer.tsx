@@ -20,6 +20,19 @@ const getCategoryColor = (category?: string): string => {
   return (category && CATEGORY_COLORS[category.toLowerCase()]) || '#6b7280';
 };
 
+const getStatusColor = (reportState?: string) => {
+  switch (reportState) {
+    case 'RESOLVED':
+      return 'success';
+    case 'IN_PROGRESS':
+      return 'primary';
+    case 'SUSPENDED':
+      return 'warning';
+    default:
+      return 'default';
+  }
+};
+
 const ExternalMaintainersPage: React.FC = () => {
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -107,7 +120,7 @@ const ExternalMaintainersPage: React.FC = () => {
                             <Chip
                               label={r.state || 'ASSIGNED'}
                               size="small"
-                              color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
+                              color={getStatusColor(r.state)}
                             />
                           </TableCell>
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
@@ -159,7 +172,7 @@ const ExternalMaintainersPage: React.FC = () => {
                               <Chip
                                 label={r.state || 'ASSIGNED'}
                                 size="small"
-                                color={r.state === 'RESOLVED' ? 'success' : r.state === 'IN_PROGRESS' ? 'primary' : r.state === 'SUSPENDED' ? 'warning' : 'default'}
+                                color={getStatusColor(r.state)}
                               />
                             </TableCell>
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>

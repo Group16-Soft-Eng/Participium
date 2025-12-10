@@ -1,6 +1,6 @@
-import { Alert, Box, Button, Container, Grid, Snackbar, Stack, TextField } from "@mui/material";
+import { Alert, Button, Container, Grid, Snackbar, TextField } from "@mui/material";
 import './Forms.css';
-import { Form, useNavigate, useLocation } from "react-router-dom";
+import {  useNavigate, useLocation } from "react-router-dom";
 import { useActionState, useState } from "react";
 import { userLogin, userRegister, generateOtp, verifyOtp } from "../API/API";
 import { clearPicture, setRole, setToken } from "../services/auth";
@@ -25,7 +25,7 @@ export function OtpForm({ username, email, password, setSnackMessage, setSnackSe
             setToken(token);
             clearPicture();
             setRole('citizen')
-            window.dispatchEvent(new Event('authChange'));
+            globalThis.dispatchEvent(new Event('authChange'));
             // If a pending location exists, redirect to the submit report page so the selection is preserved
             const pending = localStorage.getItem('pendingReportLocation');
             if (pending) {
@@ -44,7 +44,7 @@ export function OtpForm({ username, email, password, setSnackMessage, setSnackSe
         }
     }
 
-    const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
+    const [, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
 
     return <form action={formAction}>
         <Grid container spacing={2} maxWidth="sm">
@@ -66,9 +66,9 @@ export function OtpForm({ username, email, password, setSnackMessage, setSnackSe
 
 export function RegisterForm({ setShowRegister }: RegisterFormProps) {
     const location = useLocation();
-    const fromPath = (location && (location as any).state && (location as any).state.from && (location as any).state.from.pathname) ? (location as any).state.from.pathname : null;
+    const fromPath = (location as any).state?.from?.pathname || null;
 
-    const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
+    const [, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
 
     const [snackOpen, setSnackOpen] = useState(false);
     const [snackMessage, setSnackMessage] = useState('');
