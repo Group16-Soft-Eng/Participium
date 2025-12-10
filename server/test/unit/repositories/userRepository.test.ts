@@ -40,9 +40,10 @@ describe("UserRepository Unit Tests", () => {
           lastName: "User",
           email: "user1@example.com",
           password: "hash1",
-        avatar: null,
-        telegramUsername: null,
-        emailNotifications: false
+          avatar: null,
+          telegramUsername: null,
+          emailNotifications: false,
+          isActive: false
         },
         {
           id: 2,
@@ -51,9 +52,10 @@ describe("UserRepository Unit Tests", () => {
           lastName: "User",
           email: "user2@example.com",
           password: "hash2",
-        avatar: null,
-        telegramUsername: null,
-        emailNotifications: false
+          avatar: null,
+          telegramUsername: null,
+          emailNotifications: false,
+          isActive: false
         }
       ];
 
@@ -77,7 +79,8 @@ describe("UserRepository Unit Tests", () => {
         password: "hashedpassword",
         avatar: null,
         telegramUsername: null,
-        emailNotifications: false
+        emailNotifications: false,
+        isActive: false
       };
 
       mockRepo.find.mockResolvedValue([mockUser]);
@@ -108,7 +111,8 @@ describe("UserRepository Unit Tests", () => {
         password: "hashedpassword",
         avatar: null,
         telegramUsername: null,
-        emailNotifications: false
+        emailNotifications: false,
+        isActive: false
       };
 
       mockRepo.find.mockResolvedValue([mockUser]);
@@ -139,7 +143,8 @@ describe("UserRepository Unit Tests", () => {
         password: "hashedpassword",
         avatar: null,
         telegramUsername: null,
-        emailNotifications: false
+        emailNotifications: false,
+        isActive: false
       };
 
       mockRepo.find.mockResolvedValue([mockUser]);
@@ -175,7 +180,8 @@ describe("UserRepository Unit Tests", () => {
       const savedUser: UserDAO = {
         id: 1,
         ...newUser,
-        password: "hashedpassword"
+        password: "hashedpassword",
+        isActive: false
       };
 
       // Mock: username e email non esistono
@@ -224,7 +230,8 @@ describe("UserRepository Unit Tests", () => {
         password: "hash",
         avatar: null,
         telegramUsername: null,
-        emailNotifications: false
+        emailNotifications: false,
+        isActive: false
       };
 
       // Username esiste
@@ -249,7 +256,8 @@ describe("UserRepository Unit Tests", () => {
         password: "hash",
         avatar: null,
         telegramUsername: null,
-        emailNotifications: false
+        emailNotifications: false,
+        isActive: false
       };
 
       // Username non esiste, ma email esiste
@@ -324,7 +332,8 @@ describe("UserRepository Unit Tests", () => {
         password: "hash",
         avatar: null,
         telegramUsername: null,
-        emailNotifications: false
+        emailNotifications: false,
+        isActive: false
       };
 
       mockRepo.find.mockResolvedValue([mockUser]);
@@ -342,6 +351,350 @@ describe("UserRepository Unit Tests", () => {
       await expect(userRepository.deleteUser("nonexistent"))
         .rejects
         .toThrow(NotFoundError);
+    });
+  });
+
+  describe("getUseryTelegramUsername", () => {
+    it("dovrebbe restituire un utente quando esiste per telegram username", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: "telegram_user",
+        emailNotifications: false,
+        isActive: false
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+
+      const result = await userRepository.getUseryTelegramUsername("telegram_user");
+
+      expect(result).toEqual(mockUser);
+      expect(mockRepo.find).toHaveBeenCalledWith({ where: { telegramUsername: "telegram_user" } });
+    });
+
+    it("dovrebbe lanciare NotFoundError quando l'utente non esiste", async () => {
+      mockRepo.find.mockResolvedValue([]);
+
+      await expect(userRepository.getUseryTelegramUsername("nonexistent_telegram"))
+        .rejects
+        .toThrow(NotFoundError);
+    });
+
+    it("dovrebbe gestire telegram username null", async () => {
+      mockRepo.find.mockResolvedValue([]);
+
+      await expect(userRepository.getUseryTelegramUsername(null as any))
+        .rejects
+        .toThrow(NotFoundError);
+    });
+  });
+
+  describe("updateProfile", () => {
+    it("dovrebbe aggiornare telegramUsername", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: "old_telegram",
+        emailNotifications: true,
+        isActive: false
+      };
+
+      const updatedUser = {
+        ...mockUser,
+        telegramUsername: "new_telegram"
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+      mockRepo.save.mockResolvedValue(updatedUser);
+
+      const result = await userRepository.updateProfile(1, { telegramUsername: "new_telegram" });
+
+      expect(result.telegramUsername).toBe("new_telegram");
+      expect(mockRepo.save).toHaveBeenCalledWith(expect.objectContaining({
+        telegramUsername: "new_telegram"
+      }));
+    });
+
+    it("dovrebbe aggiornare emailNotifications", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: "telegram_user",
+        emailNotifications: true,
+        isActive: false
+      };
+
+      const updatedUser = {
+        ...mockUser,
+        emailNotifications: false
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+      mockRepo.save.mockResolvedValue(updatedUser);
+
+      const result = await userRepository.updateProfile(1, { emailNotifications: false });
+
+      expect(result.emailNotifications).toBe(false);
+      expect(mockRepo.save).toHaveBeenCalledWith(expect.objectContaining({
+        emailNotifications: false
+      }));
+    });
+
+    it("dovrebbe aggiornare avatarPath", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: "telegram_user",
+        emailNotifications: true,
+        isActive: false
+      };
+
+      const updatedUser = {
+        ...mockUser,
+        avatar: "/uploads/avatars/avatar.png"
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+      mockRepo.save.mockResolvedValue(updatedUser);
+
+      const result = await userRepository.updateProfile(1, { avatarPath: "/uploads/avatars/avatar.png" });
+
+      expect(result.avatar).toBe("/uploads/avatars/avatar.png");
+      expect(mockRepo.save).toHaveBeenCalledWith(expect.objectContaining({
+        avatar: "/uploads/avatars/avatar.png"
+      }));
+    });
+
+    it("dovrebbe aggiornare tutti i campi contemporaneamente", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: "old_telegram",
+        emailNotifications: true,
+        isActive: false
+      };
+
+      const updatedUser = {
+        ...mockUser,
+        telegramUsername: "new_telegram",
+        emailNotifications: false,
+        avatar: "/uploads/avatars/avatar.png"
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+      mockRepo.save.mockResolvedValue(updatedUser);
+
+      const result = await userRepository.updateProfile(1, {
+        telegramUsername: "new_telegram",
+        emailNotifications: false,
+        avatarPath: "/uploads/avatars/avatar.png"
+      });
+
+      expect(result.telegramUsername).toBe("new_telegram");
+      expect(result.emailNotifications).toBe(false);
+      expect(result.avatar).toBe("/uploads/avatars/avatar.png");
+    });
+
+    it("dovrebbe impostare telegramUsername a null", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: "old_telegram",
+        emailNotifications: true,
+        isActive: false
+      };
+
+      const updatedUser = {
+        ...mockUser,
+        telegramUsername: null
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+      mockRepo.save.mockResolvedValue(updatedUser);
+
+      const result = await userRepository.updateProfile(1, { telegramUsername: null });
+
+      expect(result.telegramUsername).toBeNull();
+    });
+
+    it("dovrebbe impostare avatarPath a null", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        password: "hashedpassword",
+        avatar: "/old-avatar.png",
+        telegramUsername: "telegram_user",
+        emailNotifications: true,
+        isActive: false
+      };
+
+      const updatedUser = {
+        ...mockUser,
+        avatar: null
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+      mockRepo.save.mockResolvedValue(updatedUser);
+
+      const result = await userRepository.updateProfile(1, { avatarPath: null });
+
+      expect(result.avatar).toBeNull();
+    });
+
+    it("non dovrebbe modificare campi non specificati", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        password: "hashedpassword",
+        avatar: "/avatar.png",
+        telegramUsername: "telegram_user",
+        emailNotifications: true,
+        isActive: false
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+      mockRepo.save.mockResolvedValue(mockUser);
+
+      const result = await userRepository.updateProfile(1, {});
+
+      expect(result.avatar).toBe("/avatar.png");
+      expect(result.telegramUsername).toBe("telegram_user");
+      expect(result.emailNotifications).toBe(true);
+    });
+
+    it("dovrebbe lanciare NotFoundError se l'utente non esiste", async () => {
+      mockRepo.find.mockResolvedValue([]);
+
+      await expect(userRepository.updateProfile(999, { telegramUsername: "test" }))
+        .rejects
+        .toThrow(NotFoundError);
+    });
+  });
+
+  describe("activateUser", () => {
+    it("dovrebbe attivare un utente esistente", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false,
+        isActive: false
+      };
+
+      const activatedUser = {
+        ...mockUser,
+        isActive: true
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+      mockRepo.save.mockResolvedValue(activatedUser);
+
+      const result = await userRepository.activateUser("test@example.com");
+
+      expect(result.isActive).toBe(true);
+      expect(mockRepo.find).toHaveBeenCalledWith({ where: { email: "test@example.com" } });
+      expect(mockRepo.save).toHaveBeenCalledWith(expect.objectContaining({
+        isActive: true
+      }));
+    });
+
+    it("dovrebbe gestire utente già attivo", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false,
+        isActive: true
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+      mockRepo.save.mockResolvedValue(mockUser);
+
+      const result = await userRepository.activateUser("test@example.com");
+
+      expect(result.isActive).toBe(true);
+      expect(mockRepo.save).toHaveBeenCalled();
+    });
+
+    it("dovrebbe lanciare NotFoundError se l'utente non esiste", async () => {
+      mockRepo.find.mockResolvedValue([]);
+
+      await expect(userRepository.activateUser("nonexistent@example.com"))
+        .rejects
+        .toThrow(NotFoundError);
+    });
+
+    it("dovrebbe gestire email con caratteri speciali", async () => {
+      const mockUser: UserDAO = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test+tag@example.co.uk",
+        password: "hashedpassword",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: false,
+        isActive: false
+      };
+
+      const activatedUser = {
+        ...mockUser,
+        isActive: true
+      };
+
+      mockRepo.find.mockResolvedValue([mockUser]);
+      mockRepo.save.mockResolvedValue(activatedUser);
+
+      const result = await userRepository.activateUser("test+tag@example.co.uk");
+
+      expect(result.isActive).toBe(true);
     });
   });
 });
