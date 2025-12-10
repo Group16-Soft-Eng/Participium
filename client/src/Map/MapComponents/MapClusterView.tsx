@@ -233,7 +233,7 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
     return () => { mounted = false; };
   }, [reports]);
 
-  if (scIndex && zoom < 17) {
+  if (scIndex && zoom <= 18) {
     const bounds = map.getBounds();
     const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
     const clusters = scIndex.getClusters(bbox, map.getZoom());
