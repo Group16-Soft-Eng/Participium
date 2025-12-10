@@ -23,10 +23,7 @@ function formatString(str: string) {
 export function AdminForm({ setShowForm }: AdminFormProps) {
     const [officeTypes, setOfficeTypes] = useState<string[]>([]);
     const [officerTypes, setOfficerTypes] = useState<string[]>([]);
-
     const [role, setRole] = useState("");
-
-
     const [snackOpen, setSnackOpen] = useState(false);
     const [snackMessage, setSnackMessage] = useState('');
     const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
@@ -41,16 +38,14 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                 console.error("Error fetching officer types:", error);
             }
         };
-
         fetchOfficerTypes();
     }, []);
 
-    const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
+    // Removed the useless assignment to variable "state"
+    const [, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
 
     async function register(prevData: RegisterState, formData: FormData) {
-
         const role = formData.get("role") as string;
-
         const validateMatch = (a: string | FormDataEntryValue | null, b: string | FormDataEntryValue | null, message: string) => {
             if (a !== b) {
                 setSnackMessage(message);
@@ -83,7 +78,6 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                     },
                 ],
             };
-
             const officerRole = officer.roles[0].role;
             if (
                 officerRole === "municipal_public_relations_officer" ||
@@ -91,7 +85,6 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
             ) {
                 officer.roles[0].office = "organization";
             }
-
             return officer;
         };
 
@@ -116,7 +109,6 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
             } else {
                 await officerRegister(createOfficer());
             }
-
             setSnackMessage("Officer registered successfully");
             setSnackSeverity("success");
             setSnackOpen(true);
@@ -124,7 +116,6 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : String(error);
-
             if (message.includes("409")) {
                 const msg = "Username or email already in use";
                 setSnackMessage(msg);
@@ -132,7 +123,6 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                 setSnackOpen(true);
                 return { error: msg };
             }
-
             if (message.includes("400")) {
                 const msg = "Invalid email. Please use a valid email address.";
                 setSnackMessage(msg);
@@ -140,7 +130,6 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                 setSnackOpen(true);
                 return { error: msg };
             }
-
             setSnackMessage("Registration failed");
             setSnackSeverity("error");
             setSnackOpen(true);

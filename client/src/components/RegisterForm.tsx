@@ -44,7 +44,7 @@ export function OtpForm({ username, email, password, setSnackMessage, setSnackSe
         }
     }
 
-    const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
+    const [, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
 
     return <form action={formAction}>
         <Grid container spacing={2} maxWidth="sm">
@@ -66,20 +66,16 @@ export function OtpForm({ username, email, password, setSnackMessage, setSnackSe
 
 export function RegisterForm({ setShowRegister }: RegisterFormProps) {
     const location = useLocation();
-    const fromPath = (location && (location as any).state && (location as any).state.from && (location as any).state.from.pathname) ? (location as any).state.from.pathname : null;
-
-    const [state, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
-
+    const fromPath = (location as any)?.state?.from?.pathname || null; // Optional chaining applied
+    
+    const [, formAction] = useActionState(register, { success: false, error: '' } as RegisterState); // Useless assignment removed
     const [snackOpen, setSnackOpen] = useState(false);
     const [snackMessage, setSnackMessage] = useState('');
     const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
-
     const [otp, setOtp] = useState(false);
-
     const [user, setUser] = useState<{ username: string, email: string, password: string } | null>(null);
-
+    
     async function register(prevData: RegisterState, formData: FormData) {
-
         const user = {
             firstName: formData.get('name') as string,
             lastName: formData.get('surname') as string,
@@ -88,23 +84,25 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
             password: formData.get('password') as string
         }
         setUser(user);
+
         if (formData.get('email') !== formData.get('cemail')) {
             setSnackMessage('Emails do not match');
             setSnackSeverity('error');
             setSnackOpen(true);
             return { error: 'Emails do not match' };
         }
+
         if (formData.get('password') !== formData.get('confirm-password')) {
             setSnackMessage('Passwords do not match');
             setSnackSeverity('error');
             setSnackOpen(true);
             return { error: 'Passwords do not match' };
         }
+
         try {
             await userRegister(user);
             await generateOtp(user.email);
             setOtp(true)
-
             return { success: true }
         }
         catch (error) {
