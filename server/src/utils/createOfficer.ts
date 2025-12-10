@@ -1,5 +1,6 @@
 import { AppDataSource } from "@database";
 import { OfficerDAO } from "@models/dao/OfficerDAO";
+import { RoleDAO } from "@models/dao/RoleDAO";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
 import { hashPassword } from "@services/authService";
@@ -7,7 +8,7 @@ import { hashPassword } from "@services/authService";
 async function createOfficer() {
   try {
     console.log("🔧 Creating new officer...");
-    
+
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
@@ -20,33 +21,44 @@ async function createOfficer() {
       surname: "Rossi",
       email: "marco.rossi@comune.torino.it",
       password: "officer123", // Plain password - will be hashed
-      role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-      office: OfficeType.INFRASTRUCTURE, // Infrastructure issues
+      roles: [
+        {
+          officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF,
+          officeType: OfficeType.INFRASTRUCTURE, // Infrastructure issues
+        } as Partial<RoleDAO>,
+      ],
     };
 
     // Check if officer already exists
-    const existing = await officerRepo.findOne({ where: { email: officerData.email } });
+    const existing = await officerRepo.findOne({
+      where: { email: officerData.email },
+      relations: { roles: true },
+    });
     if (existing) {
       console.log(`⚠️  Officer with email ${officerData.email} already exists!`);
       console.log("\n📋 Existing officer details:");
       console.log(`   Name: ${existing.name} ${existing.surname}`);
       console.log(`   Email: ${existing.email}`);
-      console.log(`   Role: ${existing.role}`);
-      console.log(`   Office: ${existing.office}`);
+      console.log(
+        `   Roles: ${
+          (existing.roles || [])
+            .map((r) => `${r.officerRole}${r.officeType ? ` (${r.officeType})` : ""}`)
+            .join(", ") || "none"
+        }`
+      );
       return existing;
     }
 
     // Hash the password
     const hashedPassword = await hashPassword(officerData.password);
 
-    // Create new officer
+    // Create new officer with roles
     const newOfficer = officerRepo.create({
       name: officerData.name,
       surname: officerData.surname,
       email: officerData.email,
       password: hashedPassword,
-      role: officerData.role,
-      office: officerData.office,
+      roles: officerData.roles as Partial<RoleDAO>[],
     });
 
     await officerRepo.save(newOfficer);
@@ -56,8 +68,11 @@ async function createOfficer() {
     console.log(`   Name: ${officerData.name} ${officerData.surname}`);
     console.log(`   Email: ${officerData.email}`);
     console.log(`   Password: ${officerData.password}`);
-    console.log(`   Role: ${officerData.role}`);
-    console.log(`   Office: ${officerData.office}`);
+    console.log(
+      `   Roles: ${officerData.roles
+        .map((r) => `${r.officerRole}${r.officeType ? ` (${r.officeType})` : ""}`)
+        .join(", ")}`
+    );
     console.log("\n🔑 Use these credentials to login as an officer!");
 
     return newOfficer;
