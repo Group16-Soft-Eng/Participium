@@ -285,7 +285,7 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
           );
         })}
         {/* render pinned marker if present */}
-        {pinned && (getToken() == null || getRole() === 'citizen') && (
+        {pinned && (getToken() == null || getRole()?.includes('citizen')) && (
           <Marker position={[pinned.lat, pinned.lng]} icon={createPinIcon()}>
             <Popup>
               <div style={{ maxWidth: 260 }}>
