@@ -467,7 +467,7 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
         maxBounds={TURIN_BOUNDS}
         maxBoundsViscosity={1.0}
         minZoom={13.2}
-        maxZoom={20}
+        maxZoom={18}
         style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
