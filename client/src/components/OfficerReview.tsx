@@ -85,7 +85,6 @@ const OfficerReview: React.FC = () => {
     setSnackOpen(true);
   };
 
-
   const openRejectDialog = (id: number) => setReject({ open: true, reportId: id, reason: '' });
 
   const handleConfirmReject = async () => {
@@ -122,13 +121,10 @@ const OfficerReview: React.FC = () => {
   return (
     <Box>
       <Typography variant="h5" gutterBottom>Pending Reports for Review</Typography>
-
       {loading && <div>Loading...</div>}
-
       {!loading && reports.length === 0 && (
         <Typography>No pending reports assigned.</Typography>
       )}
-
       {!loading && reports.length > 0 && (
         <Box sx={{ mb: 3 }}>
           <CategoryFilter
@@ -139,7 +135,6 @@ const OfficerReview: React.FC = () => {
           />
         </Box>
       )}
-
       {!loading && filteredReports.length > 0 && (
         <Paper elevation={1} sx={{ p: 2 }}>
           <TableContainer>
@@ -198,13 +193,11 @@ const OfficerReview: React.FC = () => {
           </TableContainer>
         </Paper>
       )}
-
       {!loading && reports.length > 0 && filteredReports.length === 0 && (
         <Paper elevation={1} sx={{ p: 3 }}>
           <Typography variant="body1" color="text.secondary">No reports match the selected filters.</Typography>
         </Paper>
       )}
-
       <Dialog open={reject.open} onClose={() => setReject({ open: false, reportId: null, reason: '' })} fullWidth maxWidth="sm">
         <DialogTitle>Reject Report</DialogTitle>
         <DialogContent>
@@ -230,21 +223,17 @@ const OfficerReview: React.FC = () => {
           <Button color="error" onClick={handleConfirmReject}>Confirm Reject</Button>
         </DialogActions>
       </Dialog>
-
       <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
           {snackMessage}
         </Alert>
       </Snackbar>
-
       {!loading && view && (
         <ReportDetailDialog open={selected !== null} report={selected} onClose={() => closeView()} />
       )}
-
       {!loading && showingAssign && (
         <AssignOfficerDialog open={showingAssign} successfulAssign={(id) => successfulAssign(id)} failedAssign={(id) => failedAssign(id)} onClose={() => closeAssign()} office={selected?.category || ''} report={selected} />
       )}
-
     </Box>
   );
 };

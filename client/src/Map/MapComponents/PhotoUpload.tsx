@@ -27,13 +27,14 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
     if (rejected.length > 0) {
       alert('Some files were ignored because only JPG, PNG and WebP formats are allowed.');
     }
+    
     const remainingSlots = maxPhotos - photos.length;
     const filesToAdd = imageFiles.slice(0, remainingSlots);
-
+    
     if (filesToAdd.length > 0) {
       onPhotosChange([...photos, ...filesToAdd]);
     }
-
+    
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -57,14 +58,24 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
+    
     const files = Array.from(e.dataTransfer.files);
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    // Also update drag and drop to use Set
+    const imageFiles = files.filter(file => 
+      file.type.startsWith('image/') && ALLOWED_MIME_TYPES.has(file.type)
+    );
+    
     const remainingSlots = maxPhotos - photos.length;
     const filesToAdd = imageFiles.slice(0, remainingSlots);
-
+    
     if (filesToAdd.length > 0) {
       onPhotosChange([...photos, ...filesToAdd]);
     }
+  };
+
+  // Helper function to check if file is allowed
+  const isFileAllowed = (file: File): boolean => {
+    return file.type.startsWith('image/') && ALLOWED_MIME_TYPES.has(file.type);
   };
 
   const canAddMore = photos.length < maxPhotos;
@@ -88,6 +99,12 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
         >
           <div className="upload-icon">
             <FaUpload size={24} />
@@ -98,6 +115,9 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
           <p className="upload-hint">
             Minimum 1 photo required, maximum {maxPhotos} photos
           </p>
+          <p className="upload-hint-small">
+            Allowed formats: JPG, PNG, WebP
+          </p>
           <input
             ref={fileInputRef}
             type="file"
@@ -105,16 +125,18 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
             accept="image/png,image/jpeg,image/webp"
             onChange={handleFileSelect}
             className="upload-input"
+            aria-hidden="true"
+            tabIndex={-1}
           />
         </button>
       )}
-
+      
       <div className="photos-grid-preview">
         {photos.map((photo, index) => (
           <div key={`${photo.name}-${photo.lastModified}`} className="photo-preview-item">
             <img
               src={URL.createObjectURL(photo)}
-              alt={`Preview ${index + 1}`}
+              alt={`Preview`}
               className="photo-preview-image"
             />
             <button
@@ -130,7 +152,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
           </div>
         ))}
       </div>
-
+      
       {photos.length === 0 && (
         <p className="photo-validation-error">
           At least one photo is required

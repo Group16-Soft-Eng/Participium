@@ -8,3 +8,4 @@ __pycache__/
 venv/
 **/participium.db
 participium.db
+server/coverage/**

@@ -35,7 +35,9 @@ server_base_url = "http://127.0.0.1:5000"  # Use IP to avoid DNS issues
 SERVER_URL = _normalize_server_url(os.getenv("SERVER_URL", server_base_url))
 BASE_URL = SERVER_URL.rstrip("/") + "/api/v1"
 print(f"[telegram] BASE_URL={BASE_URL}")
-
+str_ch_category = "Please choose a category for your report:"
+str_going_back = "Going back to the previous step."
+str_send_location = "Please send your location (must be within Turin area)."
 sessions: Dict[int, str] = {}
 categories: List[str] = []
 
@@ -132,7 +134,7 @@ def build_main_menu() -> InlineKeyboardMarkup:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Welcome to the Participium Bot! Use /login to authenticate.")
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    image_path = os.path.join(script_dir, "welcome.png")
+    image_path = os.path.join(script_dir, "ParticipiumLogo.webp")
     if os.path.exists(image_path):
         # Use asynchronous file I/O to read the image
         async with aiofiles.open(image_path, "rb") as f:

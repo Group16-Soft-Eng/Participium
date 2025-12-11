@@ -73,13 +73,10 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
     const [snackOpen, setSnackOpen] = useState(false);
     const [snackMessage, setSnackMessage] = useState('');
     const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
-
     const [otp, setOtp] = useState(false);
-
     const [user, setUser] = useState<{ username: string, email: string, password: string } | null>(null);
-
+    
     async function register(prevData: RegisterState, formData: FormData) {
-
         const user = {
             firstName: formData.get('name') as string,
             lastName: formData.get('surname') as string,
@@ -88,23 +85,25 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
             password: formData.get('password') as string
         }
         setUser(user);
+
         if (formData.get('email') !== formData.get('cemail')) {
             setSnackMessage('Emails do not match');
             setSnackSeverity('error');
             setSnackOpen(true);
             return { error: 'Emails do not match' };
         }
+
         if (formData.get('password') !== formData.get('confirm-password')) {
             setSnackMessage('Passwords do not match');
             setSnackSeverity('error');
             setSnackOpen(true);
             return { error: 'Passwords do not match' };
         }
+
         try {
             await userRegister(user);
             await generateOtp(user.email);
             setOtp(true)
-
             return { success: true }
         }
         catch (error) {

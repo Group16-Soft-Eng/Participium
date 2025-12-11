@@ -233,7 +233,7 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
     return () => { mounted = false; };
   }, [reports]);
 
-  if (scIndex && zoom < 17) {
+  if (scIndex && zoom <= 18) {
     const bounds = map.getBounds();
     const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
     const clusters = scIndex.getClusters(bbox, map.getZoom());
@@ -268,6 +268,8 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
                 }
             })();
           
+          return 'Unknown';
+          })();
           return (
             <Marker key={`rep-${props.reportId || i}`} position={[lat, lng]} icon={createSimpleIcon(props.category)}>
               <Popup>
@@ -282,7 +284,7 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
           );
         })}
         {/* render pinned marker if present */}
-        {pinned && (getToken() == null || getRole() === 'citizen') && (
+        {pinned && (getToken() == null || getRole()?.includes('citizen')) && (
           <Marker position={[pinned.lat, pinned.lng]} icon={createPinIcon()}>
             <Popup>
               <div style={{ maxWidth: 260 }}>
@@ -460,7 +462,7 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
         maxBounds={TURIN_BOUNDS}
         maxBoundsViscosity={1}
         minZoom={13.2}
-        maxZoom={20}
+        maxZoom={18}
         style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

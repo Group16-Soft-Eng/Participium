@@ -332,7 +332,8 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
                       </div>
                     )}
                   </div>
-                )}
+                  )}
+
 
                 <div className="report-popup-footer">
                   <div className="popup-location">
