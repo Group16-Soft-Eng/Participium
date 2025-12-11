@@ -18,10 +18,11 @@ sections:
 
 **Remember**  a story is done ONLY if it fits the Definition of Done:
  
-- Unit Tests passing: 774
-- Code review completed: 5h
-- Code present on VCS: 
-- End-to-End tests performed: 
+- Unit Tests passing
+- Code review completed
+- Code present on VCS
+- End-to-End tests performed
+- SonarCloud review passing
 
 > Please refine your DoD
  
@@ -93,15 +94,14 @@ sections:
   - No significant error in time estimation, but few tasks required more time due to inexperience with chat implementation
 - What lessons did you learn (both positive and negative) in this sprint?
   - We learned to update each other and the documentation more frequently
+  - We need to be more careful during estimation, to avoid minimal errors in the total estimated time
+  - We can handle changes and issues quickly and efficiently, so if unforeseen problems show up the team is not slowed down and can maintain momentum.
 - Which improvement goals set in the previous retrospective were you able to achieve? 
-  - we reached a better comunication between internal groups especially before and after a task is respectively started or completed or when a doubt shows up.
+  - We improved comunication between internal groups especially before and after a task is respectively started or completed or when a doubt shows up.
 - Which ones you were not able to achieve? Why?
-  - All the goal set from previous sprint have been satisfied.
+  - All the goals set from previous sprint have been satisfied.
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
-  - We're all getting along really well, this is contributing to accordingly have not so much to get improved as a team. 
-
-> Propose one or two
-
+  - We need to handle branches on the github repository more efficiently, to avoid merge conflicts which can take a lot of time to be solved
 - One thing you are proud of as a Team!!
   - We're really prod of us as a team because we're confirming we can manage to complete each story and task in the backlog sprint in most of cases with really not significant time estimation errors.
   - We're also proud to share that, as weeks pass by, we show more commitment for the tasks each one is involved into but also interest for the ones we are not.
