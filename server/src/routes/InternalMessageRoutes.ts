@@ -9,7 +9,7 @@ const router = Router({ mergeParams: true });
 router.get("/:reportId/internal-messages", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, OfficerRole.MAINTAINER, "external_maintainer"]), async (req, res, next) => {
   try {
     const reportId = Number(req.params.reportId);
-    if (isNaN(reportId)) {
+    if (Number.isNaN(reportId)) {
       return res.status(400).json({ error: "Invalid report ID" });
     }
     const messages = await listConversation(reportId);
@@ -23,7 +23,7 @@ router.get("/:reportId/internal-messages", authenticateToken, requireUserType([O
 router.post("/:reportId/internal-messages", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, OfficerRole.MAINTAINER, "external_maintainer"]), async (req, res, next) => {
   try {
     const reportId = Number(req.params.reportId);
-    if (isNaN(reportId)) {
+    if (Number.isNaN(reportId)) {
       return res.status(400).json({ error: "Invalid report ID" });
     }
 
