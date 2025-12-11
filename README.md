@@ -50,8 +50,9 @@ The database is preloaded with an admin account, with credentials:
 
 - **Citizen**: Can submit reports, view all approved reports on the map
 - **Municipal Public Relations Officer**: Can review pending reports, assign them to Technical Officers or reject them with reasons
-- **Technical Officer**: Can view assigned reports and change their status
+- **Technical Officer**: Can view assigned reports, change their status and assign them to External Maintainers
 - **Municipal Administrator**: Can create officers and assign them to offices
+- **External Maintainer**: Can view assigned reports, change their status and communicate with Technical Officers
 
 ## Features
 
@@ -78,10 +79,25 @@ The database is preloaded with an admin account, with credentials:
   - Update report status
   - View report details including photos, location, and description
   - View reports on map from review interface
+- **Report Assignment**
+  - Assign reports to external maintainers
+- **Information exchange with Maintainers**
+  - Can exchange messages about a report with the assigned external maintainer
 
 ### For Admin
 - **Officer Creation**
-  - Dashboard to configure officer account
+  - Dashboard to create officer accounts
+- **Officer Modification**
+  - Dashboard to edit officer accounts
+
+### For External Maintainers
+- **Report Update**
+  - Dashboard to view assigned reports
+  - Update report status
+  - View report details including photos, location, and description
+  - View reports on map from review interface
+- **Information exchange with Officers**
+  - Can exchange messages about a report with the assigned technical officer
 
 ## Implemented Office Types
 The offices included in the application are the following:
@@ -102,10 +118,15 @@ The offices included in the application are the following:
 - PT05: Report details
 - PT06: Approve/Deny reports
 - PT07: Report visualization on Map
-- PT08/PT10: Report list for municipality users
+- PT08: Report list for municipality users
 - PT09: Account Configuration
+- PT10: Modify municipality users role
 - PT11: Update Report Status
 - PT12: Create Report via Telegram
+- PT24: Assign report to external maintainers
+- PT25: Update report status (external maintainer)
+- PT26: Exchange information between staff members and external maintainers
+- PT27: Confirmation code for registration
 
 ## Technologies
 
@@ -123,6 +144,7 @@ The offices included in the application are the following:
 - Multer for file uploads
 - JWT for authentication
 - Redis for session token handling
+- Socket.io for live chat
 
 ## License
 See LICENSE file for details
