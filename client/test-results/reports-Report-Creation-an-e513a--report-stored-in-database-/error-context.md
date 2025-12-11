@@ -1,0 +1,45 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Participium logo" [ref=e6] [cursor=pointer]:
+          - /url: /map
+          - img "Participium logo" [ref=e7]
+        - link "Participium Turin civic reports" [ref=e8] [cursor=pointer]:
+          - /url: /map
+          - generic [ref=e9]: Participium
+          - generic [ref=e10]: Turin civic reports
+      - generic [ref=e11]:
+        - link "Map" [ref=e12] [cursor=pointer]:
+          - /url: /map
+        - link "Login / Register" [ref=e13] [cursor=pointer]:
+          - /url: /login
+  - generic [ref=e15]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - text: Username
+          - generic [ref=e20]: "*"
+        - generic [ref=e21]:
+          - textbox "Username" [ref=e22]: citizen_1765416738326
+          - group:
+            - generic: Username *
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - text: Password
+          - generic [ref=e25]: "*"
+        - generic [ref=e26]:
+          - textbox "Password" [ref=e27]: Test@1234
+          - group:
+            - generic: Password *
+      - button "Login" [ref=e28] [cursor=pointer]: Login
+      - button "Go Back" [ref=e29] [cursor=pointer]
+    - alert [ref=e30]:
+      - img [ref=e32]
+      - generic [ref=e34]: Login failed. Please check your credentials.
+      - button "Close" [ref=e36] [cursor=pointer]:
+        - img [ref=e37]
+```

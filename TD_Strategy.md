@@ -5,10 +5,14 @@ From the next sprint, we've decided to split these 15 hours in the following way
 - 5 hours for bugfixing
 - 5 hours for refactoring
 
-### Priority
-The highest priority is for the most important user stories: since the Technical Debt handling has started later in the process, the earlier stories must be completed first.
+### Issues handling Priority
+The highest priority is for issues in the code related to the most important user stories: since the Technical Debt handling has started later in the process, the earlier stories must be completed first.
 
-Additionally, the priority for "code smells" in between the stories is handled by category, from the highest to the lowest:
+Additionally, the priority for "code smells" handling in between the stories is handled by category, from the highest to the lowest:
 - Security
 - Reliability
 - Maintainability
+
+In between the categories, the priority is handled according to the issue severity.
+
+For issues that remain equally ranked, priority is determined by the estimated effort: items requiring less effort are addressed first.
