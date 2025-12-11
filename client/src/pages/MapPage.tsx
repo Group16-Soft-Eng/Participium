@@ -4,7 +4,7 @@ import MapClusterView from '../Map/MapComponents/MapClusterView';
 import type { Report } from '../Map/types/report';
 import { Box, List, ListItem, Paper, Typography, Chip, CircularProgress } from '@mui/material';
 import { getAllReports } from '../Map/mapApi/mapApi';
-import { getToken, getRole } from '../services/auth';
+import { getToken } from '../services/auth';
 
 const getCategoryColor = (cat: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
   switch (cat) {
@@ -43,7 +43,7 @@ const MapPage: React.FC = () => {
         const reportIdParam = searchParams.get('id');
         if (reportIdParam) {
           const specificReport = data.find(r => r.id === reportIdParam);
-          if (specificReport && !visibleReports.find(r => r.id === reportIdParam)) {
+          if (specificReport && !visibleReports.some(r => r.id === reportIdParam)) {
             visibleReports = [...visibleReports, specificReport];
           }
           setSelectedId(reportIdParam);
@@ -123,8 +123,24 @@ const MapPage: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     cursor: 'pointer',
-                    bgcolor: isInProgress ? '#e3f2fd' : isSuspended ? '#fff3e0' : 'white',
-                    borderLeft: isInProgress ? '4px solid #1976d2' : isSuspended ? '4px solid #f57c00' : 'none'
+                    bgcolor: (() => {
+                      if (isInProgress) {
+                        return '#e3f2fd';
+                      } else if (isSuspended) {
+                        return '#fff3e0';
+                      } else {
+                        return 'white';
+                      }
+                    })(),
+                    borderLeft: (() => {
+                      if (isInProgress) {
+                        return '4px solid #1976d2';
+                      } else if (isSuspended) {
+                        return '4px solid #f57c00';
+                      } else {
+                        return 'none';
+                      }
+                    })()
                   }}
                   elevation={1}
                   onClick={() => setSelectedId(r.id)}
@@ -133,7 +149,10 @@ const MapPage: React.FC = () => {
                     <Typography variant="subtitle1">{r.title}</Typography>
                     <Typography variant="caption" color="text.secondary">
                       {/* Show reporter: anonymous when report.anonymity is true, otherwise show author name if available */}
-                      {r.anonymity ? 'Anonymous' : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown')}
+                      {r.anonymity ? 'Anonymous' : (() => {
+                        const authorDisplayName = r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown';
+                        return authorDisplayName;
+                      })()}
                       {` • ${new Date(r.createdAt).toLocaleDateString()}`}
                     </Typography>
                   </Box>

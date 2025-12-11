@@ -16,8 +16,8 @@ const RequireLogin: React.FC<RequireLoginProps> = ({ children }) => {
       setAuthState({ token: getToken(), role: getRole() });
     };
 
-    window.addEventListener('authChange', handleAuthChange);
-    return () => window.removeEventListener('authChange', handleAuthChange);
+    globalThis.addEventListener('authChange', handleAuthChange);
+    return () => globalThis.removeEventListener('authChange', handleAuthChange);
   }, []);
 
   // Require that a token exists and user is NOT an officer

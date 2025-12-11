@@ -146,7 +146,7 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
             <Box display="flex" gap={2} flexWrap="wrap">
               {report.document.photos.map((photo: string, index: number) => (
                 <Box
-                  key={index}
+                  key={photo}
                   component="img"
                   src={static_ip_address + photo}
                   alt={`Report photo ${index + 1}`}

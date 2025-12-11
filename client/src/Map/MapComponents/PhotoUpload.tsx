@@ -16,21 +16,14 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // Use Set for allowed MIME types
-  const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+  // allowed mime types (match server-side acceptance)
+  const ALLOWED_MIME = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    
-    // Filter only image files and allowed MIME types using Set.has()
-    const imageFiles = files.filter(file => 
-      file.type.startsWith('image/') && ALLOWED_MIME_TYPES.has(file.type)
-    );
-    
-    const rejected = files.filter(file => 
-      file.type.startsWith('image/') && !ALLOWED_MIME_TYPES.has(file.type)
-    );
-    
+    // filter only image files and allowed mime types
+    const imageFiles = files.filter(file => file.type.startsWith('image/') && ALLOWED_MIME.has(file.type));
+    const rejected = files.filter(file => file.type.startsWith('image/') && !ALLOWED_MIME.has(file.type));
     if (rejected.length > 0) {
       alert('Some files were ignored because only JPG, PNG and WebP formats are allowed.');
     }
@@ -92,10 +85,15 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
       <label className="photo-upload-label">
         Photos ({photos.length}/{maxPhotos})
       </label>
-      
-        {canAddMore && (
+
+      {canAddMore && (
         <button
           type="button"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              fileInputRef.current?.click();
+            }
+          }}
           className={`upload-area ${isDragOver ? 'upload-area-dragover' : ''}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -135,7 +133,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
       
       <div className="photos-grid-preview">
         {photos.map((photo, index) => (
-          <div key={`photo-${photo.name}-${photo.size}-${photo.lastModified}`} className="photo-preview-item">
+          <div key={`${photo.name}-${photo.lastModified}`} className="photo-preview-item">
             <img
               src={URL.createObjectURL(photo)}
               alt={`Preview`}

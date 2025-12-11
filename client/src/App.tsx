@@ -122,8 +122,8 @@ function App() {
 
   useEffect(() => {
     const onAuth = () => setAuth({ token: getToken(), role: getRole() });
-    window.addEventListener('authChange', onAuth);
-    return () => window.removeEventListener('authChange', onAuth);
+    globalThis.addEventListener('authChange', onAuth);
+    return () => globalThis.removeEventListener('authChange', onAuth);
   }, []);
 
   const isLoggedIn = Boolean(auth.token);

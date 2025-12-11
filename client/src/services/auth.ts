@@ -41,7 +41,7 @@ export function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('role');
   // notify listeners; navigation handled by caller if desired
-  window.dispatchEvent(new Event('authChange'));
+  globalThis.dispatchEvent(new Event('authChange'));
 }
 
 // Try to decode a JWT and extract the payload. Returns null if not a JWT or invalid.

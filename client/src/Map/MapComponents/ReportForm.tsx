@@ -36,7 +36,7 @@ const ReportForm: React.FC = () => {
     // 1. Prefer location.state.position if present
     if (location && (location as any).state && (location as any).state.position) {
       const pos = (location as any).state.position as [number, number];
-      if (pos && pos.length === 2) {
+      if (pos?.length === 2) {
         handleLocationSelect(pos[0], pos[1]);
         localStorage.removeItem('pendingReportLocation');
         return;
@@ -136,7 +136,8 @@ const ReportForm: React.FC = () => {
       localStorage.removeItem('pendingReportLocation');
     } catch (err) {
       console.error('Submit error', err);
-      alert('Failed to submit report.');
+      setErrorMessage('Failed to submit report. Please try again.');
+      setShowError(true);
     } finally {
       setIsLoading(false);
     }
@@ -162,11 +163,14 @@ const ReportForm: React.FC = () => {
   };
 
   // Extracted nested ternary operation into an independent statement
-  const buttonText = isLoading 
-    ? '⏳ Submitting...' 
-    : validateForm() 
-      ? '✅ Submit New Report' 
-      : '⚠️ Complete All Fields';
+  let buttonText;
+  if (isLoading) {
+    buttonText = '⏳ Submitting...';
+  } else if (validateForm()) {
+    buttonText = '✅ Submit New Report';
+  } else {
+    buttonText = '⚠️ Complete All Fields';
+  }
 
   return (
     <div className="report-form-container">

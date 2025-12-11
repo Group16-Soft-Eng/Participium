@@ -42,16 +42,7 @@ const UserMenu: React.FC = () => {
         </>
         }
         {/* Role-specific shortcuts */}
-        {/*
-        {role === 'technical_office_staff' && (
-          <MenuItem onClick={() => { handleClose(); navigate('/technical'); }}>Technical Workspace</MenuItem>
-        )}
-        {role === 'municipal_public_relations_officer' && (
-          <MenuItem onClick={() => { handleClose(); navigate('/officer'); }}>Review Reports</MenuItem>
-        )}
-        {role === 'municipal_administrator' && (
-          <MenuItem onClick={() => { handleClose(); navigate('/admin'); }}>Admin Dashboard</MenuItem>
-        )} */}
+        {}
         {/* Citizen shortcut */}
         {
         /*!role && (

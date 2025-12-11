@@ -74,11 +74,15 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
               borderColor: status.color || 'primary.main',
               fontWeight: value === status.value ? 'bold' : 'normal',
               '&:hover': {
-                backgroundColor: value === status.value && status.color 
-                  ? status.color 
-                  : status.color 
-                    ? `${status.color}20` 
-                    : 'action.hover',
+                backgroundColor: (() => {
+                  if (value === status.value && status.color) {
+                    return status.color;
+                  } else if (status.color) {
+                    return `${status.color}20`;
+                  } else {
+                    return 'action.hover';
+                  }
+                })(),
               }
             }}
             variant={value === status.value ? 'filled' : 'outlined'}

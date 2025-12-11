@@ -1,18 +1,12 @@
-import { Box, Button, Checkbox, Container, FormControlLabel, Stack, TextField, Switch, IconButton, Badge } from "@mui/material";
+import { Box, Container, Stack, TextField, Switch, IconButton, Badge } from "@mui/material";
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import PersonIcon from '@mui/icons-material/Person';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import BadgeIcon from '@mui/icons-material/Badge';
 import EmailIcon from '@mui/icons-material/Email';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useEffect, useState } from "react";
-import { getToken, getUserFromToken } from "../services/auth";
-import { getUserProfile, updateUserProfile } from "../API/API";
-import UploadAvatar from "../components/UploadAvatar";
-import { EditUserForm } from "../components/EditUserForm";
-
-import {static_ip_address} from "../API/API"
+import { getUserProfile, updateUserProfile, static_ip_address } from "../API/API";
 
 export interface User {
     id?: number;
@@ -33,7 +27,7 @@ export function UserPage() {
     const [user, setUser] = useState<User>({});
     const [telegramValue, setTelegramValue] = useState('');
     const [emailNotificationsValue, setEmailNotificationsValue] = useState(false);
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [, setAvatarFile] = useState<File | null>(null);
 
     useEffect(() => {
         getUserProfile().then((data) => {
@@ -42,10 +36,6 @@ export function UserPage() {
             setEmailNotificationsValue(data.emailNotifications || false);
         });
     }, [edit]);
-
-    const setShowEdit = (show: boolean) => {
-        setEdit(show);
-    }
 
     const handleTelegramChange = async (newValue: string) => {
         setTelegramValue(newValue);

@@ -466,7 +466,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                             ) : (
                                 <Box sx={{ maxHeight: 200, overflowY: 'auto', pr: 1 }}>
                                     {currentRoles.map((assignment, index) => (
-                                        <Paper key={index} elevation={1} sx={{ p: 1.5, mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Paper key={`${assignment.office}-${assignment.role}`} elevation={1} sx={{ p: 1.5, mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <Typography>
                                                 {assignment.office != null && formatString(assignment.office) + " - "} {formatString(assignment.role)}
                                             </Typography>
@@ -647,8 +647,11 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                                                 <TableCell>
                                                     {officer.roles.map((r, idx) => (
                                                         <Chip
-                                                            key={idx}
-                                                            label={`${formatString(r.role)}${r.office && r.role === 'technical_office_staff' ? ` in ${formatString(r.office)} Office` : ''}`}
+                                                            key={`${r.office}-${r.role}`}
+                                                            label={(() => {
+                                                                const officeSuffix = r.office && r.role === 'technical_office_staff' ? ` in ${formatString(r.office)} Office` : '';
+                                                                return `${formatString(r.role)}${officeSuffix}`;
+                                                            })()}
                                                             size="small"
                                                             sx={{ mr: 1, mb: 0.5, backgroundColor: getCategoryColor(r.office), color: '#fff' }}
                                                         />
@@ -697,7 +700,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                                                 <TableCell>
                                                     {maintainer.categories.map((c, idx) => (
                                                         <Chip
-                                                            key={idx}
+                                                            key={c}
 
                                                             label={formatString(c)}
                                                             size="small"
