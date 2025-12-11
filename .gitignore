@@ -10,3 +10,4 @@ venv/
 participium.db
 server/coverage/**
 client/test-results/**
+client/test-results/*
