@@ -31,7 +31,7 @@ const getTurinMask = () => {
   if (!cityBoundary?.geojson) return null;
 
   const geo = cityBoundary.geojson;
-  
+
   // Larger bounding box covering area around Turin [Lon, Lat]
   const outerCoords = [
     [6.5, 46.6], // Top Left
@@ -163,7 +163,7 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
   useMapEvents({
     click(e) {
       const p = { lat: e.latlng.lat, lng: e.latlng.lng };
-      
+
       // Check if the point is within Turin boundaries
       if (!isPointInTurin(p.lat, p.lng)) {
         L.popup()
@@ -172,11 +172,11 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
           .openOn(map);
         return;
       }
-      
+
       setPinned(p);
       try {
         localStorage.setItem('pendingReportLocation', JSON.stringify([p.lat, p.lng]));
-      } catch (err) {}
+      } catch (err) { }
     },
   });
 
@@ -258,18 +258,16 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
 
           const props = c.properties || {};
           const report = reports.find(r => r.id === props.reportId);
-          const reporterName = report?.anonymity 
-            ? 'Anonymous' 
+          const reporterName = report?.anonymity
+            ? 'Anonymous'
             : (() => {
-                if (report?.author) {
-                    return `${report.author.firstName || ''} ${report.author.lastName || ''}`.trim();
-                } else {
-                    return 'Unknown';
-                }
+              if (report?.author) {
+                return `${report.author.firstName || ''} ${report.author.lastName || ''}`.trim();
+              } else {
+                return 'Unknown';
+              }
             })();
-          
-          return 'Unknown';
-          })();
+
           return (
             <Marker key={`rep-${props.reportId || i}`} position={[lat, lng]} icon={createSimpleIcon(props.category)}>
               <Popup>
@@ -344,14 +342,14 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
         // At high zoom levels (17+), always show individual markers
         if (zoom >= 17) {
           return c.items.map((r) => {
-            const reporterName = r.anonymity 
-              ? 'Anonymous' 
+            const reporterName = r.anonymity
+              ? 'Anonymous'
               : (() => {
-                  if (r.author) {
-                      return `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
-                  } else {
-                      return 'Unknown';
-                  }
+                if (r.author) {
+                  return `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
+                } else {
+                  return 'Unknown';
+                }
               })();
             return (
               <Marker key={`rep-${r.id}`} position={[r.latitude, r.longitude]} icon={createSimpleIcon(r.category)}>
@@ -367,17 +365,17 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
             );
           });
         }
-        
+
         if (c.items.length === 1) {
           const r = c.items[0];
-          const reporterName = r.anonymity 
-            ? 'Anonymous' 
+          const reporterName = r.anonymity
+            ? 'Anonymous'
             : (() => {
-                if (r.author) {
-                    return `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
-                } else {
-                    return 'Unknown';
-                }
+              if (r.author) {
+                return `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
+              } else {
+                return 'Unknown';
+              }
             })();
           return (
             <Marker key={`rep-${r.id}`} position={[r.latitude, r.longitude]} icon={createSimpleIcon(r.category)}>
@@ -434,18 +432,18 @@ function MapController({ center, zoom }: { center: [number, number]; zoom: numbe
 const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, initialCenter, initialZoom, highlightLocation }) => {
   const center = initialCenter || TURIN_COORDINATES;
   const zoom = initialZoom || 13;
-  
+
   // Get the city boundary for rendering
   const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
   const maskData = getTurinMask();
-  
+
   const maskStyle = {
     color: 'transparent',
     fillColor: '#001c50',
     fillOpacity: 0.2,
     interactive: false
   };
-  
+
   const boundaryStyle = {
     color: '#0a2c6bff',
     weight: 3,
@@ -453,11 +451,11 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
     fillOpacity: 0,
     interactive: false
   };
-  
+
   return (
     <div style={{ height: 'calc(100vh - 64px)', width: '100%' }}>
-      <MapContainer 
-        center={center} 
+      <MapContainer
+        center={center}
         zoom={zoom}
         maxBounds={TURIN_BOUNDS}
         maxBoundsViscosity={1}
@@ -469,16 +467,16 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {maskData && (
-          <GeoJSON 
+          <GeoJSON
             key="turin-mask"
-            data={maskData as any} 
+            data={maskData as any}
             style={maskStyle}
           />
         )}
         {cityBoundary && (
-          <GeoJSON 
-            key={cityBoundary.osm_id} 
-            data={cityBoundary.geojson as any} 
+          <GeoJSON
+            key={cityBoundary.osm_id}
+            data={cityBoundary.geojson as any}
             style={boundaryStyle}
           />
         )}
