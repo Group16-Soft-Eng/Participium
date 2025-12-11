@@ -54,7 +54,7 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
         };
 
         const createMaintainer = () => ({
-            name: formData.get("name") as string,
+            name: formData.get("username") as string,
             email: formData.get("email") as string,
             password: formData.get("password") as string,
             categories: [formData.get("office") as string],
