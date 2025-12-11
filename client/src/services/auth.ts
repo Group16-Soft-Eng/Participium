@@ -52,7 +52,7 @@ export function decodeJwt(token: string | null): any | null {
     if (parts.length < 2) return null;
     const payload = parts[1];
     // atob with URL-safe base64
-    const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const b64 = payload.replaceAll(/-/g, '+').replaceAll(/_/g, '/');
     const json = decodeURIComponent(
       atob(b64)
         .split('')

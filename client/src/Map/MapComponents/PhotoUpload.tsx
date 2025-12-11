@@ -99,12 +99,6 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              fileInputRef.current?.click();
-            }
-          }}
         >
           <div className="upload-icon">
             <FaUpload size={24} />
