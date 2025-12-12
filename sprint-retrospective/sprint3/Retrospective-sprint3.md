@@ -93,7 +93,7 @@ sections:
 - What caused your errors in estimation (if any)?
   - No significant error in time estimation, but few tasks required more time due to inexperience with chat implementation
 - What lessons did you learn (both positive and negative) in this sprint?
-  - We learned to update each other and the documentation more frequently
+  - We learned to clean unused branches on the GitHub repository more frequently
   - We need to be more careful during estimation, to avoid minimal errors in the total estimated time
   - We can handle changes and issues quickly and efficiently, so if unforeseen problems show up the team is not slowed down and can maintain momentum.
 - Which improvement goals set in the previous retrospective were you able to achieve? 
