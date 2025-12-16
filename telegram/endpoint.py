@@ -152,7 +152,7 @@ async def handle_login(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     chat_id = update.effective_chat.id
     username = update.effective_user.username
     try:
-        response = await _httpx_with_retry("POST", f"{BASE_URL}/auth/telegram", json={"username": username})
+        response = await _httpx_with_retry("POST", f"{BASE_URL}/auth/telegram", json={"username": username, "chat_id": chat_id})
     except Exception as e:
         await query.edit_message_text(f"Error connecting to server: {e}")
         return
@@ -170,7 +170,7 @@ async def retrieveAccount(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     chat_id = update.effective_chat.id
     username = update.effective_user.username
     try:
-        response = await _httpx_with_retry("POST", f"{BASE_URL}/auth/telegram", json={"username": username})
+        response = await _httpx_with_retry("POST", f"{BASE_URL}/auth/telegram", json={"username": username, "chatId": chat_id})
     except Exception as e:
         await update.message.reply_text(f"Error connecting to server: {e}")
         return

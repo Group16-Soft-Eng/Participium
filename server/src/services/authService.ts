@@ -19,6 +19,7 @@ export type AuthTokenPayload = {
   // supporta uno o più ruoli
   type: OfficerRole | OfficerRole[] | string | string[];
   sessionType?: SessionType;
+  chatId?: number;
 };
 
 // hashPassword
@@ -58,6 +59,7 @@ export async function saveSession(
   userId: number,
   token: string,
   sessionType: SessionType = "web",
+  chatId?: number,
   expiresIn: number = 86400
 ): Promise<void> {
   const key = `${SESSION_PREFIX}${userId}:${sessionType}`;
@@ -69,6 +71,7 @@ export async function saveSession(
     type: decoded.type, // array o singolo ruolo come presente nel token
     isStaff: decoded.isStaff, // boolean
     createdAt: Date.now(),
+    chatId: chatId ?? decoded.chatId ?? 0
   });
   await redisClient.set(key, sessionData, { EX: expiresIn });
 }
@@ -82,10 +85,18 @@ export async function getSession(
   type?: AuthTokenPayload["type"];
   isStaff?: boolean;
   createdAt: number;
+  chatId?: number;
 } | null> {
   const key = `${SESSION_PREFIX}${userId}:${sessionType}`;
   const data = await redisClient.get(key);
   return data ? JSON.parse(data) : null;
+}
+
+export async function getTelegramChatId(
+  userId: number
+): Promise<number | null> {
+  const session = await getSession(userId, "telegram");
+  return session && session.chatId ? session.chatId : null;
 }
 
 export async function deleteSession(
@@ -137,3 +148,4 @@ export async function blacklistUserSessions(
     await deleteSession(userId, sessionType);
   }
 }
+

@@ -6,7 +6,6 @@ import { verifyPassword, generateToken, saveSession } from "@services/authServic
 import { UnauthorizedError } from "@utils/utils";
 import { OfficerRole } from "@models/enums/OfficerRole";
 
-
 export async function loginUserByUsername(username: string, password: string): Promise<string> {
   const userRepo = new UserRepository();
   const user = await userRepo.getUserByUsername(username);
@@ -128,7 +127,7 @@ export async function loginOfficer(identifier: string, password: string, isEmail
 }
 
 
-export async function getUserByTelegramUsername(telegramUsername: string) {
+export async function getUserByTelegramUsername(telegramUsername: string, chatId: number): Promise<string> {
   const userRepo = new UserRepository();
   const user = await userRepo.getUseryTelegramUsername(telegramUsername);
   if (!user) {
@@ -140,9 +139,9 @@ export async function getUserByTelegramUsername(telegramUsername: string) {
     username: user.username,
     isStaff: false,
     type: "user",
-    sessionType: "telegram"
+    sessionType: "telegram",
+    chatId: chatId
   });
-
   await saveSession(user.id, token, "telegram");
   return token;
 }

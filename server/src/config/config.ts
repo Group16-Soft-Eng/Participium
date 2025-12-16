@@ -39,7 +39,9 @@ export const CONFIG = {
     ALLOW_SELF_SIGNED: false
   },
 
-
+  TELEGRAM_CONFIG : {
+    TOKEN : "8413586512:AAHkAtWfo3A2LLfwc7_QmEnlYTTsjqn7_UM"
+  },
 
   ROUTES: {
     V1_SWAGGER: APP_V1_BASE_URL + "/doc",

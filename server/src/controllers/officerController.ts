@@ -11,6 +11,7 @@ import { NotificationDAO } from "@models/dao/NotificationDAO"
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
 import { stat } from "fs";
+import  {sendTelegramMessage} from "@services/telegramService";
 
 export async function getAllOfficers(): Promise<Officer[]> {
   const officerRepo = new OfficerRepository();
@@ -223,7 +224,9 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
   }
 
   await notificationRepo.createStatusChangeNotification(updatedReport);
-
+  if(updatedReport.author) {
+    await sendTelegramMessage(updatedReport.author.id, `Your report (ID: ${updatedReport.id}), title "${updatedReport.title}" status has been updated to '${updatedReport.state}'.`);
+  }
   return mapReportDAOToDTO(updatedReport);
 }
 

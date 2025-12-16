@@ -50,10 +50,15 @@ router.post("/officers", async(req, res, next) =>{
 router.post("/telegram", async(req, res, next) =>{
     try{
         let identifier = req.body["username"];
+        const chatId = req.body["chatId"];
+
+        if (!chatId) {
+            return res.status(400).json({ error: "Telegram chat ID is required" });
+        }
         if(identifier === undefined || identifier === null || identifier === "null" || identifier === ""){
             return res.status(400).json({ error: "Telegram username is required" });
         }
-        const user = await getUserByTelegramUsername(identifier);
+        const user = await getUserByTelegramUsername(identifier, chatId);
         res.status(200).json(user);
     }
     catch(error)
