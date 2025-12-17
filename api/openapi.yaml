@@ -1231,6 +1231,98 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  /reports/{id}/followers:
+    get:
+      tags:
+        - Reports
+      summary: List users following a report
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /reports/{id}/follow:
+    post:
+      tags:
+        - Reports
+      summary: Follow a report
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: follow relation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Follow"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Reports
+      summary: Unfollow a report
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: follow relation deleted
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/me/followed-reports:
+    get:
+      tags:
+        - Users
+      summary: Get reports followed by current user
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     OfficeType:
@@ -1273,6 +1365,10 @@ components:
         emailNotifications:
           type: boolean
           example: true
+        followedReports:
+          type: array
+          items:
+            $ref: "#/components/schemas/Report"
       xml:
         name: user
     Officer:
@@ -1344,6 +1440,10 @@ components:
         assignedMaintainerId:
           type: integer
           nullable: true
+        followerUsers:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
     ReportState:
       type: object
       properties:
@@ -1415,6 +1515,19 @@ components:
         createdAt:
           type: string
           format: date-time
+    Follow:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        reportId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
     ApiResponse:
       type: object
       properties:
