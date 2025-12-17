@@ -5,6 +5,8 @@ import { UserFromJSON } from "@dto/User";
 import { uploadAvatar } from "@middlewares/uploadMiddleware";
 import { sendMail } from "@services/mailService";
 import { generateOtp, verifyOtp, clearOtp } from "@services/otpService";
+import { FollowRepository } from "@repositories/FollowRepository";
+import { getReport } from "@controllers/reportController";
 
 const router = Router({mergeParams : true});
 
@@ -116,3 +118,16 @@ router.post("/verifyotp", async (req, res, next) => {
 
 
 export {router as userRouter};
+
+//? PT-16: GET sui report seguiti dallo user autenticato
+router.get("/me/followed-reports", authenticateToken, requireUserType(["user"]), async (req, res, next) => {
+  try {
+    const userId = (req as any).user?.id;
+    const repo = new FollowRepository();
+    const reports = await repo.getFollowedReportsByUser(Number(userId));
+    const mapped = await Promise.all(reports.map(async (r) => await getReport(r.id)));
+    res.status(200).json(mapped);
+  } catch (err) {
+    next(err);
+  }
+});

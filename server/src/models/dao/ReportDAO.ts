@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, AfterLoad } from "typeorm";
 import { UserDAO } from "./UserDAO";
 import { OfficeType } from "@models/enums/OfficeType";
 import { ReportState } from "@models/enums/ReportState";
+import { FollowDAO } from "./FollowDAO";
 
 @Entity("reports")
 export class ReportDAO {
@@ -69,4 +70,17 @@ export class ReportDAO {
 
   @Column({ type: "text", nullable: true })
   explanation!: string | null;
+
+  // analogo alla spiegazione in UserDAO, ma per Report
+  @OneToMany(() => FollowDAO, (f) => f.report)
+  followers?: FollowDAO[];
+
+  followerUsers?: UserDAO[];
+
+  @AfterLoad()
+  private _fillFollowerUsers() {
+    if (this.followers) {
+      this.followerUsers = this.followers.map((f) => f.user).filter(Boolean) as UserDAO[];
+    }
+  }
 }

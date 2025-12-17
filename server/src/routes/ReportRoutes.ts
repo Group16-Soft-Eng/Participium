@@ -9,6 +9,7 @@ import { ReportRepository } from "@repositories/ReportRepository";
 import { NotificationRepository } from "@repositories/NotificationRepository";
 import { OfficerRepository } from "@repositories/OfficerRepository";
 import { ReviewStatus } from "@models/enums/ReviewStatus";
+import { FollowRepository } from "@repositories/FollowRepository";
 
 const router = Router({mergeParams : true});
 
@@ -191,6 +192,46 @@ router.post("/:id/message", authenticateToken, requireUserType([OfficerRole.TECH
         }
 
         res.status(201).json({ id: created.id, type: created.type, message: created.message, reportId: created.reportId });
+    } catch (err) {
+        next(err);
+    }
+});
+
+//? PT-16: FOLLOW endpoints
+// GET follower user di un report (chiamata da un Officer)
+router.get(":id/followers", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficerRole.MAINTAINER]), async (req, res, next) => {
+    try {
+        const reportId = Number(req.params.id);
+        const repo = new FollowRepository();
+        const users = await repo.getFollowersOfReport(reportId);
+        // TODO: map from DAO to DTO to JSON (così non va bene)
+        res.status(200).json(users.map(u => ({ id: u.id, username: u.username, firstName: u.firstName, lastName: u.lastName })));
+    } catch (err) {
+        next(err);
+    }
+});
+
+// POST (follow di un report) (chiamata da uno User autenticato)
+router.post(":id/follow", authenticateToken, requireUserType(["user"]), async (req, res, next) => {
+    try {
+        const userId = (req as any).user?.id;
+        const reportId = Number(req.params.id);
+        const repo = new FollowRepository();
+        const created = await repo.follow(Number(userId), reportId);
+        res.status(201).json({ message: "Report followed successfully", userId: created.user, reportId: created.report });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// DELETE (unfollow di un report) (chiamata da uno User autenticato)
+router.delete(":id/follow", authenticateToken, requireUserType(["user"]), async (req, res, next) => {
+    try {
+        const userId = (req as any).user?.id;
+        const reportId = Number(req.params.id);
+        const repo = new FollowRepository();
+        await repo.unfollow(Number(userId), reportId);
+        res.status(204).send();
     } catch (err) {
         next(err);
     }

@@ -3,6 +3,7 @@
 import { Report } from "@dto/Report";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { UserRepository } from "@repositories/UserRepository";
+import { FollowRepository } from "@repositories/FollowRepository";
 import { mapReportDAOToDTO } from "@services/mapperService";
 import { OfficeType } from "@models/enums/OfficeType";
 import { validatePhotosCount, getPhotoPaths } from "@utils/fileUtils";
@@ -36,6 +37,7 @@ export async function getReport(id: number): Promise<Report> {
 export async function uploadReport(reportDto: Report, files: Express.Multer.File[], userId?: number): Promise<Report> {
   const reportRepo = new ReportRepository();
   const userRepo = new UserRepository();
+  const followRepo = new FollowRepository();
   // Validate required fields early to return clear errors
   if (!reportDto) {
     throw new BadRequestError('Missing report data');
@@ -87,6 +89,11 @@ export async function uploadReport(reportDto: Report, files: Express.Multer.File
       Photos: photoPaths
     }
   );
+
+  //? PT-16: if not anonymous, make the author follow their own report
+  if (author && author.id) {
+    await followRepo.follow(author.id, createdReport.id);
+  }
   
   return mapReportDAOToDTO(createdReport);
 }
