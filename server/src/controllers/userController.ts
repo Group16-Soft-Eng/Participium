@@ -51,7 +51,8 @@ export async function updateMyProfile(userId: number, data: { telegramUsername?:
 export async function getAllUsers(): Promise<User[]> {
   const userRepo = new UserRepository();
   const users = await userRepo.getAllUsers();
-  return users.map(mapUserDAOToDTO); // pattern che avevamo usato a GeoControl
+  const opts = {includeFollowedReports: false };
+  return users.map(user => mapUserDAOToDTO(user, opts)); // pattern che avevamo usato a GeoControl
 }
 
 

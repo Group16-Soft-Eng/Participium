@@ -14,7 +14,8 @@ import { BadRequestError } from "@utils/utils";
 export async function getReports(): Promise<Report[]> {
   const reportRepo = new ReportRepository();
   const reports = await reportRepo.getApprovedReports();
-  return reports.map(mapReportDAOToDTO);
+  const opts = { includeFollowerUsers: false };
+  return reports.map(r => mapReportDAOToDTO(r, opts));
 }
 
 //? Get approved reports filtered by office (for officers)
@@ -23,14 +24,16 @@ export async function getReportsByOffice(office: OfficeType): Promise<Report[]> 
   const reports = await reportRepo.getApprovedReports();
   // Filter by office/category
   const filtered = reports.filter(r => r.category === office);
-  return filtered.map(mapReportDAOToDTO);
+  const opts = { includeFollowerUsers: false };
+  return filtered.map(r => mapReportDAOToDTO(r, opts));
 }
 
 
 export async function getReport(id: number): Promise<Report> {
   const reportRepo = new ReportRepository();
   const report = await reportRepo.getReportById(id);
-  return mapReportDAOToDTO(report);
+  const opts = { includeFollowerUsers: true };
+  return mapReportDAOToDTO(report, opts);
 }
 
 

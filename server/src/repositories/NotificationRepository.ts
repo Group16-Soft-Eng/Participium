@@ -3,6 +3,8 @@ import { Repository } from "typeorm";
 import { NotificationDAO } from "@dao/NotificationDAO";
 import { ReportDAO } from "@dao/ReportDAO";
 
+import { FollowRepository } from "@repositories/FollowRepository";
+import { mapUserDAOToDTO } from "@services/mapperService";
 export class NotificationRepository {
     private repo: Repository<NotificationDAO>;
 
@@ -19,7 +21,7 @@ export class NotificationRepository {
 
     //? segna come letta una notifica specifica per uno user
     async markRead(id: number, userId: number): Promise<NotificationDAO> {
-        const notif = await this.repo.findOneByOrFail( { id } );
+        const notif = await this.repo.findOneByOrFail({ id });
         if (notif.userId !== userId) {
             throw new Error("Not allowed to modify this notification");
         }
@@ -32,14 +34,22 @@ export class NotificationRepository {
     }
     //? crea una notifica di cambio stato per l'autore del report (user quindi, se non è anonimo)
     async createStatusChangeNotification(report: ReportDAO): Promise<NotificationDAO | null> {
+
+        const repo = new FollowRepository();
+        const users = await repo.getFollowersOfReport(report.id);
+        const dto = users.map(u => mapUserDAOToDTO(u));
         if (!report.author || report.author.id === undefined) return null; // anonymous
-        return this.repo.save({
-            userId: report.author.id,
-            reportId: report.id,
-            type: "STATUS_CHANGE",
-            message: this.buildStatusMessage(report),
-            read: false
-        });
+        let lastNotification: NotificationDAO | null = null;
+        for (const user of dto) {
+           lastNotification = await this.repo.save({
+                userId: user.id,
+                reportId: report.id,
+                type: "STATUS_CHANGE",
+                message: this.buildStatusMessage(report),
+                read: false
+            });
+        }
+        return lastNotification;
     }
 
     //? come sopra, ma per Message (non per cambio di stato) da officer a user

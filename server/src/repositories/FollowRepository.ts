@@ -44,7 +44,7 @@ export class FollowRepository {
     const reportRepo = new ReportRepository();
     const report = await reportRepo.getReportById(reportId);
     if (!report) throw new BadRequestError("Report not found");
-    if (report.state === ReportState.CLOSED) throw new BadRequestError("Closed reports cannot be followed");
+    if (report.state === ReportState.RESOLVED || report.state === ReportState.DECLINED) throw new BadRequestError("Closed reports cannot be followed");
 
     // prendo user (se non esiste, errore)
     const userRepo = new UserRepository();

@@ -205,7 +205,7 @@ router.get("/:id/followers", authenticateToken, requireUserType([OfficerRole.MUN
         const reportId = Number(req.params.id);
         const repo = new FollowRepository();
         const users = await repo.getFollowersOfReport(reportId);
-        const dto = users.map(u => mapUserDAOToDTO(u, { includeFollowedReports: false }));
+        const dto = users.map(u => mapUserDAOToDTO(u));
         res.status(200).json(dto);
     } catch (err) {
         next(err);
