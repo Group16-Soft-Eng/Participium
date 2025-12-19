@@ -38,7 +38,11 @@ router.post("/", async(req, res, next) =>{
 router.get("/me", authenticateToken, async (req, res, next) => {
   try {
     const userId = (req as any).user?.id;
-    const profile = await getMyProfile(userId);
+    // se la query include contiene "followedReports", allora includi i report seguiti; altrimenti stringa vuota in include (vuol dire false)
+    const include = (req.query.include as string) || "";
+    const includeFollowedReports = include.split(",").map(s => s.trim()).includes("followedReports");
+    // se non è specificato, includeFollowedReports sarà false (retrocompatibilità)
+    const profile = await getMyProfile(userId, { includeFollowedReports });
     res.status(200).json(profile);
   } catch (err) {
     next(err);

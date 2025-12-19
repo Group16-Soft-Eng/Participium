@@ -42,6 +42,18 @@ export class UserRepository {
     );
   }
 
+  // Same as getUserById, but eagerly loads follow relations so that UserDAO.followedReports can be populated by @AfterLoad
+  async getUserByIdWithFollows(id: number): Promise<UserDAO> {
+    return findOrThrowNotFound(
+      await this.repo.find({
+        where: { id },
+        relations: ["follows", "follows.report"],
+      }),
+      () => true,
+      `User with id '${id}' not found`
+    );
+  }
+
  
   async createUser(
     username: string,
