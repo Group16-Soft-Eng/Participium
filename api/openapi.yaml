@@ -593,8 +593,20 @@ paths:
       tags:
         - Users
       summary: Retrieve authenticated user's profile
-      description: Returns the profile of the authenticated user (avatar, telegramUsername, emailNotifications included).
+      description: Returns the profile of the authenticated user (avatar, telegramUsername, emailNotifications included) + if requested the followedReports
       operationId: getMyProfile
+      parameters:
+        - name: include
+          in: query
+          description: >
+            Campi aggiuntivi da includere (lista comma-separated).
+            Supportati: `followedReports`.
+          required: false
+          schema:
+            type: string
+          style: form
+          explode: false
+          example: followedReports
       responses:
         "200":
           description: successful operation
@@ -602,6 +614,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+              examples:
+                base:
+                  summary: without include
+                  value:
+                    id: 123
+                    email: "user@example.com"
+                    name: "Mario Rossi"
+                withFollowedReports:
+                  summary: with include=followedReports
+                  value:
+                    id: 123
+                    email: "user@example.com"
+                    name: "Mario Rossi"
+                    followedReports:
+                      - id: 42
+                        title: "Buche in via Roma"
+                        state: "IN_PROGRESS"
+                      - id: 77
+                        title: "Illuminazione guasta"
+                        state: "PENDING"
         default:
           description: Unexpected error
           content:
