@@ -85,6 +85,15 @@ def build_yes_no_keyboard(prefix: str) -> InlineKeyboardMarkup:
         ]
     )
 
+def build_receive_notification_keyboard(id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("Follow", callback_data=f"start_follow_{id}"),
+                InlineKeyboardButton("Stop Following", callback_data=f"stop_follow_{id}"),
+            ]
+        ]
+    )
 
 def in_turin(latitude: float, longitude: float) -> bool:
     return 44.9 <= latitude <= 45.2 and 7.5 <= longitude <= 7.8
@@ -394,3 +403,134 @@ async def handle_start_report(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
     return WAITING_TITLE
 
+
+
+async def handle_view_reports(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    chat_id = update.effective_chat.id
+    token = sessions.get(chat_id)
+    if not token:
+        await query.edit_message_text("You must first log in with /login.")
+        return
+    try:
+        response = await _httpx_with_retry(
+            "GET",
+            f"{BASE_URL}/reports",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        if response.status_code == 200:
+            reports = response.json()
+            if isinstance(reports, dict):
+                reports = reports.get("reports", [])
+
+            if not reports:
+                await query.edit_message_text("No reports found.")
+                return
+
+            # Edit the original message to indicate reports are being sent
+            await query.edit_message_text("Here are the reports found:")
+
+            # Send each report as a new message
+            for rpt in reports:
+                report_id = rpt.get('id')
+                author_username = rpt.get("author", {}).get("username", "N/A")
+                description = rpt.get("document", {}).get("description", "No description.")
+                
+                if len(description) > 100:
+                    description = description[:100] + "..."
+
+                rpt_text = (
+                    f"📝 *Report ID:* {report_id}\n"
+                    f"👤 *Author:* {author_username}\n"
+                    f"📄 *Title:* {rpt.get('title')}\n"
+                    f"ℹ️ *Description:* {description}"
+                )
+                
+                # Build keyboard for each report
+                keyboard = build_receive_notification_keyboard(report_id)
+                
+                # Use reply_text to send a new message for each report
+                await query.message.reply_text(
+                    text=rpt_text,
+                    reply_markup=keyboard,
+                    parse_mode='Markdown'
+                )
+            
+            # After sending all reports, send the main menu
+            await query.message.reply_text(
+                "What would you like to do next?",
+                reply_markup=build_main_menu()
+            )
+
+        elif response.status_code == 401:
+            sessions.pop(chat_id, None)
+            await query.edit_message_text("❌ Unauthorized. Your session has expired. Please /login again.")
+        else:
+            await query.edit_message_text(f"❌ Error retrieving reports: {response.text}")
+    except Exception as e:
+        await query.edit_message_text(f"Error connecting to server: {e}")
+
+
+async def handle_follow_report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles the 'Follow' button callback."""
+    query = update.callback_query
+    await query.answer()
+    chat_id = update.effective_chat.id
+    token = sessions.get(chat_id)
+    print("Follow report callback triggered. {}".format(report_id))
+    if not token:
+        await query.message.reply_text("You must first log in with /login.")
+        return
+
+    try:
+        report_id = int(query.data.replace("start_follow_", ""))
+        response = await _httpx_with_retry(
+            "POST",
+            f"{BASE_URL}/telegram/report/{report_id}/follow",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        if response.status_code in (200, 201):
+            await query.message.reply_text("✅ You are now following this report. You will receive status updates.")
+        elif response.status_code == 409:  # Conflict
+            await query.message.reply_text("ℹ️ You are already following this report.")
+        elif response.status_code == 401:
+            sessions.pop(chat_id, None)
+            await query.message.reply_text("❌ Unauthorized. Your session has expired. Please /login again.")
+        else:
+            await query.message.reply_text(f"❌ Error: {response.text}")
+    except Exception as e:
+        await query.message.reply_text(f"An error occurred: {e}")
+
+
+async def handle_unfollow_report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles the 'Stop Following' button callback."""
+    query = update.callback_query
+    await query.answer()
+    chat_id = update.effective_chat.id
+    token = sessions.get(chat_id)
+
+    if not token:
+        await query.message.reply_text("You must first log in with /login.")
+        return
+
+    try:
+        report_id = int(query.data.replace("stop_follow_", ""))
+        response = await _httpx_with_retry(
+            "DELETE",
+            f"{BASE_URL}/telegram/report/{report_id}/follow",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        if response.status_code in (200, 204):
+            await query.message.reply_text("✅ You have stopped following this report.")
+        elif response.status_code == 404: 
+            await query.message.reply_text("ℹ️ You were not following this report.")
+        elif response.status_code == 401:
+            sessions.pop(chat_id, None)
+            await query.message.reply_text("❌ Unauthorized. Your session has expired. Please /login again.")
+        else:
+            await query.message.reply_text(f"❌ Error: {response.text}")
+    except Exception as e:
+        await query.message.reply_text(f"An error occurred: {e}")

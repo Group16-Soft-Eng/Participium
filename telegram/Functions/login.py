@@ -19,6 +19,7 @@ def build_main_menu() -> InlineKeyboardMarkup:
     """Build main menu with available functionalities."""
     keyboard = [
         [InlineKeyboardButton("📝 Create Report", callback_data="start_report")],
+        [InlineKeyboardButton("📊 View Active Reports", callback_data="view_reports")],
         # Add more functionalities here in the future
     ]
     return InlineKeyboardMarkup(keyboard)
