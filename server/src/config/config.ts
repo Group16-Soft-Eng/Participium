@@ -40,7 +40,7 @@ export const CONFIG = {
   },
 
   TELEGRAM_CONFIG : {
-    TOKEN : "8413586512:AAHkAtWfo3A2LLfwc7_QmEnlYTTsjqn7_UM"
+    TOKEN : "7796981555:AAFAU2xf7n6f-BihJhw5bjXo3H--_fzgwGg"
   },
 
   ROUTES: {

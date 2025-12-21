@@ -7,6 +7,7 @@ import { ReportRepository } from "@repositories/ReportRepository";
 import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
 import { ReportState } from "@models/enums/ReportState";
 import { NotificationRepository } from "@repositories/NotificationRepository";
+import { FollowRepository } from "@repositories/FollowRepository";
 import { NotificationDAO } from "@models/dao/NotificationDAO"
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
@@ -225,9 +226,16 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
     }
   }
   await notificationRepo.createStatusChangeNotification(updatedReport);
+  //manda messaggio telegram a tutti quelli che seguono il report
+  /*
   if (updatedReport.author) {
     await sendTelegramMessage(updatedReport.author.id, `Your report (ID: ${updatedReport.id}), title "${updatedReport.title}" status has been updated to '${updatedReport.state}'.`);
-  }
+  }*/
+ const followRepo = new FollowRepository();
+  const followers = await followRepo.getFollowersOfReport(updatedReport.id, "telegram");
+  for (const follower of followers ?? []) {
+    await sendTelegramMessage(follower.id, `The report (ID: ${updatedReport.id}), title "${updatedReport.title}" you are following has been updated to '${updatedReport.state}'.`);
+  } 
 
   return mapReportDAOToDTO(updatedReport);
 }
