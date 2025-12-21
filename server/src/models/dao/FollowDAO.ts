@@ -1,9 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Unique, CreateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Unique, CreateDateColumn, Column } from "typeorm";
 import { UserDAO } from "./UserDAO";
 import { ReportDAO } from "./ReportDAO";
 
 @Entity("follows")
-@Unique(["user", "report"]) // user_id + report_id = UNIQUE
+@Unique(["user", "report", "notifyVia"]) // user_id + report_id + notifyVia = UNIQUE
 export class FollowDAO {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -18,4 +18,7 @@ export class FollowDAO {
 
   @CreateDateColumn({ type: "datetime" })
   createdAt!: Date;
+
+  @Column({ default: "web" })
+  notifyVia!: string;
 }

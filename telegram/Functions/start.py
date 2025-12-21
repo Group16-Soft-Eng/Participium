@@ -75,4 +75,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 server_base_url = "http://127.0.0.1:5000" # Use IP to avoid DNS issues
 SERVER_URL = _normalize_server_url(os.getenv("SERVER_URL", server_base_url))
 BASE_URL = SERVER_URL.rstrip("/") + "/api/v1"
+TELEGRAM_REPORT_URL = BASE_URL + "/telegram/reports/"
+TELEGRAM_FAQ_URL = BASE_URL + "/telegram/faq/"
 sessions: Dict[int, str] = {}

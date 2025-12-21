@@ -16,10 +16,12 @@ export class FollowRepository {
   }
 
   // prende gli user follower di un report
-  async getFollowersOfReport(reportId: number): Promise<UserDAO[]> {
+  async getFollowersOfReport(reportId: number, notifyVia: string = "web"): Promise<UserDAO[]> {
     const rows = await this.repo.find({
-      where: { report: { id: reportId } },
-      // relations indica le entità correlate da caricare; le prende dalle @ManyToOne ecc. in FollowDAO
+      where: { 
+        report: { id: reportId },
+        notifyVia: notifyVia 
+      },
       relations: ["user"],
       order: { id: "ASC" }
     });
@@ -27,17 +29,19 @@ export class FollowRepository {
   }
 
   // prende i report seguiti da uno user
-  async getFollowedReportsByUser(userId: number): Promise<ReportDAO[]> {
+  async getFollowedReportsByUser(userId: number, notifyVia: string = "web"): Promise<ReportDAO[]> {
     const rows = await this.repo.find({
-      where: { user: { id: userId } },
+      where: { 
+        user: { id: userId },
+        notifyVia: notifyVia
+      },
       relations: ["report"],
       order: { id: "ASC" }
     });
     return rows.map((r) => r.report);
   }
-
   // crea un Follow (quindi crea relazione user-report)
-  async follow(userId: number, reportId: number): Promise<FollowDAO> {
+  async follow(userId: number, reportId: number, notifyVia: string = "web"): Promise<FollowDAO> {
 
     // prendo report (se non esiste, errore; se già CLOSED, errore)
     // TODO: valuta se togliere condizione su CLOSED
@@ -52,23 +56,52 @@ export class FollowRepository {
     if (!user) throw new BadRequestError("User not found");
 
     // se c'è già un follow con questo report e questo user, tornalo
-    const existing = await this.repo.findOne({ where: { user: { id: userId }, report: { id: reportId } } });
+    const existing = await this.repo.findOne({ where: { user: { id: userId }, report: { id: reportId }, notifyVia } });
     if (existing) return existing;
 
     // altrimenti lo aggiungi
-    return await this.repo.save({ user, report });
+    return await this.repo.save({ user, report, notifyVia });
+  }
+  async followAllPersonal(userId: number, notifyVia: string = "web"): Promise<FollowDAO[]> {
+    const reportRepo = new ReportRepository();
+    const userReport = await reportRepo.getReportsByUserId(userId);
+
+    const follows: FollowDAO[] = [];
+    for (const report of userReport) {
+      // se c'è già un follow con questo report e questo user, saltalo
+      const existing = await this.repo.findOne({ where: { user: { id: userId }, report: { id: report.id }, notifyVia } });
+      if (existing) {
+        follows.push(existing);
+        continue;
+      }
+
+      // altrimenti lo aggiungi
+      const userRepo = new UserRepository();
+      const user = await userRepo.getUserById(userId);
+      if (!user) throw new BadRequestError("User not found");
+
+      const follow = await this.repo.save({ user, report, notifyVia });
+      follows.push(follow);
+    }
+    return follows;
   }
 
 
   // fa unfollow dato user e report (quindi DELETE di un follo)
-  async unfollow(userId: number, reportId: number): Promise<void> {
-    
+  async unfollow(userId: number, reportId: number, notifyVia: string = "web"): Promise<void> {
     // uso direttamente il query builder per eliminare il follow, così mi evito dei find sulla repo
-    await this.repo
-      .createQueryBuilder()
-      .delete()
-      .from(FollowDAO)
-      .where("user_id = :userId AND report_id = :reportId", { userId, reportId })
-      .execute();
+    await this.repo.delete({ 
+        user: { id: userId },
+        report: { id: reportId },
+        notifyVia: notifyVia
+    });
+  }
+
+  async unfollowAllByUser(userId: number, notifyVia: string = "web"): Promise<void> {
+    // uso direttamente il query builder per eliminare i follow, così mi evito dei find sulla repo
+    await this.repo.delete({ 
+        user: { id: userId },
+        notifyVia: notifyVia
+    });
   }
 }
