@@ -97,6 +97,32 @@ describe("UserController Unit Tests", () => {
       expect(mockUserRepo.createUser).toHaveBeenCalled();
       expect(result).toEqual(mockCreatedUser);
     });
+
+    it("dovrebbe propagare errore se il repository fallisce", async () => {
+      const userDto = {
+        username: "existinguser",
+        firstName: "Mario",
+        lastName: "Rossi",
+        email: "mario@example.com",
+        password: "password123"
+      };
+      mockUserRepo.createUser = jest.fn().mockRejectedValue(new Error("User with username 'existinguser' already exists"));
+
+      await expect(createUser(userDto as any)).rejects.toThrow("User with username 'existinguser' already exists");
+    });
+
+    it("dovrebbe gestire errore generico dal repository", async () => {
+      const userDto = {
+        username: "newuser",
+        firstName: "Mario",
+        lastName: "Rossi",
+        email: "mario@example.com",
+        password: "password123"
+      };
+      mockUserRepo.createUser = jest.fn().mockRejectedValue(new Error("Database error"));
+
+      await expect(createUser(userDto as any)).rejects.toThrow("Database error");
+    });
   });
 
   describe("getUser", () => {
@@ -126,6 +152,12 @@ describe("UserController Unit Tests", () => {
       expect(mockUserRepo.getUserByUsername).toHaveBeenCalledWith("notfound");
       expect(result).toBeNull();
     });
+
+    it("dovrebbe propagare errore dal repository", async () => {
+      mockUserRepo.getUserByUsername = jest.fn().mockRejectedValue(new Error("User with username 'testuser' not found"));
+
+      await expect(getUser("testuser")).rejects.toThrow("User with username 'testuser' not found");
+    });
   });
 
   describe("getAllUsers", () => {
@@ -151,6 +183,12 @@ describe("UserController Unit Tests", () => {
 
       expect(result).toEqual([]);
     });
+
+    it("dovrebbe propagare errore dal repository", async () => {
+      mockUserRepo.getAllUsers = jest.fn().mockRejectedValue(new Error("Database connection failed"));
+
+      await expect(getAllUsers()).rejects.toThrow("Database connection failed");
+    });
   });
 
   describe("deleteUser", () => {
@@ -168,6 +206,12 @@ describe("UserController Unit Tests", () => {
       await deleteUser("nonexistent");
 
       expect(mockUserRepo.deleteUser).toHaveBeenCalledWith("nonexistent");
+    });
+
+    it("dovrebbe propagare errore dal repository", async () => {
+      mockUserRepo.deleteUser = jest.fn().mockRejectedValue(new Error("User with username 'testuser' not found"));
+
+      await expect(deleteUser("testuser")).rejects.toThrow("User with username 'testuser' not found");
     });
   });
 
@@ -192,6 +236,68 @@ describe("UserController Unit Tests", () => {
       expect(result.avatar).toBe("/avatar.png");
       expect(result.telegramUsername).toBe("telegram_user");
       expect(result.emailNotifications).toBe(false);
+    });
+
+    it("dovrebbe caricare i report seguiti quando includeFollowedReports è true", async () => {
+      const mockReport = {
+        id: 100,
+        title: "Report seguito",
+        location: { lat: 10, lng: 20 },
+        category: "Environment"
+      };
+      const mockUser = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: true,
+        followedReports: [mockReport]
+      };
+      mockUserRepo.getUserByIdWithFollows = jest.fn().mockResolvedValue(mockUser);
+      (mapUserDAOToDTO as jest.Mock).mockReturnValue({ ...mockUser, followedReports: [mockReport] });
+
+      const result = await getMyProfile(1, { includeFollowedReports: true });
+
+      expect(mockUserRepo.getUserByIdWithFollows).toHaveBeenCalledWith(1);
+      expect(mockUserRepo.getUserById).not.toHaveBeenCalled();
+      expect(result.followedReports).toBeDefined();
+      expect(result.followedReports).toHaveLength(1);
+      expect(result.followedReports[0].id).toBe(100);
+    });
+
+    it("dovrebbe usare getUserById quando includeFollowedReports è false", async () => {
+      const mockUser = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        avatar: null,
+        telegramUsername: null,
+        emailNotifications: true
+      };
+      mockUserRepo.getUserById = jest.fn().mockResolvedValue(mockUser);
+      (mapUserDAOToDTO as jest.Mock).mockReturnValue({ ...mockUser });
+
+      const result = await getMyProfile(1, { includeFollowedReports: false });
+
+      expect(mockUserRepo.getUserById).toHaveBeenCalledWith(1);
+      expect(mockUserRepo.getUserByIdWithFollows).not.toHaveBeenCalled();
+    });
+
+    it("dovrebbe propagare errore quando getUserById fallisce", async () => {
+      mockUserRepo.getUserById = jest.fn().mockRejectedValue(new Error("User with id '1' not found"));
+
+      await expect(getMyProfile(1)).rejects.toThrow("User with id '1' not found");
+    });
+
+    it("dovrebbe propagare errore quando getUserByIdWithFollows fallisce", async () => {
+      mockUserRepo.getUserByIdWithFollows = jest.fn().mockRejectedValue(new Error("User with id '1' not found"));
+
+      await expect(getMyProfile(1, { includeFollowedReports: true })).rejects.toThrow("User with id '1' not found");
     });
 
     it("dovrebbe gestire avatar/telegram/emailNotifications null", async () => {
@@ -383,6 +489,27 @@ describe("UserController Unit Tests", () => {
       });
       expect(result.avatar).toBe("/new-avatar.png");
     });
+
+    it("dovrebbe propagare errore dal repository quando getUserById fallisce", async () => {
+      mockUserRepo.getUserById = jest.fn().mockRejectedValue(new Error("User with id '1' not found"));
+
+      await expect(updateMyProfile(1, { telegramUsername: "new_telegram" })).rejects.toThrow("User with id '1' not found");
+    });
+
+    it("dovrebbe propagare errore dal repository quando updateProfile fallisce", async () => {
+      const mockUser = {
+        id: 1,
+        username: "testuser",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        telegramUsername: "telegram_user"
+      };
+      mockUserRepo.getUserById = jest.fn().mockResolvedValue(mockUser);
+      mockUserRepo.updateProfile = jest.fn().mockRejectedValue(new Error("Update failed"));
+
+      await expect(updateMyProfile(1, { telegramUsername: "new_telegram" })).rejects.toThrow("Update failed");
+    });
   });
 
   describe("activateAccount", () => {
@@ -400,6 +527,12 @@ describe("UserController Unit Tests", () => {
       await activateAccount("active@example.com");
 
       expect(mockUserRepo.activateUser).toHaveBeenCalledWith("active@example.com");
+    });
+
+    it("dovrebbe propagare errore dal repository", async () => {
+      mockUserRepo.activateUser = jest.fn().mockRejectedValue(new Error("User with email 'test@example.com' not found"));
+
+      await expect(activateAccount("test@example.com")).rejects.toThrow("User with email 'test@example.com' not found");
     });
   });
 
@@ -436,6 +569,12 @@ describe("UserController Unit Tests", () => {
 
       expect(mockUserRepo.getUserByEmail).toHaveBeenCalledWith("inactive@example.com");
       expect(result).toBe(false);
+    });
+
+    it("dovrebbe propagare errore dal repository", async () => {
+      mockUserRepo.getUserByEmail = jest.fn().mockRejectedValue(new Error("User with email 'test@example.com' not found"));
+
+      await expect(isActive("test@example.com")).rejects.toThrow("User with email 'test@example.com' not found");
     });
   });
 

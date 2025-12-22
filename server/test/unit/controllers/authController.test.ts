@@ -139,6 +139,29 @@ describe('authController', () => {
             await expect(loginUserByUsername('testuser', 'wrong-password'))
                 .rejects.toThrow('Invalid username or password');
         });
+
+        it('should propagate repository error when getUserByUsername fails', async () => {
+            mockUserRepo.getUserByUsername.mockRejectedValue(new Error("User with username 'testuser' not found"));
+
+            await expect(loginUserByUsername('testuser', 'password123'))
+                .rejects.toThrow("User with username 'testuser' not found");
+        });
+
+        it('should propagate error when saveSession fails', async () => {
+            const mockUser: UserDAO = {
+                id: 1,
+                username: 'testuser',
+                email: 'test@example.com',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockUserRepo.getUserByUsername.mockResolvedValue(mockUser);
+            (authService.saveSession as jest.Mock).mockRejectedValue(new Error('Redis connection failed'));
+
+            await expect(loginUserByUsername('testuser', 'password123'))
+                .rejects.toThrow('Redis connection failed');
+        });
     });
 
     // ===================== loginUserByMail =====================
@@ -219,6 +242,13 @@ describe('authController', () => {
                 .rejects.toThrow(UnauthorizedError);
             await expect(loginUserByMail('test2@example.com', 'wrong-password'))
                 .rejects.toThrow('Invalid email or password');
+        });
+
+        it('should propagate repository error when getUserByEmail fails', async () => {
+            mockUserRepo.getUserByEmail.mockRejectedValue(new Error("User with email 'test@example.com' not found"));
+
+            await expect(loginUserByMail('test@example.com', 'password123'))
+                .rejects.toThrow("User with email 'test@example.com' not found");
         });
     });
 
@@ -459,6 +489,13 @@ describe('authController', () => {
             });
             expect(token).toBe('mock-token');
         });
+
+        it('should propagate repository error when getOfficersByUsername fails', async () => {
+            mockOfficerRepo.getOfficersByUsername.mockRejectedValue(new Error('Database error'));
+
+            await expect(loginOfficerByUsername('officer_username', 'password123'))
+                .rejects.toThrow('Database error');
+        });
     });
 
     // ===================== loginUser =====================
@@ -497,6 +534,20 @@ describe('authController', () => {
             expect(mockUserRepo.getUserByUsername).toHaveBeenCalledWith('user31');
             expect(mockUserRepo.getUserByEmail).not.toHaveBeenCalled();
             expect(token).toBe('mock-token');
+        });
+
+        it('should propagate errors from loginUserByMail', async () => {
+            mockUserRepo.getUserByEmail.mockRejectedValue(new Error("User with email 'invalid@example.com' not found"));
+
+            await expect(loginUser('invalid@example.com', 'password123', true))
+                .rejects.toThrow("User with email 'invalid@example.com' not found");
+        });
+
+        it('should propagate errors from loginUserByUsername', async () => {
+            mockUserRepo.getUserByUsername.mockRejectedValue(new Error("User with username 'invalid' not found"));
+
+            await expect(loginUser('invalid', 'password123', false))
+                .rejects.toThrow("User with username 'invalid' not found");
         });
     });
 
@@ -537,6 +588,20 @@ describe('authController', () => {
             expect(mockOfficerRepo.getOfficerByEmail).not.toHaveBeenCalled();
             expect(token).toBe('mock-token');
         });
+
+        it('should propagate errors from loginOfficerByMail', async () => {
+            mockOfficerRepo.getOfficerByEmail.mockRejectedValue(new Error("Officer with email 'invalid@example.com' not found"));
+
+            await expect(loginOfficer('invalid@example.com', 'password123', true))
+                .rejects.toThrow("Officer with email 'invalid@example.com' not found");
+        });
+
+        it('should propagate errors from loginOfficerByUsername', async () => {
+            mockOfficerRepo.getOfficersByUsername.mockRejectedValue(new Error('Database error'));
+
+            await expect(loginOfficer('invalid', 'password123', false))
+                .rejects.toThrow('Database error');
+        });
     });
 
     // ===================== getUserByTelegramUsername =====================
@@ -553,7 +618,7 @@ describe('authController', () => {
 
             mockUserRepo.getUseryTelegramUsername.mockResolvedValue(mockUser);
 
-            const token = await getUserByTelegramUsername('telegram_user');
+            const token = await getUserByTelegramUsername('telegram_user', 12345);
 
             expect(mockUserRepo.getUseryTelegramUsername).toHaveBeenCalledWith('telegram_user');
             expect(authService.generateToken).toHaveBeenCalledWith({
@@ -561,7 +626,8 @@ describe('authController', () => {
                 username: 'user50',
                 isStaff: false,
                 type: 'user',
-                sessionType: 'telegram'
+                sessionType: 'telegram',
+                chatId: 12345
             });
             expect(authService.saveSession).toHaveBeenCalledWith(50, 'mock-token', 'telegram');
             expect(token).toBe('mock-token');
@@ -569,10 +635,34 @@ describe('authController', () => {
 
         it('should throw error if no user found with telegram username', async () => {
             mockUserRepo.getUseryTelegramUsername.mockResolvedValue(null as any);
-            await expect(getUserByTelegramUsername('nonexistent_telegram'))
+            await expect(getUserByTelegramUsername('nonexistent_telegram', 12345))
                 .rejects.toThrow(UnauthorizedError);
-            await expect(getUserByTelegramUsername('nonexistent_telegram'))
+            await expect(getUserByTelegramUsername('nonexistent_telegram', 12345))
                 .rejects.toThrow('No user associated with this Telegram username');
+        });
+
+        it('should propagate repository error when getUseryTelegramUsername fails', async () => {
+            mockUserRepo.getUseryTelegramUsername.mockRejectedValue(new Error("User with telegram username 'telegram_user' not found"));
+
+            await expect(getUserByTelegramUsername('telegram_user', 12345))
+                .rejects.toThrow("User with telegram username 'telegram_user' not found");
+        });
+
+        it('should propagate error when saveSession fails', async () => {
+            const mockUser: UserDAO = {
+                id: 51,
+                username: 'user51',
+                email: 'user51@example.com',
+                telegramUsername: 'telegram_user2',
+                password: 'hashed-password',
+                isActive: true
+            } as any;
+
+            mockUserRepo.getUseryTelegramUsername.mockResolvedValue(mockUser);
+            (authService.saveSession as jest.Mock).mockRejectedValue(new Error('Redis connection failed'));
+
+            await expect(getUserByTelegramUsername('telegram_user2', 99999))
+                .rejects.toThrow('Redis connection failed');
         });
     });
 
@@ -638,7 +728,12 @@ describe('authController', () => {
             await expect(loginMaintainerByMail('maintainer3@example.com', 'wrong-password'))
                 .rejects.toThrow('Invalid email or password');
         });
-    });
+        it('should propagate repository error when getMaintainerByEmail fails', async () => {
+            mockMaintainerRepo.getMaintainerByEmail.mockRejectedValue(new Error("Maintainer with email 'maintainer@example.com' not found"));
+
+            await expect(loginMaintainerByMail('maintainer@example.com', 'password123'))
+                .rejects.toThrow("Maintainer with email 'maintainer@example.com' not found");
+        });    });
 
     // ===================== loginMaintainerByUsername =====================
     describe('loginMaintainerByUsername', () => {
@@ -741,6 +836,13 @@ describe('authController', () => {
             });
             expect(token).toBe('mock-token');
         });
+
+        it('should propagate repository error when getMaintainersByUsername fails', async () => {
+            mockMaintainerRepo.getMaintainersByUsername.mockRejectedValue(new Error('Database error'));
+
+            await expect(loginMaintainerByUsername('maintainer_username', 'password123'))
+                .rejects.toThrow('Database error');
+        });
     });
 
     // ===================== loginMaintainer =====================
@@ -779,6 +881,20 @@ describe('authController', () => {
             expect(mockMaintainerRepo.getMaintainersByUsername).toHaveBeenCalledWith('maintainer81');
             expect(mockMaintainerRepo.getMaintainerByEmail).not.toHaveBeenCalled();
             expect(token).toBe('mock-token');
+        });
+
+        it('should propagate errors from loginMaintainerByMail', async () => {
+            mockMaintainerRepo.getMaintainerByEmail.mockRejectedValue(new Error("Maintainer with email 'invalid@example.com' not found"));
+
+            await expect(loginMaintainer('invalid@example.com', 'password123', true))
+                .rejects.toThrow("Maintainer with email 'invalid@example.com' not found");
+        });
+
+        it('should propagate errors from loginMaintainerByUsername', async () => {
+            mockMaintainerRepo.getMaintainersByUsername.mockRejectedValue(new Error('Database error'));
+
+            await expect(loginMaintainer('invalid', 'password123', false))
+                .rejects.toThrow('Database error');
         });
     });
 });

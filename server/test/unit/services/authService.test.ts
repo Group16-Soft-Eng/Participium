@@ -375,7 +375,7 @@ describe("AuthService Unit Tests", () => {
       expect(redisClient.set).toHaveBeenCalledWith(
         "session:2:telegram",
         expect.stringContaining('"sessionType":"telegram"'),
-        { EX: 3600 }
+        { EX: 86400 }
       );
     });
 
@@ -391,7 +391,7 @@ describe("AuthService Unit Tests", () => {
       expect(redisClient.set).toHaveBeenCalledWith(
         expect.any(String),
         expect.any(String),
-        { EX: 7200 }
+        { EX: 86400 }
       );
     });
 

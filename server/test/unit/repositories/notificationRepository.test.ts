@@ -4,6 +4,8 @@ import { NotificationDAO } from '../../../src/models/dao/NotificationDAO';
 import { ReportDAO } from '../../../src/models/dao/ReportDAO';
 import { UserDAO } from '../../../src/models/dao/UserDAO';
 import { AppDataSource } from '../../../src/database/connection';
+import { FollowRepository } from '../../../src/repositories/FollowRepository';
+import * as mapperService from '../../../src/services/mapperService';
 
 jest.mock('../../../src/database/connection', () => ({
     AppDataSource: {
@@ -11,9 +13,14 @@ jest.mock('../../../src/database/connection', () => ({
     }
 }));
 
+jest.mock('../../../src/repositories/FollowRepository');
+jest.mock('../../../src/services/mapperService');
+
 describe('NotificationRepository', () => {
     let notificationRepo: NotificationRepository;
     let mockRepo: jest.Mocked<Repository<NotificationDAO>>;
+    let mockFollowRepo: jest.Mocked<FollowRepository>;
+    let mockMapperService: jest.Mocked<typeof mapperService>;
 
     beforeEach(() => {
         mockRepo = {
@@ -23,7 +30,19 @@ describe('NotificationRepository', () => {
             create: jest.fn()
         } as any;
 
+        mockFollowRepo = {
+            getFollowersOfReport: jest.fn()
+        } as any;
+
+        mockMapperService = mapperService as jest.Mocked<typeof mapperService>;
+        mockMapperService.mapUserDAOToDTO = jest.fn((user: UserDAO) => ({
+            id: user.id,
+            username: user.username,
+            email: user.email
+        })) as any;
+
         (AppDataSource.getRepository as jest.Mock).mockReturnValue(mockRepo);
+        (FollowRepository as jest.Mock).mockImplementation(() => mockFollowRepo);
         notificationRepo = new NotificationRepository();
     });
 
@@ -317,6 +336,12 @@ describe('NotificationRepository', () => {
                 reason: null
             } as any;
 
+            const mockFollowers: UserDAO[] = [
+                { id: 1, username: 'user1', email: 'user1@test.com' } as UserDAO
+            ];
+
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
+
             const expectedNotification: NotificationDAO = {
                 id: 1,
                 userId: 1,
@@ -349,6 +374,12 @@ describe('NotificationRepository', () => {
                 state: 'DECLINED',
                 reason: 'Insufficient information'
             } as any;
+
+            const mockFollowers: UserDAO[] = [
+                { id: 2, username: 'user2', email: 'user2@test.com' } as UserDAO
+            ];
+
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
 
             const expectedNotification: NotificationDAO = {
                 id: 2,
@@ -384,6 +415,12 @@ describe('NotificationRepository', () => {
                 reason: null
             } as any;
 
+            const mockFollowers: UserDAO[] = [
+                { id: 3, username: 'user3', email: 'user3@test.com' } as UserDAO
+            ];
+
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
+
             const expectedNotification: NotificationDAO = {
                 id: 3,
                 userId: 3,
@@ -410,6 +447,8 @@ describe('NotificationRepository', () => {
                 anonymity: true
             } as any;
 
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue([]);
+
             const result = await notificationRepo.createStatusChangeNotification(mockReport);
 
             expect(result).toBeNull();
@@ -423,6 +462,8 @@ describe('NotificationRepository', () => {
                 author: { username: 'user4' } as UserDAO, // No id
                 state: 'PENDING'
             } as any;
+
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue([]);
 
             const result = await notificationRepo.createStatusChangeNotification(mockReport);
 
@@ -439,6 +480,12 @@ describe('NotificationRepository', () => {
                 reason: null
             } as any;
 
+            const mockFollowers: UserDAO[] = [
+                { id: 5, username: 'user5', email: 'user5@test.com' } as UserDAO
+            ];
+
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
+
             const expectedNotification: NotificationDAO = {
                 id: 4,
                 userId: 5,
@@ -449,6 +496,7 @@ describe('NotificationRepository', () => {
                 read: false
             };
 
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
             mockRepo.save.mockResolvedValue(expectedNotification);
 
             const result = await notificationRepo.createStatusChangeNotification(mockReport);
@@ -465,6 +513,12 @@ describe('NotificationRepository', () => {
                 reason: null
             } as any;
 
+            const mockFollowers: UserDAO[] = [
+                { id: 6, username: 'user6', email: 'user6@test.com' } as UserDAO
+            ];
+
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
+
             const expectedNotification: NotificationDAO = {
                 id: 5,
                 userId: 6,
@@ -475,6 +529,7 @@ describe('NotificationRepository', () => {
                 read: false
             };
 
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
             mockRepo.save.mockResolvedValue(expectedNotification);
 
             const result = await notificationRepo.createStatusChangeNotification(mockReport);
