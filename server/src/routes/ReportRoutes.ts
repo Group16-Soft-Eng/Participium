@@ -42,10 +42,10 @@ router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, asy
     }
 });
 
-router.get("/",authenticateToken, async(req, res, next) =>{
+router.get("/", async(req, res, next) =>{
     try{
         // Check if user is authenticated
-        const authHeader = req.headers.authorization;
+        // const authHeader = req.headers.authorization; //No Auht needed for PT-28
         let result;
         /*
         if (authHeader && authHeader.startsWith('Bearer ')) {
