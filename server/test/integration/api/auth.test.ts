@@ -336,7 +336,8 @@ describe("Auth API Integration Tests", () => {
       const res = await request(app)
         .post("/api/v1/auth/telegram")
         .send({
-          username: telegramUsername
+          username: telegramUsername,
+          chatId: 12345
         });
       expect(res.status).toBe(200);
       expect(typeof res.body).toBe("string");
@@ -346,7 +347,8 @@ describe("Auth API Integration Tests", () => {
       const res = await request(app)
         .post("/api/v1/auth/telegram")
         .send({
-          username: "nonexistenttg"
+          username: "nonexistenttg",
+          chatId: 12345
         });
       expect(res.status).toBe(404);
     });
@@ -354,7 +356,9 @@ describe("Auth API Integration Tests", () => {
     it("should return 400 if username is undefined", async () => {
       const res = await request(app)
         .post("/api/v1/auth/telegram")
-        .send({});
+        .send({
+          chatId: 12345
+        });
       expect(res.status).toBe(400);
       expect(res.body.error).toBe("Telegram username is required");
     });
@@ -363,7 +367,8 @@ describe("Auth API Integration Tests", () => {
       const res = await request(app)
         .post("/api/v1/auth/telegram")
         .send({
-          username: null
+          username: null,
+          chatId: 12345
         });
       expect(res.status).toBe(400);
       expect(res.body.error).toBe("Telegram username is required");
@@ -373,7 +378,8 @@ describe("Auth API Integration Tests", () => {
       const res = await request(app)
         .post("/api/v1/auth/telegram")
         .send({
-          username: "null"
+          username: "null",
+          chatId: 12345
         });
       expect(res.status).toBe(400);
       expect(res.body.error).toBe("Telegram username is required");
@@ -383,7 +389,8 @@ describe("Auth API Integration Tests", () => {
       const res = await request(app)
         .post("/api/v1/auth/telegram")
         .send({
-          username: ""
+          username: "",
+          chatId: 12345
         });
       expect(res.status).toBe(400);
       expect(res.body.error).toBe("Telegram username is required");
@@ -403,7 +410,8 @@ describe("Auth API Integration Tests", () => {
       const res = await request(app)
         .post("/api/v1/auth/telegram")
         .send({
-          username: telegramUsername
+          username: telegramUsername,
+          chatId: 12345
         });
       expect(res.status).toBe(200);
     });
