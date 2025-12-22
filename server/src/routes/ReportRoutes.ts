@@ -238,16 +238,4 @@ router.delete("/:id/follow", authenticateToken, requireUserType(["user"]), async
     }
 });
 
-//? PT-28: Public endpoint for unauthenticated users to view approved reports on map
-router.get("/Reports/public", async(req, res, next) => {
-    try {
-        // Get all approved reports - no authentication required
-        const result = await getReports();
-        res.status(200).json(result);
-    }
-    catch(error) {
-        next(error);
-    }
-});
-
 export {router as reportRouter};
