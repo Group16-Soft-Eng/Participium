@@ -918,6 +918,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /Reports/public:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve approved reports for unauthenticated users
+      description: |
+        Retrieve all approved reports that can be viewed by unauthenticated users.
+      operationId: getPublicReports
+      security: []  # No authentication required
+      parameters: []
+      responses:
+        "200":
+          description: successful operation - returns list of approved reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+              example:
+                - id: 1
+                  title: "Broken streetlight on Main St"
+                  category: "infrastructure"
+                  location:
+                    Coordinates:
+                      latitude: 45.0703
+                      longitude: 7.6869
+                  date: "2025-12-20T10:30:00Z"
+                  state: "approved"
+                  anonymity: false
+                - id: 2
+                  title: "Graffiti on public building"
+                  category: "environment"
+                  location:
+                    Coordinates:
+                      latitude: 45.0705
+                      longitude: 7.6872
+                  date: "2025-12-21T14:15:00Z"
+                  state: "approved"
+                  anonymity: true
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /auth/telegram:
     post:
       tags:
