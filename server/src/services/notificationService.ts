@@ -3,8 +3,8 @@ import { UserDAO } from "@dao/UserDAO";
 import { NotificationDAO } from "@dao/NotificationDAO";
 
 /**
- * Servizio per inviare notifiche email agli utenti
- * Le email vengono inviate solo se l'utente ha abilitato le notifiche email nelle preferenze
+ * Service to send email to users based on their notification preferences
+ * @module notificationService
  */
 
 export async function sendNotificationEmail(

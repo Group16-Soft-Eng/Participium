@@ -5,7 +5,9 @@ import { ReportDAO } from '../../../src/models/dao/ReportDAO';
 import { UserDAO } from '../../../src/models/dao/UserDAO';
 import { AppDataSource } from '../../../src/database/connection';
 import { FollowRepository } from '../../../src/repositories/FollowRepository';
+import { UserRepository } from '../../../src/repositories/UserRepository';
 import * as mapperService from '../../../src/services/mapperService';
+import * as notificationService from '../../../src/services/notificationService';
 
 jest.mock('../../../src/database/connection', () => ({
     AppDataSource: {
@@ -14,13 +16,18 @@ jest.mock('../../../src/database/connection', () => ({
 }));
 
 jest.mock('../../../src/repositories/FollowRepository');
+jest.mock('../../../src/repositories/UserRepository');
 jest.mock('../../../src/services/mapperService');
+jest.mock('../../../src/services/notificationService');
 
 describe('NotificationRepository', () => {
     let notificationRepo: NotificationRepository;
     let mockRepo: jest.Mocked<Repository<NotificationDAO>>;
     let mockFollowRepo: jest.Mocked<FollowRepository>;
+    let mockUserRepo: jest.Mocked<UserRepository>;
     let mockMapperService: jest.Mocked<typeof mapperService>;
+    let mockNotificationService: jest.Mocked<typeof notificationService>;
+    let consoleErrorSpy: jest.SpyInstance;
 
     beforeEach(() => {
         mockRepo = {
@@ -34,6 +41,10 @@ describe('NotificationRepository', () => {
             getFollowersOfReport: jest.fn()
         } as any;
 
+        mockUserRepo = {
+            getUserById: jest.fn()
+        } as any;
+
         mockMapperService = mapperService as jest.Mocked<typeof mapperService>;
         mockMapperService.mapUserDAOToDTO = jest.fn((user: UserDAO) => ({
             id: user.id,
@@ -41,13 +52,20 @@ describe('NotificationRepository', () => {
             email: user.email
         })) as any;
 
+        mockNotificationService = notificationService as jest.Mocked<typeof notificationService>;
+        mockNotificationService.sendNotificationEmail = jest.fn().mockResolvedValue(undefined);
+
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
         (AppDataSource.getRepository as jest.Mock).mockReturnValue(mockRepo);
         (FollowRepository as jest.Mock).mockImplementation(() => mockFollowRepo);
+        (UserRepository as jest.Mock).mockImplementation(() => mockUserRepo);
         notificationRepo = new NotificationRepository();
     });
 
     afterEach(() => {
         jest.clearAllMocks();
+        consoleErrorSpy.mockRestore();
     });
 
     // ===================== listByUser =====================
@@ -264,14 +282,147 @@ describe('NotificationRepository', () => {
                 read: false
             };
 
+            const mockUser: UserDAO = {
+                id: 1,
+                username: 'testuser',
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'john@test.com',
+                emailNotifications: true
+            } as UserDAO;
+
             mockRepo.create.mockReturnValue(createdNotification);
             mockRepo.save.mockResolvedValue(createdNotification);
+            mockUserRepo.getUserById.mockResolvedValue(mockUser);
 
             const result = await notificationRepo.createNotification(notificationData);
 
             expect(mockRepo.create).toHaveBeenCalledWith(notificationData);
             expect(mockRepo.save).toHaveBeenCalledWith(createdNotification);
+            expect(mockUserRepo.getUserById).toHaveBeenCalledWith(1);
+            expect(mockNotificationService.sendNotificationEmail).toHaveBeenCalledWith(mockUser, createdNotification);
             expect(result).toEqual(createdNotification);
+        });
+
+        it('should send email after creating notification', async () => {
+            const notificationData: Partial<NotificationDAO> = {
+                userId: 2,
+                reportId: 20,
+                type: 'OFFICER_MESSAGE',
+                message: 'New message',
+                read: false
+            };
+
+            const createdNotification: NotificationDAO = {
+                id: 2,
+                ...notificationData,
+                createdAt: new Date()
+            } as NotificationDAO;
+
+            const mockUser: UserDAO = {
+                id: 2,
+                email: 'user2@test.com',
+                emailNotifications: true
+            } as UserDAO;
+
+            mockRepo.create.mockReturnValue(createdNotification);
+            mockRepo.save.mockResolvedValue(createdNotification);
+            mockUserRepo.getUserById.mockResolvedValue(mockUser);
+
+            await notificationRepo.createNotification(notificationData);
+
+            expect(mockNotificationService.sendNotificationEmail).toHaveBeenCalledTimes(1);
+            expect(mockNotificationService.sendNotificationEmail).toHaveBeenCalledWith(
+                mockUser,
+                createdNotification
+            );
+        });
+
+        it('should handle email sending failure gracefully', async () => {
+            const notificationData: Partial<NotificationDAO> = {
+                userId: 3,
+                type: 'STATUS_CHANGE',
+                message: 'Test',
+                read: false
+            };
+
+            const createdNotification: NotificationDAO = {
+                id: 3,
+                ...notificationData,
+                reportId: null,
+                createdAt: new Date()
+            } as NotificationDAO;
+
+            const mockUser: UserDAO = {
+                id: 3,
+                email: 'user3@test.com'
+            } as UserDAO;
+
+            mockRepo.create.mockReturnValue(createdNotification);
+            mockRepo.save.mockResolvedValue(createdNotification);
+            mockUserRepo.getUserById.mockResolvedValue(mockUser);
+            mockNotificationService.sendNotificationEmail.mockRejectedValue(new Error('SMTP error'));
+
+            const result = await notificationRepo.createNotification(notificationData);
+
+            expect(result).toEqual(createdNotification);
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Failed to send email for notification 3'),
+                expect.any(Error)
+            );
+        });
+
+        it('should handle UserRepository failure gracefully', async () => {
+            const notificationData: Partial<NotificationDAO> = {
+                userId: 4,
+                type: 'STATUS_CHANGE',
+                message: 'Test',
+                read: false
+            };
+
+            const createdNotification: NotificationDAO = {
+                id: 4,
+                ...notificationData,
+                reportId: null,
+                createdAt: new Date()
+            } as NotificationDAO;
+
+            mockRepo.create.mockReturnValue(createdNotification);
+            mockRepo.save.mockResolvedValue(createdNotification);
+            mockUserRepo.getUserById.mockRejectedValue(new Error('User not found'));
+
+            const result = await notificationRepo.createNotification(notificationData);
+
+            expect(result).toEqual(createdNotification);
+            expect(mockNotificationService.sendNotificationEmail).not.toHaveBeenCalled();
+            expect(consoleErrorSpy).toHaveBeenCalled();
+        });
+
+        it('should not send email if userId is undefined', async () => {
+            const notificationData: Partial<NotificationDAO> = {
+                type: 'STATUS_CHANGE',
+                message: 'Test notification',
+                read: false
+            };
+
+            const createdNotification: NotificationDAO = {
+                id: 5,
+                userId: undefined as any,
+                reportId: null,
+                type: 'STATUS_CHANGE',
+                message: 'Test notification',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.create.mockReturnValue(createdNotification);
+            mockRepo.save.mockResolvedValue(createdNotification);
+
+            const result = await notificationRepo.createNotification(notificationData);
+
+            expect(result).toEqual(createdNotification);
+            expect(mockUserRepo.getUserById).not.toHaveBeenCalled();
+            expect(mockNotificationService.sendNotificationEmail).not.toHaveBeenCalled();
         });
 
         it('should create notification with minimal data', async () => {
@@ -291,13 +442,21 @@ describe('NotificationRepository', () => {
                 read: false
             };
 
+            const mockUser: UserDAO = {
+                id: 1,
+                email: 'user@test.com',
+                emailNotifications: true
+            } as UserDAO;
+
             mockRepo.create.mockReturnValue(createdNotification);
             mockRepo.save.mockResolvedValue(createdNotification);
+            mockUserRepo.getUserById.mockResolvedValue(mockUser);
 
             const result = await notificationRepo.createNotification(notificationData);
 
             expect(mockRepo.create).toHaveBeenCalledWith(notificationData);
             expect(result).toEqual(createdNotification);
+            expect(mockNotificationService.sendNotificationEmail).toHaveBeenCalled();
         });
 
         it('should create notification with null reportId', async () => {
@@ -315,19 +474,26 @@ describe('NotificationRepository', () => {
                 createdAt: new Date()
             };
 
+            const mockUser: UserDAO = {
+                id: 5,
+                email: 'user5@test.com'
+            } as UserDAO;
+
             mockRepo.create.mockReturnValue(createdNotification);
             mockRepo.save.mockResolvedValue(createdNotification);
+            mockUserRepo.getUserById.mockResolvedValue(mockUser);
 
             const result = await notificationRepo.createNotification(notificationData);
 
             expect(result.reportId).toBeNull();
             expect(mockRepo.save).toHaveBeenCalled();
+            expect(mockNotificationService.sendNotificationEmail).toHaveBeenCalled();
         });
     });
 
     // ===================== createStatusChangeNotification =====================
     describe('createStatusChangeNotification', () => {
-        it('should create status change notification for non-anonymous report', async () => {
+        it('should create status change notification for non-anonymous report and send email', async () => {
             const mockReport: ReportDAO = {
                 id: 10,
                 title: 'Test Report',
@@ -337,8 +503,15 @@ describe('NotificationRepository', () => {
             } as any;
 
             const mockFollowers: UserDAO[] = [
-                { id: 1, username: 'user1', email: 'user1@test.com' } as UserDAO
+                { id: 1, username: 'user1', email: 'user1@test.com', emailNotifications: true } as UserDAO
             ];
+
+            const mockUser: UserDAO = {
+                id: 1,
+                username: 'user1',
+                email: 'user1@test.com',
+                emailNotifications: true
+            } as UserDAO;
 
             mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
 
@@ -353,6 +526,7 @@ describe('NotificationRepository', () => {
             };
 
             mockRepo.save.mockResolvedValue(expectedNotification);
+            mockUserRepo.getUserById.mockResolvedValue(mockUser);
 
             const result = await notificationRepo.createStatusChangeNotification(mockReport);
 
@@ -363,7 +537,136 @@ describe('NotificationRepository', () => {
                 message: 'Your report #10 is now ASSIGNED',
                 read: false
             });
+            expect(mockUserRepo.getUserById).toHaveBeenCalledWith(1);
+            expect(mockNotificationService.sendNotificationEmail).toHaveBeenCalledWith(mockUser, expectedNotification);
             expect(result).toEqual(expectedNotification);
+        });
+
+        it('should send email to multiple followers', async () => {
+            const mockReport: ReportDAO = {
+                id: 50,
+                title: 'Test Report',
+                author: { id: 1, username: 'user1' } as UserDAO,
+                state: 'IN_PROGRESS',
+                reason: null
+            } as any;
+
+            const mockFollowers: UserDAO[] = [
+                { id: 1, username: 'user1', email: 'user1@test.com' } as UserDAO,
+                { id: 2, username: 'user2', email: 'user2@test.com' } as UserDAO
+            ];
+
+            const mockUser1: UserDAO = { id: 1, email: 'user1@test.com', emailNotifications: true } as UserDAO;
+            const mockUser2: UserDAO = { id: 2, email: 'user2@test.com', emailNotifications: true } as UserDAO;
+
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
+
+            const notification1: NotificationDAO = {
+                id: 1,
+                userId: 1,
+                reportId: 50,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #50 is now IN_PROGRESS',
+                createdAt: new Date(),
+                read: false
+            };
+
+            const notification2: NotificationDAO = {
+                id: 2,
+                userId: 2,
+                reportId: 50,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #50 is now IN_PROGRESS',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save
+                .mockResolvedValueOnce(notification1)
+                .mockResolvedValueOnce(notification2);
+
+            mockUserRepo.getUserById
+                .mockResolvedValueOnce(mockUser1)
+                .mockResolvedValueOnce(mockUser2);
+
+            await notificationRepo.createStatusChangeNotification(mockReport);
+
+            expect(mockNotificationService.sendNotificationEmail).toHaveBeenCalledTimes(2);
+            expect(mockNotificationService.sendNotificationEmail).toHaveBeenNthCalledWith(1, mockUser1, notification1);
+            expect(mockNotificationService.sendNotificationEmail).toHaveBeenNthCalledWith(2, mockUser2, notification2);
+        });
+
+        it('should handle email sending failure without breaking notification creation', async () => {
+            const mockReport: ReportDAO = {
+                id: 60,
+                title: 'Test Report',
+                author: { id: 1, username: 'user1' } as UserDAO,
+                state: 'RESOLVED',
+                reason: null
+            } as any;
+
+            const mockFollowers: UserDAO[] = [
+                { id: 1, username: 'user1', email: 'user1@test.com' } as UserDAO
+            ];
+
+            const mockUser: UserDAO = { id: 1, email: 'user1@test.com' } as UserDAO;
+
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
+
+            const expectedNotification: NotificationDAO = {
+                id: 1,
+                userId: 1,
+                reportId: 60,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #60 is now RESOLVED',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+            mockUserRepo.getUserById.mockResolvedValue(mockUser);
+            mockNotificationService.sendNotificationEmail.mockRejectedValue(new Error('SMTP error'));
+
+            const result = await notificationRepo.createStatusChangeNotification(mockReport);
+
+            expect(result).toEqual(expectedNotification);
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Failed to send email for notification 1'),
+                expect.any(Error)
+            );
+        });
+
+        it('should skip email if user ID is undefined', async () => {
+            const mockReport: ReportDAO = {
+                id: 70,
+                title: 'Test Report',
+                author: { id: 1, username: 'user1' } as UserDAO,
+                state: 'ASSIGNED',
+                reason: null
+            } as any;
+
+            const mockFollowers: UserDAO[] = [
+                { username: 'user1', email: 'user1@test.com' } as UserDAO // No id
+            ];
+
+            mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
+
+            const expectedNotification: NotificationDAO = {
+                id: 1,
+                userId: undefined,
+                reportId: 70,
+                type: 'STATUS_CHANGE',
+                message: 'Your report #70 is now ASSIGNED',
+                createdAt: new Date(),
+                read: false
+            } as any;
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+
+            await notificationRepo.createStatusChangeNotification(mockReport);
+
+            expect(mockUserRepo.getUserById).not.toHaveBeenCalled();
+            expect(mockNotificationService.sendNotificationEmail).not.toHaveBeenCalled();
         });
 
         it('should create notification with declined reason', async () => {
@@ -379,6 +682,8 @@ describe('NotificationRepository', () => {
                 { id: 2, username: 'user2', email: 'user2@test.com' } as UserDAO
             ];
 
+            const mockUser: UserDAO = { id: 2, email: 'user2@test.com', emailNotifications: true } as UserDAO;
+
             mockFollowRepo.getFollowersOfReport.mockResolvedValue(mockFollowers);
 
             const expectedNotification: NotificationDAO = {
@@ -392,6 +697,7 @@ describe('NotificationRepository', () => {
             };
 
             mockRepo.save.mockResolvedValue(expectedNotification);
+            mockUserRepo.getUserById.mockResolvedValue(mockUser);
 
             const result = await notificationRepo.createStatusChangeNotification(mockReport);
 
@@ -540,7 +846,7 @@ describe('NotificationRepository', () => {
 
     // ===================== createOfficerMessageNotification =====================
     describe('createOfficerMessageNotification', () => {
-        it('should create officer message notification for non-anonymous report', async () => {
+        it('should create officer message notification for non-anonymous report and send email', async () => {
             const mockReport: ReportDAO = {
                 id: 10,
                 title: 'Test Report',
@@ -550,6 +856,13 @@ describe('NotificationRepository', () => {
 
             const officerId = 5;
             const messageText = 'Please provide more details';
+
+            const mockUser: UserDAO = {
+                id: 1,
+                username: 'user1',
+                email: 'user1@test.com',
+                emailNotifications: true
+            } as UserDAO;
 
             const expectedNotification: NotificationDAO = {
                 id: 1,
@@ -562,6 +875,7 @@ describe('NotificationRepository', () => {
             };
 
             mockRepo.save.mockResolvedValue(expectedNotification);
+            mockUserRepo.getUserById.mockResolvedValue(mockUser);
 
             const result = await notificationRepo.createOfficerMessageNotification(
                 mockReport,
@@ -576,9 +890,83 @@ describe('NotificationRepository', () => {
                 message: 'Message from officer #5: Please provide more details',
                 read: false
             });
+            expect(mockUserRepo.getUserById).toHaveBeenCalledWith(1);
+            expect(mockNotificationService.sendNotificationEmail).toHaveBeenCalledWith(mockUser, expectedNotification);
             expect(result).toEqual(expectedNotification);
             expect(result?.message).toContain(`officer #${officerId}`);
             expect(result?.message).toContain(messageText);
+        });
+
+        it('should handle email sending failure gracefully', async () => {
+            const mockReport: ReportDAO = {
+                id: 20,
+                title: 'Test Report',
+                author: { id: 2, username: 'user2' } as UserDAO,
+                state: 'IN_PROGRESS'
+            } as any;
+
+            const mockUser: UserDAO = {
+                id: 2,
+                email: 'user2@test.com'
+            } as UserDAO;
+
+            const expectedNotification: NotificationDAO = {
+                id: 2,
+                userId: 2,
+                reportId: 20,
+                type: 'OFFICER_MESSAGE',
+                message: 'Message from officer #10: Test message',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+            mockUserRepo.getUserById.mockResolvedValue(mockUser);
+            mockNotificationService.sendNotificationEmail.mockRejectedValue(new Error('SMTP error'));
+
+            const result = await notificationRepo.createOfficerMessageNotification(
+                mockReport,
+                10,
+                'Test message'
+            );
+
+            expect(result).toEqual(expectedNotification);
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Failed to send email for notification 2'),
+                expect.any(Error)
+            );
+        });
+
+        it('should handle UserRepository failure gracefully', async () => {
+            const mockReport: ReportDAO = {
+                id: 30,
+                title: 'Test Report',
+                author: { id: 3, username: 'user3' } as UserDAO,
+                state: 'ASSIGNED'
+            } as any;
+
+            const expectedNotification: NotificationDAO = {
+                id: 3,
+                userId: 3,
+                reportId: 30,
+                type: 'OFFICER_MESSAGE',
+                message: 'Message from officer #15: Test',
+                createdAt: new Date(),
+                read: false
+            };
+
+            mockRepo.save.mockResolvedValue(expectedNotification);
+            mockUserRepo.getUserById.mockRejectedValue(new Error('User not found'));
+
+            const result = await notificationRepo.createOfficerMessageNotification(
+                mockReport,
+                15,
+                'Test'
+            );
+
+            expect(result).toEqual(expectedNotification);
+            expect(mockNotificationService.sendNotificationEmail).not.toHaveBeenCalled();
+            expect(consoleErrorSpy).toHaveBeenCalled();
         });
 
         it('should return null for anonymous report', async () => {
@@ -598,6 +986,7 @@ describe('NotificationRepository', () => {
 
             expect(result).toBeNull();
             expect(mockRepo.save).not.toHaveBeenCalled();
+            expect(mockNotificationService.sendNotificationEmail).not.toHaveBeenCalled();
         });
 
         it('should return null for report with author but no author id', async () => {
