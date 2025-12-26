@@ -2,9 +2,13 @@ import { AppDataSource } from "@database";
 import { Repository } from "typeorm";
 import { NotificationDAO } from "@dao/NotificationDAO";
 import { ReportDAO } from "@dao/ReportDAO";
+import { UserDAO } from "@dao/UserDAO";
 
 import { FollowRepository } from "@repositories/FollowRepository";
+import { UserRepository } from "@repositories/UserRepository";
 import { mapUserDAOToDTO } from "@services/mapperService";
+import { sendNotificationEmail } from "@services/notificationService";
+
 export class NotificationRepository {
     private repo: Repository<NotificationDAO>;
 
@@ -30,7 +34,21 @@ export class NotificationRepository {
     }
     async createNotification(notification: Partial<NotificationDAO>): Promise<NotificationDAO> {
         const newNotification = this.repo.create(notification);
-        return this.repo.save(newNotification);
+        const savedNotification = await this.repo.save(newNotification);
+        
+        // Invia email se l'utente ha abilitato le notifiche email
+        if (savedNotification.userId) {
+            try {
+                const userRepo = new UserRepository();
+                const userDAO = await userRepo.getUserById(savedNotification.userId);
+                await sendNotificationEmail(userDAO, savedNotification);
+            } catch (error) {
+                console.error(`Failed to send email for notification ${savedNotification.id}:`, error);
+                // Continuiamo comunque, l'email è opzionale
+            }
+        }
+        
+        return savedNotification;
     }
     //? crea una notifica di cambio stato per l'autore del report (user quindi, se non è anonimo)
     async createStatusChangeNotification(report: ReportDAO): Promise<NotificationDAO | null> {
@@ -40,6 +58,8 @@ export class NotificationRepository {
         const dto = users.map(u => mapUserDAOToDTO(u));
         if (!report.author || report.author.id === undefined) return null; // anonymous
         let lastNotification: NotificationDAO | null = null;
+        const userRepo = new UserRepository();
+        
         for (const user of dto) {
            lastNotification = await this.repo.save({
                 userId: user.id,
@@ -48,6 +68,17 @@ export class NotificationRepository {
                 message: this.buildStatusMessage(report),
                 read: false
             });
+            
+            // Invia email se l'utente ha abilitato le notifiche email
+            if (user.id !== undefined) {
+                try {
+                    const userDAO = await userRepo.getUserById(user.id);
+                    await sendNotificationEmail(userDAO, lastNotification);
+                } catch (error) {
+                    console.error(`Failed to send email for notification ${lastNotification.id}:`, error);
+                    // Continuiamo comunque, l'email è opzionale
+                }
+            }
         }
         return lastNotification;
     }
@@ -56,13 +87,25 @@ export class NotificationRepository {
     async createOfficerMessageNotification(report: ReportDAO, officerId: number, text: string): Promise<NotificationDAO | null> {
         if (!report.author || report.author.id === undefined) return null; // anonymous
         const msg = `Message from officer #${officerId}: ${text}`;
-        return this.repo.save({
+        const notification = await this.repo.save({
             userId: report.author.id,
             reportId: report.id,
             type: "OFFICER_MESSAGE",
             message: msg,
             read: false
         });
+        
+        // Invia email se l'utente ha abilitato le notifiche email
+        try {
+            const userRepo = new UserRepository();
+            const userDAO = await userRepo.getUserById(report.author.id);
+            await sendNotificationEmail(userDAO, notification);
+        } catch (error) {
+            console.error(`Failed to send email for notification ${notification.id}:`, error);
+            // Continuiamo comunque, l'email è opzionale
+        }
+        
+        return notification;
     }
 
     //? creazione di messaggio di notifica per cambio stato report (chiamato nella createStatusChangeNotification sopra)
