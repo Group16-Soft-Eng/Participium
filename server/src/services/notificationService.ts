@@ -23,15 +23,15 @@ export async function sendNotificationEmail(
   let textContent: string;
 
   if (notification.type === "STATUS_CHANGE") {
-    subject = `Participium - Aggiornamento Report #${notification.reportId}`;
+    subject = `Participium - Report Update #${notification.reportId}`;
     htmlContent = generateStatusChangeEmailHTML(user, notification);
     textContent = generateStatusChangeEmailText(user, notification);
   } else if (notification.type === "OFFICER_MESSAGE") {
-    subject = `Participium - Nuovo Messaggio per Report #${notification.reportId}`;
+    subject = `Participium - New Message for Report #${notification.reportId}`;
     htmlContent = generateOfficerMessageEmailHTML(user, notification);
     textContent = generateOfficerMessageEmailText(user, notification);
   } else {
-    subject = `Participium - Nuova Notifica`;
+    subject = `Participium - New Notification`;
     htmlContent = generateGenericEmailHTML(user, notification);
     textContent = generateGenericEmailText(user, notification);
   }
@@ -109,23 +109,23 @@ function generateStatusChangeEmailHTML(user: UserDAO, notification: Notification
 <body>
   <div class="container">
     <div class="header">
-      <h2>🔔 Participium - Aggiornamento Report</h2>
+      <h2>🔔 Participium - Report Update</h2>
     </div>
     <div class="content">
-      <p>Ciao ${user.firstName},</p>
-      <p>Il tuo report ha ricevuto un aggiornamento di stato:</p>
+      <p>Hello ${user.firstName},</p>
+      <p>Your report has received a status update:</p>
       
       <div class="notification-box">
         <strong>Report #${notification.reportId}</strong><br>
         ${notification.message}
       </div>
       
-      <p>Puoi visualizzare tutti i dettagli accedendo alla piattaforma Participium.</p>
+      <p>You can view all the details by accessing the Participium platform.</p>
       
-      <p>Grazie per utilizzare Participium!</p>
+      <p>Thank you for using Participium!</p>
     </div>
     <div class="footer">
-      <p>Questo è un messaggio automatico. Per disabilitare le notifiche email, accedi al tuo pannello di configurazione su Participium.</p>
+      <p>This is an automated message. To disable email notifications, access your configuration panel on Participium.</p>
     </div>
   </div>
 </body>
@@ -138,19 +138,19 @@ function generateStatusChangeEmailHTML(user: UserDAO, notification: Notification
  */
 function generateStatusChangeEmailText(user: UserDAO, notification: NotificationDAO): string {
   return `
-Ciao ${user.firstName},
+Hello ${user.firstName},
 
-Il tuo report ha ricevuto un aggiornamento di stato:
+Your report has received a status update:
 
 Report #${notification.reportId}
 ${notification.message}
 
-Puoi visualizzare tutti i dettagli accedendo alla piattaforma Participium.
+You can view all the details by accessing the Participium platform.
 
-Grazie per utilizzare Participium!
+Thank you for using Participium!
 
 ---
-Questo è un messaggio automatico. Per disabilitare le notifiche email, accedi al tuo pannello di configurazione su Participium.
+This is an automated message. To disable email notifications, access your configuration panel on Participium.
   `;
 }
 
@@ -204,23 +204,23 @@ function generateOfficerMessageEmailHTML(user: UserDAO, notification: Notificati
 <body>
   <div class="container">
     <div class="header">
-      <h2>💬 Participium - Nuovo Messaggio</h2>
+      <h2>💬 Participium - New Message</h2>
     </div>
     <div class="content">
-      <p>Ciao ${user.firstName},</p>
-      <p>Hai ricevuto un nuovo messaggio riguardo al tuo report:</p>
+      <p>Hello ${user.firstName},</p>
+      <p>You have received a new message regarding your report:</p>
       
       <div class="message-box">
         <strong>Report #${notification.reportId}</strong><br>
         ${notification.message}
       </div>
       
-      <p>Puoi rispondere accedendo alla piattaforma Participium.</p>
+      <p>You can reply by accessing the Participium platform.</p>
       
-      <p>Grazie per utilizzare Participium!</p>
+      <p>Thank you for using Participium!</p>
     </div>
     <div class="footer">
-      <p>Questo è un messaggio automatico. Per disabilitare le notifiche email, accedi al tuo pannello di configurazione su Participium.</p>
+      <p>This is an automated message. To disable email notifications, access your configuration panel on Participium.</p>
     </div>
   </div>
 </body>
@@ -233,19 +233,19 @@ function generateOfficerMessageEmailHTML(user: UserDAO, notification: Notificati
  */
 function generateOfficerMessageEmailText(user: UserDAO, notification: NotificationDAO): string {
   return `
-Ciao ${user.firstName},
+Hello ${user.firstName},
 
-Hai ricevuto un nuovo messaggio riguardo al tuo report:
+You have received a new message regarding your report:
 
 Report #${notification.reportId}
 ${notification.message}
 
-Puoi rispondere accedendo alla piattaforma Participium.
+You can reply by accessing the Participium platform.
 
-Grazie per utilizzare Participium!
+Thank you for using Participium!
 
 ---
-Questo è un messaggio automatico. Per disabilitare le notifiche email, accedi al tuo pannello di configurazione su Participium.
+This is an automated message. To disable email notifications, access your configuration panel on Participium.
   `;
 }
 
@@ -299,22 +299,22 @@ function generateGenericEmailHTML(user: UserDAO, notification: NotificationDAO):
 <body>
   <div class="container">
     <div class="header">
-      <h2>🔔 Participium - Notifica</h2>
+      <h2>🔔 Participium - Notification</h2>
     </div>
     <div class="content">
-      <p>Ciao ${user.firstName},</p>
-      <p>Hai una nuova notifica:</p>
+      <p>Hello ${user.firstName},</p>
+      <p>You have a new notification:</p>
       
       <div class="notification-box">
         ${notification.message}
       </div>
       
-      <p>Puoi visualizzare tutti i dettagli accedendo alla piattaforma Participium.</p>
+      <p>You can view all the details by accessing the Participium platform.</p>
       
-      <p>Grazie per utilizzare Participium!</p>
+      <p>Thank you for using Participium!</p>
     </div>
     <div class="footer">
-      <p>Questo è un messaggio automatico. Per disabilitare le notifiche email, accedi al tuo pannello di configurazione su Participium.</p>
+      <p>This is an automated message. To disable email notifications, access your configuration panel on Participium.</p>
     </div>
   </div>
 </body>
@@ -327,17 +327,17 @@ function generateGenericEmailHTML(user: UserDAO, notification: NotificationDAO):
  */
 function generateGenericEmailText(user: UserDAO, notification: NotificationDAO): string {
   return `
-Ciao ${user.firstName},
+Hello ${user.firstName},
 
-Hai una nuova notifica:
+You have a new notification:
 
 ${notification.message}
 
-Puoi visualizzare tutti i dettagli accedendo alla piattaforma Participium.
+You can view all the details by accessing the Participium platform.
 
-Grazie per utilizzare Participium!
+Thank you for using Participium!
 
 ---
-Questo è un messaggio automatico. Per disabilitare le notifiche email, accedi al tuo pannello di configurazione su Participium.
+This is an automated message. To disable email notifications, access your configuration panel on Participium.
   `;
 }
