@@ -36,10 +36,10 @@ const UserMenu: React.FC = () => {
       </IconButton>
 
       <Menu id="user-menu" anchorEl={anchorEl} open={open} onClose={handleClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
-        {role?.includes('citizen') && <>
+        {role?.includes('citizen') && <Box>
         <MenuItem onClick={() => navigate('/user')}>Account Settings</MenuItem>
         <MenuItem onClick={() => window.open('https://t.me/participium_g16_bot', '_blank')}>Telegram Bot</MenuItem>
-        </>
+        </Box>
         }
         {/* Role-specific shortcuts */}
         {}

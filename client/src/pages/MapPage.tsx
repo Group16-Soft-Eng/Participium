@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MapClusterView from '../Map/MapComponents/MapClusterView';
 import type { Report } from '../Map/types/report';
 import { Box, List, ListItem, Paper, Typography, Chip, CircularProgress } from '@mui/material';
 import { getAllReports } from '../Map/mapApi/mapApi';
 import { getToken } from '../services/auth';
+import SearchBar from '../components/SearchBar';
 
 const getCategoryColor = (cat: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
   switch (cat) {
@@ -25,6 +26,8 @@ const MapPage: React.FC = () => {
   const [initialCenter, setInitialCenter] = useState<[number, number] | null>(null);
   const [initialZoom, setInitialZoom] = useState<number | null>(null);
   const [highlightLocation, setHighlightLocation] = useState<[number, number] | null>(null);
+  const [search, setSearch] = useState<string | null>(null);
+  const [searchCoords, setSearchCoords] = useState<[number, number] | null>(null);
 
   const logged = getToken() !== null;
 
@@ -33,13 +36,11 @@ const MapPage: React.FC = () => {
       try {
         setLoading(true);
         const data = await getAllReports();
-        // Show only APPROVED, IN_PROGRESS, and SUSPENDED reports on map
         let visibleReports = data.filter(report => {
           const status = report.status?.toLowerCase();
           return status === 'approved' || status === 'in_progress' || status === 'suspended';
         });
 
-        // If there's a specific report ID in the URL, ensure it's included even if filtered
         const reportIdParam = searchParams.get('id');
         if (reportIdParam) {
           const specificReport = data.find(r => r.id === reportIdParam);
@@ -51,8 +52,7 @@ const MapPage: React.FC = () => {
 
         setReports(visibleReports);
       } catch (error) {
-        console.error('Error fetching reports:', error);
-        // Show empty array if API fails
+        console.error(error);
         setReports([]);
       } finally {
         setLoading(false);
@@ -61,6 +61,50 @@ const MapPage: React.FC = () => {
 
     fetchReports();
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!search || search.trim() === '') {
+      setSearchCoords(null);
+      return;
+    }
+
+    const geocodeAddress = async () => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(search)}&limit=1`
+        );
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const coords: [number, number] = [Number.parseFloat(data[0].lat), Number.parseFloat(data[0].lon)];
+          setSearchCoords(coords);
+          setInitialCenter(coords);
+          setInitialZoom(17);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    geocodeAddress();
+  }, [search]);
+
+  const filteredReports = useMemo(() => {
+    if (search != "") {
+      if (!searchCoords) return reports;
+
+      const RADIUS_KM = 0.2;
+
+      return reports.filter((r) => {
+        const dx = (r.longitude - searchCoords[1]) * 111.32 * Math.cos(searchCoords[0] * (Math.PI / 180));
+        const dy = (r.latitude - searchCoords[0]) * 111.13;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance <= RADIUS_KM;
+      });
+    }
+    else {
+      return reports
+    }
+  }, [reports, searchCoords]);
 
   useEffect(() => {
     const lat = searchParams.get('lat');
@@ -85,18 +129,16 @@ const MapPage: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', gap: 0, alignItems: 'stretch', flexDirection: { xs: 'column', md: 'row' }, width: '100%', height: 'calc(100vh - 64px)' }}>
-      {/* Map: 2/3 width on md+ screens, full width on xs */}
       <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 66.666%' }, minWidth: 0 }}>
-          <MapClusterView
-            reports={logged ? reports : []}
-            selectedId={selectedId}
-            initialCenter={initialCenter}
-            initialZoom={initialZoom}
-            highlightLocation={highlightLocation}
-          />
+        <MapClusterView
+          reports={logged ? filteredReports : []}
+          selectedId={selectedId}
+          initialCenter={initialCenter}
+          initialZoom={initialZoom}
+          highlightLocation={highlightLocation}
+        />
       </Box>
 
-      {/* Sidebar list: 1/3 width on md+ screens, full width on xs */}
       <Paper sx={{
         flex: { xs: '0 0 100%', md: '0 0 33.333%' },
         minWidth: { xs: '100%', md: 280 },
@@ -105,67 +147,51 @@ const MapPage: React.FC = () => {
         p: 2,
         bgcolor: '#f8f9fa'
       }} elevation={2}>
-        { logged ? 
-        <>
-        <Typography variant="h6" gutterBottom>Reports on map ({reports.length})</Typography>
-        <List>
-          {reports.map((r) => {
-            const status = r.status?.toLowerCase();
-            const isInProgress = status === 'in_progress';
-            const isSuspended = status === 'suspended';
-            return (
-              <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
-                <Paper
-                  sx={{
-                    width: '100%',
-                    p: 1.25,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    bgcolor: (() => {
-                      if (isInProgress) {
-                        return '#e3f2fd';
-                      } else if (isSuspended) {
-                        return '#fff3e0';
-                      } else {
-                        return 'white';
-                      }
-                    })(),
-                    borderLeft: (() => {
-                      if (isInProgress) {
-                        return '4px solid #1976d2';
-                      } else if (isSuspended) {
-                        return '4px solid #f57c00';
-                      } else {
-                        return 'none';
-                      }
-                    })()
-                  }}
-                  elevation={1}
-                  onClick={() => setSelectedId(r.id)}
-                >
-                  <Box>
-                    <Typography variant="subtitle1">{r.title}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {/* Show reporter: anonymous when report.anonymity is true, otherwise show author name if available */}
-                      {r.anonymity ? 'Anonymous' : (() => {
-                        const authorDisplayName = r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown';
-                        return authorDisplayName;
-                      })()}
-                      {` • ${new Date(r.createdAt).toLocaleDateString()}`}
-                    </Typography>
-                  </Box>
-                  <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
-                </Paper>
-              </ListItem>
-            );
-          })}
-        </List>
-        </>
-        : <>
-        <Typography variant="h6" gutterBottom>Please log in to view the available reports.</Typography>
-        </>}
+        {logged ?
+          <>
+            <Typography variant="h6" gutterBottom>
+              {searchCoords ? `Reports near location (${filteredReports.length})` : `Reports on map (${reports.length})`}
+            </Typography>
+
+            {!highlightLocation && <SearchBar setSearch={setSearch} />}
+            <List>
+              {filteredReports.map((r) => {
+                const status = r.status?.toLowerCase();
+                const isInProgress = status === 'in_progress' || status === 'in-progress';
+                const isSuspended = status === 'suspended';
+                return (
+                  <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
+                    <Paper
+                      sx={{
+                        width: '100%',
+                        p: 1.25,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        bgcolor: isInProgress ? '#e3f2fd' : isSuspended ? '#fff3e0' : 'white',
+                        borderLeft: isInProgress ? '4px solid #1976d2' : isSuspended ? '4px solid #f57c00' : 'none',
+                        '&:hover': { bgcolor: '#f0f0f0' }
+                      }}
+                      elevation={1}
+                      onClick={() => setSelectedId(r.id)}
+                    >
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ lineHeight: 1.2, mb: 0.5 }}>{r.title}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {r.anonymity ? 'Anonymous' : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown')}
+                          {` • ${new Date(r.createdAt).toLocaleDateString()}`}
+                        </Typography>
+                      </Box>
+                      <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
+                    </Paper>
+                  </ListItem>
+                );
+              })}
+            </List>
+          </>
+          : <Typography variant="h6" gutterBottom>Please log in to view the available reports.</Typography>
+        }
       </Paper>
     </Box>
   );

@@ -123,7 +123,7 @@ const NotificationBell: React.FC = () => {
                   secondary={formatTimestamp(notification.timestamp)}
                   primaryTypographyProps={{
                     variant: 'body2',
-                    sx: { 
+                    sx: {
                       fontWeight: notification.read ? 400 : 600,
                       color: notification.read ? 'text.secondary' : 'text.primary',
                       whiteSpace: 'normal',
@@ -147,21 +147,19 @@ const NotificationBell: React.FC = () => {
           ))
         )}
 
-        {allNotifications.length > 0 && (
-          <>
-            <Divider />
-            <Box sx={{ py: 1, textAlign: 'center' }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ cursor: 'pointer' }}
-                onClick={handleClose}
-              >
-                Close
-              </Typography>
-            </Box>
-          </>
-        )}
+        {allNotifications.length > 0 && [
+          <Divider key="divider-bottom" />,
+          <Box key="close-box" sx={{ py: 1, textAlign: 'center' }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ cursor: 'pointer' }}
+              onClick={handleClose}
+            >
+              Close
+            </Typography>
+          </Box>
+        ]}
       </Menu>
     </>
   );
