@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {uploadReport, getReports, getReportsByOffice, getReport } from "@controllers/reportController"
+import {uploadReport, getReports, getReportsByOffice, getReport, getPublicStatistics } from "@controllers/reportController"
 import {ReportFromJSON} from "@dto/Report";
 
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
@@ -11,6 +11,16 @@ import { OfficerRepository } from "@repositories/OfficerRepository";
 import { ReviewStatus } from "@models/enums/ReviewStatus";
 
 const router = Router({mergeParams : true});
+
+//? Public statistics endpoint (no authentication required)
+router.get("/statistics", async (_req, res, next) => {
+    try {
+        const statistics = await getPublicStatistics();
+        res.status(200).json(statistics);
+    } catch (error) {
+        next(error);
+    }
+});
 
 router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, async(req, res, next) =>{
     try{
@@ -40,38 +50,11 @@ router.post("/", authenticateToken, requireUserType(["user"]), uploadPhotos, asy
     }
 });
 
-router.get("/",authenticateToken, async(req, res, next) =>{
+router.get("/", async(_req, res, next) =>{
     try{
-        // Check if user is authenticated
-        const authHeader = req.headers.authorization;
-        let result;
-        /*
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            // User is authenticated - check if it's an officer
-            try {
-                const token = authHeader.substring(7);
-                const jwt = require('jsonwebtoken');
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-                
-                // Check if user type is an officer role
-                if (decoded.type && decoded.type !== 'user') {
-                    // It's an officer - get their office and filter reports
-                    const officerRepo = new OfficerRepository();
-                    const officer = await officerRepo.getOfficerById(decoded.id);
-                    result = await getReportsByOffice(officer.office);
-                } else {
-                    // Regular user - show all approved reports
-                    result = await getReports();
-                }
-            } catch (e) {
-                // Invalid token - show all approved reports (public)
-                result = await getReports();
-            }
-        } else {
-            // No authentication - show all approved reports (public)
-            result = await getReports();
-        }*/
-        result = await getReports();
+        // Public endpoint - no authentication required
+        // All users (logged in or not) can see approved reports on the map
+        const result = await getReports();
         res.status(200).json(result);
     }
     catch(error)

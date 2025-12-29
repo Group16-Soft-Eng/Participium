@@ -21,6 +21,7 @@ import { UserPage } from './pages/UserPage';
 
 import { ReportDetailsPage } from './pages/ReportDetailsPage';
 import MaintainerDashboardPage from './pages/MaintainerDashboardPage';
+import StatisticsPage from './pages/StatisticsPage';
 
 
 type OfficerProps = {
@@ -158,6 +159,7 @@ function App() {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button className="flex-mobile" id="map-button" component={Link} to="/map" color="inherit">Map</Button>
+              <Button className="flex-mobile" component={Link} to="/statistics" color="inherit">Statistics</Button>
 
               {/* Show different button based on user role */}
               {isPROfficer && (
@@ -221,6 +223,7 @@ function App() {
             <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
             <Route path="/maintainer" element={<RequireMaintainer><MaintainerDashboardPage /></RequireMaintainer>} />
             <Route path="/reports/:reportId/details" element={<RequireLogin><ReportDetailsPage /></RequireLogin>} />
+            <Route path="/statistics" element={<StatisticsPage />} />
           </Routes>
         </Box>
 

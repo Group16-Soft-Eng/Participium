@@ -17,7 +17,7 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-openapi-validator": "^5.1.6",
-    "generate": "^0.14.0",
+    "generate": "^0.8.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.11",

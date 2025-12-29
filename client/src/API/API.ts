@@ -618,7 +618,7 @@ async function getReportById(reportId: string) {
         method: 'GET',
         headers: headers,
     });
-    
+
     if (response.ok) {
         return await response.json();
     } else {
@@ -627,5 +627,28 @@ async function getReportById(reportId: string) {
     }
 }
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById };
-export type { Notification };
+type PublicStatistics = {
+    totalReports: number;
+    byCategory: { category: string; count: number }[];
+    byState: { state: string; count: number }[];
+    dailyTrend: { date: string; count: number }[];
+    weeklyTrend: { week: string; count: number }[];
+    monthlyTrend: { month: string; count: number }[];
+};
+
+async function getPublicStatistics(): Promise<PublicStatistics> {
+    const response = await fetch(URI + `/reports/statistics`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to fetch statistics');
+    }
+}
+
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById, getPublicStatistics };
+export type { Notification, PublicStatistics };

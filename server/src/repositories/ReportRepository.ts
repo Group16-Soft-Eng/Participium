@@ -4,6 +4,7 @@ import { ReportDAO } from "@dao/ReportDAO";
 import { UserDAO } from "@dao/UserDAO";
 import { OfficeType } from "@models/enums/OfficeType";
 import { ReportState } from "@models/enums/ReportState";
+import { ReviewStatus } from "@models/enums/ReviewStatus";
 import { findOrThrowNotFound } from "@utils/utils";
 
 export class ReportRepository {
@@ -20,12 +21,9 @@ export class ReportRepository {
 
   async getApprovedReports(): Promise<ReportDAO[]> {
     return this.repo.find({
-      where: [
-        
-        { state: ReportState.ASSIGNED },
-        { state: ReportState.IN_PROGRESS },
-        { state: ReportState.SUSPENDED }
-      ],
+      where: {
+        reviewStatus: ReviewStatus.APPROVED
+      },
       relations: ["author"],
       order: {
         date: "DESC" // Most recent first
@@ -173,5 +171,100 @@ export class ReportRepository {
 
   async updateReport(report: ReportDAO): Promise<ReportDAO> {
     return this.repo.save(report);
+  }
+
+  async getPublicStatistics(): Promise<{
+    totalReports: number;
+    byCategory: { category: string; count: number }[];
+    byState: { state: string; count: number }[];
+    dailyTrend: { date: string; count: number }[];
+    weeklyTrend: { week: string; count: number }[];
+    monthlyTrend: { month: string; count: number }[];
+  }> {
+    const allReports = await this.getAllReports();
+
+    // Total reports
+    const totalReports = allReports.length;
+
+    // By category
+    const categoryMap = new Map<string, number>();
+    allReports.forEach(report => {
+      const category = report.category || 'other';
+      categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+    });
+    const byCategory = Array.from(categoryMap.entries()).map(([category, count]) => ({
+      category,
+      count
+    }));
+
+    // By state
+    const stateMap = new Map<string, number>();
+    allReports.forEach(report => {
+      const state = report.state || 'PENDING';
+      stateMap.set(state, (stateMap.get(state) || 0) + 1);
+    });
+    const byState = Array.from(stateMap.entries()).map(([state, count]) => ({
+      state,
+      count
+    }));
+
+    // Daily trend (last 30 days)
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const dailyMap = new Map<string, number>();
+
+    allReports
+      .filter(report => new Date(report.date) >= thirtyDaysAgo)
+      .forEach(report => {
+        const dateStr = new Date(report.date).toISOString().split('T')[0];
+        dailyMap.set(dateStr, (dailyMap.get(dateStr) || 0) + 1);
+      });
+
+    const dailyTrend = Array.from(dailyMap.entries())
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Weekly trend (last 12 weeks)
+    const twelveWeeksAgo = new Date(now.getTime() - 12 * 7 * 24 * 60 * 60 * 1000);
+    const weeklyMap = new Map<string, number>();
+
+    allReports
+      .filter(report => new Date(report.date) >= twelveWeeksAgo)
+      .forEach(report => {
+        const date = new Date(report.date);
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay());
+        const weekStr = weekStart.toISOString().split('T')[0];
+        weeklyMap.set(weekStr, (weeklyMap.get(weekStr) || 0) + 1);
+      });
+
+    const weeklyTrend = Array.from(weeklyMap.entries())
+      .map(([week, count]) => ({ week, count }))
+      .sort((a, b) => a.week.localeCompare(b.week));
+
+    // Monthly trend (last 12 months)
+    const twelveMonthsAgo = new Date(now.getTime() - 12 * 30 * 24 * 60 * 60 * 1000);
+    const monthlyMap = new Map<string, number>();
+
+    allReports
+      .filter(report => new Date(report.date) >= twelveMonthsAgo)
+      .forEach(report => {
+        const date = new Date(report.date);
+        const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyMap.set(monthStr, (monthlyMap.get(monthStr) || 0) + 1);
+      });
+
+    const monthlyTrend = Array.from(monthlyMap.entries())
+      .map(([month, count]) => ({ month, count }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+
+    return {
+      totalReports,
+      byCategory,
+      byState,
+      dailyTrend,
+      weeklyTrend,
+      monthlyTrend
+    };
   }
 }

@@ -8,6 +8,11 @@ import { OfficeType } from "@models/enums/OfficeType";
 import { validatePhotosCount, getPhotoPaths } from "@utils/fileUtils";
 import { BadRequestError } from "@utils/utils";
 
+export async function getPublicStatistics() {
+  const reportRepo = new ReportRepository();
+  return await reportRepo.getPublicStatistics();
+}
+
 
 //? qui prendo gli solo gli Approved Reports (per la mappa pubblica)
 export async function getReports(): Promise<Report[]> {
