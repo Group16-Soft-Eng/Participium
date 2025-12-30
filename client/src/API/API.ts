@@ -199,7 +199,7 @@ async function officerRegister(officer: Officer | any) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/admin`, {
+    const response = await fetch(URI + `/officers`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(officer)
@@ -236,7 +236,7 @@ async function maintainerRegister(maintainer: Maintainer | any) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/admin/maintainers`, {
+    const response = await fetch(URI + `/maintainers`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(maintainer)
@@ -474,7 +474,7 @@ async function getAllOfficers() {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/admin/admin`, {
+    const response = await fetch(URI + `/officers`, {
         method: 'GET',
         headers: headers,
     });
@@ -498,7 +498,7 @@ async function getAllMaintainers() {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/maintainers/list`, {
+    const response = await fetch(URI + `/maintainers`, {
         method: 'GET',
         headers: headers,
     });
@@ -521,7 +521,7 @@ async function updateMaintainers(maintainer: Maintainer, id: number) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/admin/maintainers/${id}`, {
+    const response = await fetch(URI + `/maintainers/${id}`, {
         method: 'PATCH',
         headers: headers,
         body: JSON.stringify(maintainer),
@@ -545,7 +545,12 @@ async function updateOfficer(officer: Officer) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/admin`, {
+    const officerId = Number((officer as any)?.id);
+    if (!officerId) {
+        throw new Error('Officer id is required to update officer');
+    }
+
+    const response = await fetch(URI + `/officers/${officerId}`, {
         method: 'PATCH',
         headers: headers,
         body: JSON.stringify(officer),
@@ -569,7 +574,7 @@ async function deleteOfficer(id: number) {
         headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(URI + `/admin/officers/${id}`, {
+    const response = await fetch(URI + `/officers/${id}`, {
         method: 'DELETE',
         headers: headers,
     });

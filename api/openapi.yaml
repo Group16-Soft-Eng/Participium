@@ -90,7 +90,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /admin/maintainers:
+  /maintainers:
       post:
         tags:
           - Admin
@@ -132,7 +132,6 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/Error"
-  /maintainers/list:
       get:
         tags:
           - Maintainers
@@ -178,7 +177,7 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/Error"
-  /admin/maintainers/{id}:
+  /maintainers/{id}:
       patch:
         tags:
           - Admin
@@ -202,6 +201,33 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/Maintainer"
+          default:
+            description: Unexpected error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+      delete:
+        tags:
+          - Admin
+        summary: Admin deletes a maintainer
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: integer
+        responses:
+          "200":
+            description: successful operation
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "Maintainer with id '1' deleted successfully"
           default:
             description: Unexpected error
             content:
@@ -690,7 +716,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /admin:
+  /officers:
     post:
       tags:
         - Admin
@@ -718,6 +744,83 @@ paths:
             application/xml:
               schema:
                 $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags:
+        - Admin
+      summary: Admin lists all officers
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /officers/{id}:
+    patch:
+      tags:
+        - Admin
+      summary: Admin updates officer info
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Officer"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Admin
+      summary: Admin deletes an officer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Officer with id '1' deleted successfully"
         default:
           description: Unexpected error
           content:
@@ -1125,77 +1228,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /admin/officers/{id}:
-    delete:
-      tags:
-        - Admin
-      summary: Admin deletes an officer
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Officer with id '1' deleted successfully"
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /admin/officers:
-    get:
-      tags:
-        - Admin
-      summary: Admin lists all officers
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Officer"
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    patch:
-      tags:
-        - Admin
-      summary: Admin updates officer info
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Officer"
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Officer"
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+
   /internal-messages:
     post:
       tags:
