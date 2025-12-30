@@ -75,6 +75,26 @@ describe("Auth Controller Integration Tests", () => {
       await expect(authController.loginUserByUsername("inactive", "Password@123"))
         .rejects.toThrow("User account is not active");
     });
+
+    it("should call saveSession with correct session type", async () => {
+      await createActiveUser("webuser", "Web", "User", "web@example.com", "Password@123");
+
+      await authController.loginUserByUsername("webuser", "Password@123");
+
+      expect(authService.saveSession).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(String),
+        "web"
+      );
+    });
+
+    it("should handle username with special characters", async () => {
+      await createActiveUser("user_123", "Special", "User", "special@example.com", "Password@123");
+
+      const token = await authController.loginUserByUsername("user_123", "Password@123");
+
+      expect(token).toBeDefined();
+    });
   });
 
   // ===================== loginUserByMail =====================
@@ -107,7 +127,25 @@ describe("Auth Controller Integration Tests", () => {
       await expect(authController.loginUserByMail("inactive2@example.com", "Password@123"))
         .rejects.toThrow("User account is not active");
     });
-  });
+    it("should save session with web type for email login", async () => {
+      await createActiveUser("emailuser2", "Email", "User2", "email2@example.com", "Password@123");
+
+      await authController.loginUserByMail("email2@example.com", "Password@123");
+
+      expect(authService.saveSession).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(String),
+        "web"
+      );
+    });
+
+    it("should handle email with various formats", async () => {
+      await createActiveUser("complex", "Complex", "Email", "user+tag@sub.domain.com", "Password@123");
+
+      const token = await authController.loginUserByMail("user+tag@sub.domain.com", "Password@123");
+
+      expect(token).toBeDefined();
+    });  });
 
   // ===================== loginUser =====================
   describe("loginUser", () => {
@@ -183,6 +221,55 @@ describe("Auth Controller Integration Tests", () => {
       await expect(authController.loginOfficerByMail("officer2@example.com", "WrongPassword"))
         .rejects.toThrow("Invalid email or password");
     });
+
+    it("should login officer with TECHNICAL_OFFICE_STAFF role", async () => {
+      await officerRepo.createOfficer(
+        "techstaff",
+        "Tech",
+        "Staff",
+        "tech@example.com",
+        "Password@123",
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+      );
+
+      const token = await authController.loginOfficerByMail("tech@example.com", "Password@123");
+
+      expect(token).toBeDefined();
+    });
+
+    it("should login officer with MUNICIPAL_PUBLIC_RELATIONS_OFFICER role", async () => {
+      await officerRepo.createOfficer(
+        "prstaff",
+        "PR",
+        "Staff",
+        "pr@example.com",
+        "Password@123",
+        [{ role: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, office: null }]
+      );
+
+      const token = await authController.loginOfficerByMail("pr@example.com", "Password@123");
+
+      expect(token).toBeDefined();
+    });
+
+    it("should save session with correct parameters for officer", async () => {
+      await officerRepo.createOfficer(
+        "officer7",
+        "Officer",
+        "Seven",
+        "officer7@example.com",
+        "Password@123",
+        [{ role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null }]
+      );
+
+      await authController.loginOfficerByMail("officer7@example.com", "Password@123");
+
+      expect(authService.saveSession).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(String),
+        "web"
+      );
+    });
   });
 
   // ===================== loginOfficerByUsername =====================
@@ -220,6 +307,39 @@ describe("Auth Controller Integration Tests", () => {
 
       await expect(authController.loginOfficerByUsername("officer4", "WrongPassword"))
         .rejects.toThrow("Invalid username or password");
+    });
+
+    it("should login officer with multiple roles using username", async () => {
+      await officerRepo.createOfficer(
+        "multirole2",
+        "Multi",
+        "Role2",
+        "multirole2@example.com",
+        "Password@123",
+        [
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT },
+          { role: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, office: null }
+        ]
+      );
+
+      const token = await authController.loginOfficerByUsername("multirole2", "Password@123");
+
+      expect(token).toBeDefined();
+    });
+
+    it("should handle officer username with spaces", async () => {
+      await officerRepo.createOfficer(
+        "officer with space",
+        "Officer",
+        "Space",
+        "officerspace@example.com",
+        "Password@123",
+        [{ role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null }]
+      );
+
+      const token = await authController.loginOfficerByUsername("officer with space", "Password@123");
+
+      expect(token).toBeDefined();
     });
   });
 
@@ -262,15 +382,43 @@ describe("Auth Controller Integration Tests", () => {
       const user = await createActiveUser("telegram", "Telegram", "User", "telegram@example.com", "Password@123");
       await userRepo.updateProfile(user.id, { telegramUsername: "telegram_user" });
 
-      const token = await authController.getUserByTelegramUsername("telegram_user");
+      const token = await authController.getUserByTelegramUsername("telegram_user", 12345);
 
       expect(token).toBeDefined();
       expect(authService.saveSession).toHaveBeenCalled();
+      expect(authService.saveSession).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(String),
+        "telegram"
+      );
     });
 
     it("should throw error when telegram username not found", async () => {
-      await expect(authController.getUserByTelegramUsername("nonexistent_tg"))
+      await expect(authController.getUserByTelegramUsername("nonexistent_tg", 12345))
         .rejects.toThrow("User with telegram username 'nonexistent_tg' not found");
+    });
+
+    it("should save session with correct chatId", async () => {
+      const user = await createActiveUser("tguser2", "TG", "User2", "tg2@example.com", "Password@123");
+      await userRepo.updateProfile(user.id, { telegramUsername: "tg_user_2" });
+      const chatId = 99999;
+
+      await authController.getUserByTelegramUsername("tg_user_2", chatId);
+
+      expect(authService.saveSession).toHaveBeenCalledWith(
+        user.id,
+        expect.any(String),
+        "telegram"
+      );
+    });
+
+    it("should handle telegram username with special characters", async () => {
+      const user = await createActiveUser("specialtg", "Special", "TG", "specialtg@example.com", "Password@123");
+      await userRepo.updateProfile(user.id, { telegramUsername: "user_with_underscores_123" });
+
+      const token = await authController.getUserByTelegramUsername("user_with_underscores_123", 54321);
+
+      expect(token).toBeDefined();
     });
   });
 
@@ -323,6 +471,38 @@ describe("Auth Controller Integration Tests", () => {
       await expect(authController.loginMaintainerByMail("maintainer2@example.com", "WrongPassword"))
         .rejects.toThrow("Invalid email or password");
     });
+
+    it("should save session with correct session type for maintainer", async () => {
+      await maintainerRepo.createMaintainer(
+        "Maintainer Seven",
+        "maintainer7@example.com",
+        "Password@123",
+        [OfficeType.INFRASTRUCTURE],
+        true
+      );
+
+      await authController.loginMaintainerByMail("maintainer7@example.com", "Password@123");
+
+      expect(authService.saveSession).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.any(String),
+        "web"
+      );
+    });
+
+    it("should login maintainer with all office types", async () => {
+      await maintainerRepo.createMaintainer(
+        "All Categories",
+        "allcat@example.com",
+        "Password@123",
+        [OfficeType.INFRASTRUCTURE, OfficeType.ENVIRONMENT, OfficeType.SAFETY, OfficeType.SANITATION, OfficeType.TRANSPORT],
+        true
+      );
+
+      const token = await authController.loginMaintainerByMail("allcat@example.com", "Password@123");
+
+      expect(token).toBeDefined();
+    });
   });
 
   // ===================== loginMaintainerByUsername =====================
@@ -358,6 +538,34 @@ describe("Auth Controller Integration Tests", () => {
 
       await expect(authController.loginMaintainerByUsername("Maintainer Four", "WrongPassword"))
         .rejects.toThrow("Invalid username or password");
+    });
+
+    it("should login maintainer with ENVIRONMENT category", async () => {
+      await maintainerRepo.createMaintainer(
+        "Environment Maintainer",
+        "env@example.com",
+        "Password@123",
+        [OfficeType.ENVIRONMENT],
+        true
+      );
+
+      const token = await authController.loginMaintainerByUsername("Environment Maintainer", "Password@123");
+
+      expect(token).toBeDefined();
+    });
+
+    it("should handle maintainer name with special characters", async () => {
+      await maintainerRepo.createMaintainer(
+        "Maintainer's Company & Co.",
+        "special@example.com",
+        "Password@123",
+        [OfficeType.ORGANIZATION],
+        true
+      );
+
+      const token = await authController.loginMaintainerByUsername("Maintainer's Company & Co.", "Password@123");
+
+      expect(token).toBeDefined();
     });
   });
 
@@ -458,6 +666,64 @@ describe("Auth Controller Integration Tests", () => {
       );
 
       const token = await authController.loginOfficerByMail("noroles@example.com", "Password@123");
+
+      expect(token).toBeDefined();
+    });
+
+    it("should handle very long passwords", async () => {
+      const longPassword = "A1!" + "a".repeat(100);
+      await createActiveUser("longpass", "Long", "Pass", "longpass@example.com", longPassword);
+
+      const token = await authController.loginUserByUsername("longpass", longPassword);
+
+      expect(token).toBeDefined();
+    });
+
+    it("should handle empty string password differently from wrong password", async () => {
+      await createActiveUser("emptytest", "Empty", "Test", "empty@example.com", "Password@123");
+
+      await expect(authController.loginUserByUsername("emptytest", ""))
+        .rejects.toThrow("Invalid username or password");
+    });
+
+    it("should handle case sensitive usernames", async () => {
+      await createActiveUser("CaseSensitive", "Case", "User", "case@example.com", "Password@123");
+
+      await expect(authController.loginUserByUsername("casesensitive", "Password@123"))
+        .rejects.toThrow("User with username 'casesensitive' not found");
+    });
+
+    it("should handle case sensitive emails", async () => {
+      await createActiveUser("emailcase", "Email", "Case", "EmailCase@example.com", "Password@123");
+
+      await expect(authController.loginUserByMail("emailcase@example.com", "Password@123"))
+        .rejects.toThrow("User with email 'emailcase@example.com' not found");
+    });
+
+    it("should verify token generation includes user id", async () => {
+      const user = await createActiveUser("tokentest", "Token", "Test", "token@example.com", "Password@123");
+
+      const token = await authController.loginUserByUsername("tokentest", "Password@123");
+
+      expect(token).toBeDefined();
+      expect(typeof token).toBe("string");
+      expect(token.length).toBeGreaterThan(0);
+    });
+
+    it("should save session for each login attempt", async () => {
+      await createActiveUser("sessiontest", "Session", "Test", "session@example.com", "Password@123");
+
+      await authController.loginUserByUsername("sessiontest", "Password@123");
+      await authController.loginUserByUsername("sessiontest", "Password@123");
+
+      expect(authService.saveSession).toHaveBeenCalledTimes(2);
+    });
+
+    it("should handle telegram user without chatId in profile", async () => {
+      const user = await createActiveUser("tgnull", "TG", "Null", "tgnull@example.com", "Password@123");
+      await userRepo.updateProfile(user.id, { telegramUsername: "tg_null" });
+
+      const token = await authController.getUserByTelegramUsername("tg_null", 0);
 
       expect(token).toBeDefined();
     });

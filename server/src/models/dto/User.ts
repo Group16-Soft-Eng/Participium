@@ -13,6 +13,8 @@
  */
 
 import { mapValues } from '../../../generated/runtime';
+import type { Report } from './Report';
+import { ReportFromJSON, ReportToJSON } from './Report';
 /**
  * 
  * @export
@@ -73,6 +75,12 @@ export interface User {
      * @memberof User
      */
     emailNotifications?: boolean;
+    /**
+     * Reports followed by the user
+     * @type {Array<Report>}
+     * @memberof User
+     */
+    followedReports?: Array<Report>;
 }
 
 /**
@@ -101,6 +109,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'avatar': json['avatar'] == null ? undefined : json['avatar'],
         'telegramUsername': json['telegramUsername'] == null ? undefined : json['telegramUsername'],
         'emailNotifications': json['emailNotifications'] == null ? undefined : json['emailNotifications'],
+        'followedReports': json['followedReports'] == null ? undefined : (json['followedReports'] as Array<any>).map(ReportFromJSON),
     };
 }
 
@@ -124,6 +133,7 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
         'avatar': value['avatar'],
         'telegramUsername': value['telegramUsername'],
         'emailNotifications': value['emailNotifications'],
+        'followedReports': value['followedReports'] == null ? undefined : (value['followedReports'] as Array<Report>).map(ReportToJSON),
     };
 }
 

@@ -15,13 +15,19 @@ from .start import BASE_URL, sessions, _httpx_with_retry
 
 
 
+
 def build_main_menu() -> InlineKeyboardMarkup:
     """Build main menu with available functionalities."""
     keyboard = [
         [InlineKeyboardButton("📝 Create Report", callback_data="start_report")],
+        [InlineKeyboardButton("📊 View My Active Reports", callback_data="view_reports")],
+        [InlineKeyboardButton("🔔 Manage Notifications", callback_data="manage_notifications")],
+        [InlineKeyboardButton("❓ Help", callback_data="help_menu")],
         # Add more functionalities here in the future
     ]
     return InlineKeyboardMarkup(keyboard)
+
+
 
 
 async def handle_login(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

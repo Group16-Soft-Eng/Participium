@@ -2,20 +2,24 @@ import request from "supertest";
 import express from "express";
 import { userRouter } from "../../../src/routes/UserRoutes";
 import * as userController from "../../../src/controllers/userController";
+import * as reportController from "../../../src/controllers/reportController";
 import * as mailService from "../../../src/services/mailService";
 import * as otpService from "../../../src/services/otpService";
 import { authenticateToken } from "../../../src/middlewares/authMiddleware";
 import { uploadAvatar } from "../../../src/middlewares/uploadMiddleware";
+import { FollowRepository } from "../../../src/repositories/FollowRepository";
 
 jest.mock("../../../src/controllers/userController");
+jest.mock("../../../src/controllers/reportController");
 jest.mock("../../../src/services/mailService");
 jest.mock("../../../src/services/otpService");
+jest.mock("../../../src/repositories/FollowRepository");
 jest.mock("../../../src/middlewares/authMiddleware", () => ({
   authenticateToken: jest.fn((req, res, next) => {
-    req.user = { id: 1, username: "testuser" };
+    req.user = { id: 1, username: "testuser", type: "user" };
     next();
   }),
-  requireUserType: jest.fn((req, res, next) => next())
+  requireUserType: jest.fn((types) => (req: any, res: any, next: () => any) => next())
 }));
 jest.mock("../../../src/middlewares/uploadMiddleware", () => ({
   uploadAvatar: jest.fn((req, res, next) => next())
@@ -72,9 +76,45 @@ describe("UserRoutes", () => {
     it("should return user profile", async () => {
       (userController.getMyProfile as jest.Mock).mockResolvedValue({ id: 1, username: "testuser" });
       const res = await request(app).get("/users/me");
-      expect(userController.getMyProfile).toHaveBeenCalledWith(1);
+      expect(userController.getMyProfile).toHaveBeenCalledWith(1, { includeFollowedReports: false });
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ id: 1, username: "testuser" });
+    });
+
+    it("should return user profile with followed reports when include query is set", async () => {
+      (userController.getMyProfile as jest.Mock).mockResolvedValue({ 
+        id: 1, 
+        username: "testuser",
+        followedReports: [{ id: 1, title: "Report 1" }]
+      });
+      
+      const res = await request(app).get("/users/me?include=followedReports");
+      
+      expect(userController.getMyProfile).toHaveBeenCalledWith(1, { includeFollowedReports: true });
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("followedReports");
+    });
+
+    it("should handle multiple include values in query string", async () => {
+      (userController.getMyProfile as jest.Mock).mockResolvedValue({ 
+        id: 1, 
+        username: "testuser",
+        followedReports: []
+      });
+      
+      const res = await request(app).get("/users/me?include=followedReports,other");
+      
+      expect(userController.getMyProfile).toHaveBeenCalledWith(1, { includeFollowedReports: true });
+      expect(res.status).toBe(200);
+    });
+
+    it("should not include followed reports when include query is different", async () => {
+      (userController.getMyProfile as jest.Mock).mockResolvedValue({ id: 1, username: "testuser" });
+      
+      const res = await request(app).get("/users/me?include=other");
+      
+      expect(userController.getMyProfile).toHaveBeenCalledWith(1, { includeFollowedReports: false });
+      expect(res.status).toBe(200);
     });
 
     it("should handle errors in getMyProfile", async () => {
@@ -172,7 +212,7 @@ describe("UserRoutes", () => {
     it("should return user info from req.user", async () => {
       const res = await request(app).get("/users/me/info");
       expect(res.status).toBe(200);
-      expect(res.body).toEqual({ id: 1, username: "testuser" });
+      expect(res.body).toEqual({ id: 1, type: "user", username: "testuser" });
     });
   });
 
@@ -277,6 +317,73 @@ describe("UserRoutes", () => {
       const res = await request(app)
         .post("/users/verifyotp")
         .send({ email: "test@example.com", code: "123456" });
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+  });
+
+  describe("GET /users/me/followed-reports", () => {
+    let mockFollowRepo: jest.Mocked<FollowRepository>;
+
+    beforeEach(() => {
+      mockFollowRepo = {
+        getFollowedReportsByUser: jest.fn(),
+      } as any;
+
+      (FollowRepository as jest.Mock).mockImplementation(() => mockFollowRepo);
+    });
+
+    it("should return list of followed reports successfully", async () => {
+      const mockReports = [
+        { id: 1, title: "Report 1", state: "ASSIGNED" },
+        { id: 2, title: "Report 2", state: "IN_PROGRESS" },
+      ];
+
+      const mockMappedReports = [
+        { id: 1, title: "Report 1", state: "ASSIGNED", author: { id: 1 } },
+        { id: 2, title: "Report 2", state: "IN_PROGRESS", author: { id: 2 } },
+      ];
+
+      mockFollowRepo.getFollowedReportsByUser.mockResolvedValue(mockReports as any);
+      (reportController.getReport as jest.Mock)
+        .mockResolvedValueOnce(mockMappedReports[0])
+        .mockResolvedValueOnce(mockMappedReports[1]);
+
+      const res = await request(app).get("/users/me/followed-reports");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(2);
+      expect(mockFollowRepo.getFollowedReportsByUser).toHaveBeenCalledWith(1);
+      expect(reportController.getReport).toHaveBeenCalledTimes(2);
+      expect(reportController.getReport).toHaveBeenCalledWith(1);
+      expect(reportController.getReport).toHaveBeenCalledWith(2);
+    });
+
+    it("should return empty array when user follows no reports", async () => {
+      mockFollowRepo.getFollowedReportsByUser.mockResolvedValue([]);
+
+      const res = await request(app).get("/users/me/followed-reports");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+      expect(reportController.getReport).not.toHaveBeenCalled();
+    });
+
+    it("should handle errors when getting followed reports", async () => {
+      mockFollowRepo.getFollowedReportsByUser.mockRejectedValue(new Error("Database error"));
+
+      const res = await request(app).get("/users/me/followed-reports");
+
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it("should handle errors when mapping reports", async () => {
+      const mockReports = [{ id: 1, title: "Report 1" }];
+      
+      mockFollowRepo.getFollowedReportsByUser.mockResolvedValue(mockReports as any);
+      (reportController.getReport as jest.Mock).mockRejectedValue(new Error("Report not found"));
+
+      const res = await request(app).get("/users/me/followed-reports");
 
       expect(res.status).toBeGreaterThanOrEqual(400);
     });

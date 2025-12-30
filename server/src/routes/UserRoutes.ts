@@ -5,6 +5,8 @@ import { UserFromJSON } from "@dto/User";
 import { uploadAvatar } from "@middlewares/uploadMiddleware";
 import { sendMail } from "@services/mailService";
 import { generateOtp, verifyOtp, clearOtp } from "@services/otpService";
+import { FollowRepository } from "@repositories/FollowRepository";
+import { getReport } from "@controllers/reportController";
 
 const router = Router({mergeParams : true});
 
@@ -36,7 +38,11 @@ router.post("/", async(req, res, next) =>{
 router.get("/me", authenticateToken, async (req, res, next) => {
   try {
     const userId = (req as any).user?.id;
-    const profile = await getMyProfile(userId);
+    // se la query include contiene "followedReports", allora includi i report seguiti; altrimenti stringa vuota in include (vuol dire false)
+    const include = (req.query.include as string) || "";
+    const includeFollowedReports = include.split(",").map(s => s.trim()).includes("followedReports");
+    // se non è specificato, includeFollowedReports sarà false (retrocompatibilità)
+    const profile = await getMyProfile(userId, { includeFollowedReports });
     res.status(200).json(profile);
   } catch (err) {
     next(err);
@@ -116,3 +122,16 @@ router.post("/verifyotp", async (req, res, next) => {
 
 
 export {router as userRouter};
+
+//? PT-16: GET sui report seguiti dallo user autenticato
+router.get("/me/followed-reports", authenticateToken, requireUserType(["user"]), async (req, res, next) => {
+  try {
+    const userId = (req as any).user?.id;
+    const repo = new FollowRepository();
+    const reports = await repo.getFollowedReportsByUser(Number(userId));
+    const mapped = await Promise.all(reports.map(async (r) => await getReport(r.id)));
+    res.status(200).json(mapped);
+  } catch (err) {
+    next(err);
+  }
+});

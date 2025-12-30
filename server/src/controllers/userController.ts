@@ -6,10 +6,13 @@ import { mapUserDAOToDTO } from "@services/mapperService";
 import { blacklistUserSessions, getSession } from "@services/authService";
 
 //? get user profile (story 9)
-export async function getMyProfile(userId: number): Promise<any> {
+export async function getMyProfile(userId: number, opts?: { includeFollowedReports?: boolean }): Promise<any> {
+  // se opts.includeFollowedReports è true, carica anche i report seguiti dall'utente; altrimenti retrocompatibile con le vecchie chiamate
   const userRepo = new UserRepository();
-  const user = await userRepo.getUserById(userId);
-  const dto = mapUserDAOToDTO(user) as any;
+  const user = opts?.includeFollowedReports
+    ? await userRepo.getUserByIdWithFollows(userId)
+    : await userRepo.getUserById(userId);
+  const dto = mapUserDAOToDTO(user, { includeFollowedReports: !!opts?.includeFollowedReports }) as any;
 
   dto.avatar = user.avatar ?? null;
   dto.telegramUsername = user.telegramUsername ?? null;
@@ -51,7 +54,8 @@ export async function updateMyProfile(userId: number, data: { telegramUsername?:
 export async function getAllUsers(): Promise<User[]> {
   const userRepo = new UserRepository();
   const users = await userRepo.getAllUsers();
-  return users.map(mapUserDAOToDTO); // pattern che avevamo usato a GeoControl
+  const opts = {includeFollowedReports: false };
+  return users.map(user => mapUserDAOToDTO(user, opts)); // pattern che avevamo usato a GeoControl
 }
 
 

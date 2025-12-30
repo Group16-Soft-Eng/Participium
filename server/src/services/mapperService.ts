@@ -16,8 +16,8 @@ import { OfficeType as DtoOfficeType } from "@dto/OfficeType";
 /**
  * DAO -> DTO: User
  */
-export function mapUserDAOToDTO(dao: UserDAO): User {
-  return {
+export function mapUserDAOToDTO(dao: UserDAO, opts?: { includeFollowedReports?: boolean }): User {
+  const base: User = {
     id: dao.id,
     username: dao.username,
     firstName: dao.firstName,
@@ -27,8 +27,14 @@ export function mapUserDAOToDTO(dao: UserDAO): User {
     password: undefined,
     avatar: dao.avatar || undefined,
     telegramUsername: dao.telegramUsername || undefined,
-    emailNotifications: dao.emailNotifications
+    emailNotifications: dao.emailNotifications,
   };
+
+  if (opts?.includeFollowedReports && dao.followedReports) {
+    (base as any).followedReports = dao.followedReports.map(r => mapReportDAOToDTO(r, { includeFollowerUsers: false }));
+  }
+
+  return base;
 }
 
 /**
@@ -55,12 +61,12 @@ export function mapOfficerDAOToDTO(dao: OfficerDAO): Officer {
 /**
  * DAO -> DTO: Report
  */
-export function mapReportDAOToDTO(dao: ReportDAO): Report {
-  return {
+export function mapReportDAOToDTO(dao: ReportDAO, opts?: { includeFollowerUsers?: boolean }): Report {
+  const base: Report = {
     id: dao.id,
     title: dao.title,
     location: dao.location,
-    author: dao.author ? mapUserDAOToDTO(dao.author) : undefined,
+    author: dao.author ? mapUserDAOToDTO(dao.author, { includeFollowedReports: false }) : undefined,
     anonymity: dao.anonymity,
     date: dao.date.toISOString(),
     category: dao.category as any,
@@ -73,4 +79,10 @@ export function mapReportDAOToDTO(dao: ReportDAO): Report {
     assignedMaintainerId: dao.assignedMaintainerId ?? undefined,
     reason: dao.reason ?? undefined
   };
+
+  if (opts?.includeFollowerUsers && (dao as any).followerUsers) {
+    (base as any).followerUsers = (dao as any).followerUsers.map((u: UserDAO) => mapUserDAOToDTO(u, { includeFollowedReports: false }));
+  }
+
+  return base;
 }

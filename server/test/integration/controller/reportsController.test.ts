@@ -528,6 +528,355 @@ expect(result.document?.photos?.[0]).toBe("/uploads/reports/photo1.jpg");
 expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
   });
 
+  // ===================== uploadReport - Additional tests =====================
+  describe("uploadReport - Additional validation", () => {
+
+    it("should accept all valid OfficeType categories", async () => {
+      const user = await userRepo.createUser("testuser19", "Test19", "User19", "test19@example.com", "Test@1234");
+
+      const categories = [
+        OfficeType.INFRASTRUCTURE,
+        OfficeType.ENVIRONMENT,
+        OfficeType.SAFETY,
+        OfficeType.SANITATION,
+        OfficeType.TRANSPORT,
+        OfficeType.ORGANIZATION,
+        OfficeType.OTHER
+      ];
+
+      for (let i = 0; i < categories.length; i++) {
+        const mockFiles = [
+          { filename: `photo${i}.jpg`, path: `/uploads/reports/photo${i}.jpg` }
+        ] as any[];
+
+        const reportDto: any = {
+          title: `Report ${i}`,
+          category: categories[i],
+          location: { Coordinates: { latitude: 45.0 + i * 0.1, longitude: 7.0 + i * 0.1 } }
+        };
+
+        const result = await reportController.uploadReport(reportDto, mockFiles, user.id);
+        expect(result.category).toBe(categories[i]);
+      }
+    });
+
+    it("should handle missing description in document", async () => {
+      const user = await userRepo.createUser("testuser20", "Test20", "User20", "test20@example.com", "Test@1234");
+
+      const mockFiles = [
+        { filename: "photo1.jpg", path: "/uploads/reports/photo1.jpg" }
+      ] as any[];
+
+      const reportDto: any = {
+        title: "Report without description",
+        category: OfficeType.INFRASTRUCTURE,
+        location: { Coordinates: { latitude: 45.0, longitude: 7.0 } },
+        document: {}
+      };
+
+      const result = await reportController.uploadReport(reportDto, mockFiles, user.id);
+
+      expect(result).toBeDefined();
+      expect(result.document?.description).toBeUndefined();
+    });
+
+    it("should handle very long titles", async () => {
+      const user = await userRepo.createUser("testuser22", "Test22", "User22", "test22@example.com", "Test@1234");
+
+      const mockFiles = [
+        { filename: "photo1.jpg", path: "/uploads/reports/photo1.jpg" }
+      ] as any[];
+
+      const longTitle = "A".repeat(500);
+
+      const reportDto: any = {
+        title: longTitle,
+        category: OfficeType.INFRASTRUCTURE,
+        location: { Coordinates: { latitude: 45.0, longitude: 7.0 } }
+      };
+
+      const result = await reportController.uploadReport(reportDto, mockFiles, user.id);
+
+      expect(result.title).toBe(longTitle);
+    });
+
+    it("should handle special characters in title", async () => {
+      const user = await userRepo.createUser("testuser23", "Test23", "User23", "test23@example.com", "Test@1234");
+
+      const mockFiles = [
+        { filename: "photo1.jpg", path: "/uploads/reports/photo1.jpg" }
+      ] as any[];
+
+      const specialTitle = "Report with €, ©, ™ & special chars!";
+
+      const reportDto: any = {
+        title: specialTitle,
+        category: OfficeType.INFRASTRUCTURE,
+        location: { Coordinates: { latitude: 45.0, longitude: 7.0 } }
+      };
+
+      const result = await reportController.uploadReport(reportDto, mockFiles, user.id);
+
+      expect(result.title).toBe(specialTitle);
+    });
+
+    it("should auto-follow report when user creates non-anonymous report", async () => {
+      const user = await userRepo.createUser("testuser25", "Test25", "User25", "test25@example.com", "Test@1234");
+
+      const mockFiles = [
+        { filename: "photo1.jpg", path: "/uploads/reports/photo1.jpg" }
+      ] as any[];
+
+      const reportDto: any = {
+        title: "Report to auto-follow",
+        category: OfficeType.INFRASTRUCTURE,
+        location: { Coordinates: { latitude: 45.0, longitude: 7.0 } },
+        anonymity: false
+      };
+
+      const result = await reportController.uploadReport(reportDto, mockFiles, user.id);
+
+      expect(result).toBeDefined();
+      expect(result.author?.id).toBe(user.id);
+    });
+
+    it("should NOT auto-follow anonymous report", async () => {
+      const mockFiles = [
+        { filename: "photo1.jpg", path: "/uploads/reports/photo1.jpg" }
+      ] as any[];
+
+      const reportDto: any = {
+        title: "Anonymous no follow",
+        category: OfficeType.INFRASTRUCTURE,
+        location: { Coordinates: { latitude: 45.0, longitude: 7.0 } },
+        anonymity: true
+      };
+
+      const result = await reportController.uploadReport(reportDto, mockFiles);
+
+      expect(result).toBeDefined();
+      expect(result.anonymity).toBe(true);
+    });
+
+    it("should handle undefined anonymity as false", async () => {
+      const user = await userRepo.createUser("testuser26", "Test26", "User26", "test26@example.com", "Test@1234");
+
+      const mockFiles = [
+        { filename: "photo1.jpg", path: "/uploads/reports/photo1.jpg" }
+      ] as any[];
+
+      const reportDto: any = {
+        title: "Report default anonymity",
+        category: OfficeType.INFRASTRUCTURE,
+        location: { Coordinates: { latitude: 45.0, longitude: 7.0 } }
+      };
+
+      const result = await reportController.uploadReport(reportDto, mockFiles, user.id);
+
+      expect(result.anonymity).toBe(false);
+    });
+  });
+
+  // ===================== getReports - Additional tests =====================
+  describe("getReports - Order and filtering", () => {
+    it("should return reports ordered by date descending", async () => {
+      const user = await userRepo.createUser("testuser27", "Test27", "User27", "test27@example.com", "Test@1234");
+
+      const report1 = await reportRepo.createReport(
+        "Old Report",
+        { Coordinates: { latitude: 45.0, longitude: 7.0 } },
+        user,
+        false,
+        OfficeType.INFRASTRUCTURE,
+        { Description: "Old", Photos: ["/uploads/photo1.jpg"] }
+      );
+      await reportRepo.updateReportState(report1.id, ReportState.ASSIGNED);
+
+      // Wait a bit to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      const report2 = await reportRepo.createReport(
+        "New Report",
+        { Coordinates: { latitude: 45.1, longitude: 7.1 } },
+        user,
+        false,
+        OfficeType.INFRASTRUCTURE,
+        { Description: "New", Photos: ["/uploads/photo2.jpg"] }
+      );
+      await reportRepo.updateReportState(report2.id, ReportState.ASSIGNED);
+
+      const reports = await reportController.getReports();
+
+      expect(reports.length).toBe(2);
+      // Most recent first
+      expect(reports[0].title).toBe("New Report");
+      expect(reports[1].title).toBe("Old Report");
+    });
+
+    it("should not include followerUsers by default in getReports", async () => {
+      const user = await userRepo.createUser("testuser28", "Test28", "User28", "test28@example.com", "Test@1234");
+
+      const report = await reportRepo.createReport(
+        "Report for followers test",
+        { Coordinates: { latitude: 45.0, longitude: 7.0 } },
+        user,
+        false,
+        OfficeType.INFRASTRUCTURE,
+        { Description: "Test", Photos: ["/uploads/photo1.jpg"] }
+      );
+      await reportRepo.updateReportState(report.id, ReportState.ASSIGNED);
+
+      const reports = await reportController.getReports();
+
+      expect(reports.length).toBe(1);
+      expect(reports[0].followerUsers).toBeUndefined();
+    });
+
+    it("should handle mixed categories in approved reports", async () => {
+      const user = await userRepo.createUser("testuser29", "Test29", "User29", "test29@example.com", "Test@1234");
+
+      const categories = [OfficeType.INFRASTRUCTURE, OfficeType.ENVIRONMENT, OfficeType.SAFETY];
+
+      for (const category of categories) {
+        const report = await reportRepo.createReport(
+          `Report ${category}`,
+          { Coordinates: { latitude: 45.0, longitude: 7.0 } },
+          user,
+          false,
+          category,
+          { Description: category, Photos: ["/uploads/photo.jpg"] }
+        );
+        await reportRepo.updateReportState(report.id, ReportState.ASSIGNED);
+      }
+
+      const reports = await reportController.getReports();
+
+      expect(reports.length).toBe(3);
+      expect(reports.map(r => r.category)).toContain(OfficeType.INFRASTRUCTURE);
+      expect(reports.map(r => r.category)).toContain(OfficeType.ENVIRONMENT);
+      expect(reports.map(r => r.category)).toContain(OfficeType.SAFETY);
+    });
+  });
+
+  // ===================== getReportsByOffice - Additional tests =====================
+  describe("getReportsByOffice - Edge cases", () => {
+    it("should handle all office types correctly", async () => {
+      const user = await userRepo.createUser("testuser30", "Test30", "User30", "test30@example.com", "Test@1234");
+
+      const allOffices = [
+        OfficeType.INFRASTRUCTURE,
+        OfficeType.ENVIRONMENT,
+        OfficeType.SAFETY,
+        OfficeType.SANITATION,
+        OfficeType.TRANSPORT,
+        OfficeType.ORGANIZATION,
+        OfficeType.OTHER
+      ];
+
+      for (const office of allOffices) {
+        const report = await reportRepo.createReport(
+          `Report ${office}`,
+          { Coordinates: { latitude: 45.0, longitude: 7.0 } },
+          user,
+          false,
+          office,
+          { Description: office, Photos: ["/uploads/photo.jpg"] }
+        );
+        await reportRepo.updateReportState(report.id, ReportState.ASSIGNED);
+      }
+
+      for (const office of allOffices) {
+        const reports = await reportController.getReportsByOffice(office);
+        expect(reports.length).toBe(1);
+        expect(reports[0].category).toBe(office);
+      }
+    });
+
+    it("should only return approved reports for office", async () => {
+      const user = await userRepo.createUser("testuser31", "Test31", "User31", "test31@example.com", "Test@1234");
+
+      await reportRepo.createReport(
+        "Pending Infrastructure",
+        { Coordinates: { latitude: 45.0, longitude: 7.0 } },
+        user,
+        false,
+        OfficeType.INFRASTRUCTURE,
+        { Description: "Pending", Photos: ["/uploads/photo1.jpg"] }
+      );
+
+      const declined = await reportRepo.createReport(
+        "Declined Infrastructure",
+        { Coordinates: { latitude: 45.1, longitude: 7.1 } },
+        user,
+        false,
+        OfficeType.INFRASTRUCTURE,
+        { Description: "Declined", Photos: ["/uploads/photo2.jpg"] }
+      );
+      await reportRepo.updateReportState(declined.id, ReportState.DECLINED);
+
+      const assigned = await reportRepo.createReport(
+        "Assigned Infrastructure",
+        { Coordinates: { latitude: 45.2, longitude: 7.2 } },
+        user,
+        false,
+        OfficeType.INFRASTRUCTURE,
+        { Description: "Assigned", Photos: ["/uploads/photo3.jpg"] }
+      );
+      await reportRepo.updateReportState(assigned.id, ReportState.ASSIGNED);
+
+      const reports = await reportController.getReportsByOffice(OfficeType.INFRASTRUCTURE);
+
+      expect(reports.length).toBe(1);
+      expect(reports[0].state).toBe(ReportState.ASSIGNED);
+    });
+  });
+
+  // ===================== getReport - Additional tests =====================
+  describe("getReport - Include follower users", () => {
+    it("should include followerUsers option in getReport", async () => {
+      const user = await userRepo.createUser("testuser32", "Test32", "User32", "test32@example.com", "Test@1234");
+
+      const report = await reportRepo.createReport(
+        "Report with followers info",
+        { Coordinates: { latitude: 45.0, longitude: 7.0 } },
+        user,
+        false,
+        OfficeType.INFRASTRUCTURE,
+        { Description: "Test", Photos: ["/uploads/photo1.jpg"] }
+      );
+
+      const result = await reportController.getReport(report.id);
+
+      expect(result).toBeDefined();
+      // The getReport function uses includeFollowerUsers: true
+      // Result depends on actual DAO state
+    });
+
+    it("should return all report fields", async () => {
+      const user = await userRepo.createUser("testuser33", "Test33", "User33", "test33@example.com", "Test@1234");
+
+      const report = await reportRepo.createReport(
+        "Complete Report",
+        { Coordinates: { latitude: 45.5, longitude: 7.5 } },
+        user,
+        false,
+        OfficeType.ENVIRONMENT,
+        { Description: "Complete description", Photos: ["/uploads/photo1.jpg", "/uploads/photo2.jpg"] }
+      );
+
+      const result = await reportController.getReport(report.id);
+
+      expect(result.id).toBeDefined();
+      expect(result.title).toBe("Complete Report");
+      expect(result.location).toBeDefined();
+      expect(result.category).toBe(OfficeType.ENVIRONMENT);
+      expect(result.document?.description).toBe("Complete description");
+      expect(result.document?.photos?.length).toBe(2);
+      expect(result.state).toBe(ReportState.PENDING);
+      expect(result.date).toBeDefined();
+    });
+  });
+
   // ===================== deleteReport =====================
   describe("deleteReport", () => {
     it("should delete a report successfully", async () => {
@@ -563,6 +912,23 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Description: "To be deleted", Photos: ["/uploads/photo1.jpg"] }
       );
       await reportRepo.updateReportState(report.id, ReportState.ASSIGNED);
+
+      await reportController.deleteReport(report.id);
+
+      await expect(reportRepo.getReportById(report.id)).rejects.toThrow(`Report with id '${report.id}' not found`);
+    });
+
+    it("should delete anonymous report", async () => {
+      const user = await userRepo.createUser("testuser34", "Test34", "User34", "test34@example.com", "Test@1234");
+
+      const report = await reportRepo.createReport(
+        "Anonymous to delete",
+        { Coordinates: { latitude: 45.0, longitude: 7.0 } },
+        user,
+        true,
+        OfficeType.INFRASTRUCTURE,
+        { Description: "To be deleted", Photos: ["/uploads/photo1.jpg"] }
+      );
 
       await reportController.deleteReport(report.id);
 

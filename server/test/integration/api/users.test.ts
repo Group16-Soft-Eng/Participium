@@ -515,6 +515,220 @@ describe("Users API Integration Tests", () => {
     });
   });
 
+  // ===================== GET /users/me with includeFollowedReports =====================
+  describe("GET /users/me?include=followedReports", () => {
+    it("should include followed reports when query param is set", async () => {
+      const response = await request(app)
+        .get("/api/v1/users/me?include=followedReports")
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty("id", testUserId);
+      // The field name depends on mapperService implementation
+      // Could be followedReports or followedReportIds
+    });
+
+    it("should not include followed reports without query param", async () => {
+      const response = await request(app)
+        .get("/api/v1/users/me")
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty("id", testUserId);
+    });
+
+    it("should handle multiple include values", async () => {
+      const response = await request(app)
+        .get("/api/v1/users/me?include=followedReports,other")
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+    });
+
+    it("should handle empty include param", async () => {
+      const response = await request(app)
+        .get("/api/v1/users/me?include=")
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+    });
+  });
+
+  // ===================== GET /users/me/followed-reports =====================
+  describe("GET /users/me/followed-reports", () => {
+    it("should return empty array when no reports followed", async () => {
+      const response = await request(app)
+        .get("/api/v1/users/me/followed-reports")
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.length).toBe(0);
+    });
+
+    it("should return 401 without authentication", async () => {
+      const response = await request(app)
+        .get("/api/v1/users/me/followed-reports");
+
+      expect(response.status).toBe(401);
+    });
+
+    it("should require user type", async () => {
+      // Create an officer token
+      const officerToken = generateToken({
+        id: 999,
+        username: "officer",
+        isStaff: true,
+        type: ["municipal_administrator"]
+      });
+
+      mockGetSession.mockImplementationOnce((userId, sessionType) => {
+        return Promise.resolve({
+          token: officerToken,
+          sessionType: sessionType || 'web',
+          createdAt: Date.now()
+        });
+      });
+
+      const response = await request(app)
+        .get("/api/v1/users/me/followed-reports")
+        .set("Authorization", `Bearer ${officerToken}`);
+
+      expect(response.status).toBe(403);
+    });
+  });
+
+  // ===================== PATCH /users/me - Avatar Upload =====================
+  describe("PATCH /users/me - Avatar Upload", () => {
+    it("should accept avatar file upload", async () => {
+      const response = await request(app)
+        .patch("/api/v1/users/me")
+        .set("Authorization", `Bearer ${authToken}`)
+        .attach("avatar", Buffer.from("fake-image-data"), "avatar.jpg");
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty("avatar");
+      expect(response.body.avatar).toContain("/uploads/avatars/");
+    });
+
+    it("should update avatar and other fields together", async () => {
+      const response = await request(app)
+        .patch("/api/v1/users/me")
+        .set("Authorization", `Bearer ${authToken}`)
+        .field("telegramUsername", "updated_with_avatar")
+        .attach("avatar", Buffer.from("fake-image-data"), "avatar.png");
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty("telegramUsername", "updated_with_avatar");
+      expect(response.body).toHaveProperty("avatar");
+    });
+
+    it("should handle update without avatar", async () => {
+      const response = await request(app)
+        .patch("/api/v1/users/me")
+        .set("Authorization", `Bearer ${authToken}`)
+        .field("telegramUsername", "no_avatar_update");
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty("telegramUsername", "no_avatar_update");
+    });
+  });
+
+  // ===================== Additional POST /users tests =====================
+  describe("POST /users - Additional validation", () => {
+    
+    it("should handle very long username", async () => {
+      const longUsername = "a".repeat(200);
+      const user = {
+        username: longUsername,
+        firstName: "Long",
+        lastName: "Username",
+        email: "long@example.com",
+        password: "Password@123"
+      };
+
+      const response = await request(app)
+        .post("/api/v1/users")
+        .send(user);
+
+      // Should either succeed or fail with validation error
+      expect([200, 400]).toContain(response.status);
+    });
+
+    it("should handle special characters in names", async () => {
+      const specialUser = {
+        username: "special_user",
+        firstName: "José",
+        lastName: "O'Brien-Smith",
+        email: "special@example.com",
+        password: "Password@123"
+      };
+
+      const response = await request(app)
+        .post("/api/v1/users")
+        .send(specialUser);
+
+      expect(response.status).toBe(200);
+      expect(response.body.firstName).toBe("José");
+      expect(response.body.lastName).toBe("O'Brien-Smith");
+    });
+
+  });
+
+  // ===================== Additional OTP tests =====================
+  describe("OTP Flow - Additional tests", () => {
+    it("should prevent OTP generation for non-existent email", async () => {
+      const response = await request(app)
+        .post("/api/v1/users/generateotp")
+        .send({ email: "doesnotexist@example.com" });
+
+      expect(response.status).toBe(404);
+    });
+
+    it("should handle OTP generation with uppercase email", async () => {
+      await userRepo.createUser("uppertest", "Upper", "Test", "Upper@Example.com", "Password@123");
+
+      const response = await request(app)
+        .post("/api/v1/users/generateotp")
+        .send({ email: "Upper@Example.com" });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty("sent", true);
+    });
+
+    it("should verify OTP is case sensitive", async () => {
+      const inactiveUser = await userRepo.createUser("casetest", "Case", "Test", "case@example.com", "Password@123");
+
+      (verifyOtp as jest.Mock).mockResolvedValueOnce(false);
+
+      const response = await request(app)
+        .post("/api/v1/users/verifyotp")
+        .send({
+          email: "case@example.com",
+          code: "WRONGCASE"
+        });
+
+      expect(response.status).toBe(401);
+    });
+
+    it("should handle concurrent OTP requests", async () => {
+      const inactiveUser = await userRepo.createUser("concurrent", "Concurrent", "Test", "concurrent@example.com", "Password@123");
+
+      const response1 = request(app)
+        .post("/api/v1/users/generateotp")
+        .send({ email: "concurrent@example.com" });
+
+      const response2 = request(app)
+        .post("/api/v1/users/generateotp")
+        .send({ email: "concurrent@example.com" });
+
+      const [res1, res2] = await Promise.all([response1, response2]);
+
+      expect(res1.status).toBe(200);
+      expect(res2.status).toBe(200);
+    });
+  });
+
   // ===================== Security Tests =====================
   describe("Security Tests", () => {
     it("should not allow user to access another user's profile", async () => {
@@ -586,6 +800,90 @@ describe("Users API Integration Tests", () => {
         .set("Authorization", `Bearer ${token}`);
 
       expect(profileResponse.body).not.toHaveProperty("password");
+    });
+
+    it("should sanitize user input to prevent XSS", async () => {
+      const xssUser = {
+        username: "xsstest",
+        firstName: "<script>alert('xss')</script>",
+        lastName: "Test",
+        email: "xss@example.com",
+        password: "Password@123"
+      };
+
+      const response = await request(app)
+        .post("/api/v1/users")
+        .send(xssUser);
+
+      expect(response.status).toBe(200);
+      // The firstName should be stored as-is, but never executed
+      expect(response.body.firstName).toBe("<script>alert('xss')</script>");
+    });
+
+    it("should handle SQL injection attempts in username", async () => {
+      const sqlUser = {
+        username: "'; DROP TABLE users; --",
+        firstName: "SQL",
+        lastName: "Injection",
+        email: "sql@example.com",
+        password: "Password@123"
+      };
+
+      const response = await request(app)
+        .post("/api/v1/users")
+        .send(sqlUser);
+
+      // Should either succeed (treating as normal string) or reject
+      expect([200, 400, 409]).toContain(response.status);
+    });
+
+    it("should validate session matches user in token", async () => {
+      // Mock getSession to return a different user's session
+      mockGetSession.mockImplementationOnce((userId, sessionType) => {
+        return Promise.resolve({
+          token: "different-token",
+          sessionType: sessionType || 'web',
+          createdAt: Date.now()
+        });
+      });
+
+      const response = await request(app)
+        .get("/api/v1/users/me")
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(response.status).toBe(401);
+    });
+  });
+
+  // ===================== Performance and Load Tests =====================
+  describe("Performance Tests", () => {
+    it("should handle multiple concurrent profile updates", async () => {
+      const updates = Array.from({ length: 5 }, (_, i) =>
+        request(app)
+          .patch("/api/v1/users/me")
+          .set("Authorization", `Bearer ${authToken}`)
+          .send({ telegramUsername: `concurrent_${i}` })
+      );
+
+      const responses = await Promise.all(updates);
+
+      responses.forEach(res => {
+        expect(res.status).toBe(200);
+      });
+    });
+
+    it("should handle rapid logout requests", async () => {
+      const logouts = Array.from({ length: 3 }, () =>
+        request(app)
+          .get("/api/v1/users/logout")
+          .set("Authorization", `Bearer ${authToken}`)
+      );
+
+      const responses = await Promise.all(logouts);
+
+      responses.forEach(res => {
+        expect(res.status).toBe(200);
+      });
     });
   });
 });

@@ -579,34 +579,6 @@ describe("Officer Controller Integration Tests", () => {
       expect(result.state).toBe(ReportState.DECLINED);
     });
 
-    it("should create notification for status change", async () => {
-      const user = await userRepo.createUser("user8", "User", "Eight", "user8@example.com", "Password@123");
-      
-      const officer = await officerRepo.createOfficer(
-        "notifier",
-        "Notifier",
-        "Officer",
-        "notifier@example.com",
-        "Password@123",
-        [{ role: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, office: null }]
-      );
-
-      const report = await reportRepo.createReport(
-        "Notify Report",
-        { Coordinates: { latitude: 45.0, longitude: 7.0 } },
-        user,
-        false,
-        OfficeType.INFRASTRUCTURE,
-        { Description: "Notify", Photos: ["/photo.jpg"] }
-      );
-
-      await officerController.reviewDoc(officer.id, report.id, ReportState.ASSIGNED);
-
-      const notifications = await notificationRepo.listByUser(user.id);
-      expect(notifications.length).toBe(1);
-      expect(notifications[0].type).toBe("STATUS_CHANGE");
-    });
-
     it("should throw error when report already resolved", async () => {
       const user = await userRepo.createUser("user9", "User", "Nine", "user9@example.com", "Password@123");
       

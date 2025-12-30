@@ -21,7 +21,7 @@ export class ReportRepository {
   async getApprovedReports(): Promise<ReportDAO[]> {
     return this.repo.find({
       where: [
-        
+
         { state: ReportState.ASSIGNED },
         { state: ReportState.IN_PROGRESS },
         { state: ReportState.SUSPENDED }
@@ -55,9 +55,25 @@ export class ReportRepository {
     });
   }
 
+  async getReportsByUserId(userId: number): Promise<ReportDAO[]> {
+    const baseWhereConditions = [
+      { state: ReportState.ASSIGNED },
+      { state: ReportState.IN_PROGRESS },
+      { state: ReportState.SUSPENDED }
+    ];
+    const where = baseWhereConditions.map(condition => ({
+      ...condition,
+      author: { id: userId }
+    }));
+    return this.repo.find({
+      where,
+      relations: ["author"]
+    });
+  }
+
   async getReportsByAssignedOfficer(officerId: number): Promise<ReportDAO[]> {
     return this.repo.find({
-      where: { 
+      where: {
         assignedOfficerId: officerId
       },
       relations: ["author"]
@@ -65,7 +81,7 @@ export class ReportRepository {
   }
   async getReportsByMaintainerId(maintainerId: number): Promise<ReportDAO[]> {
     return this.repo.find({
-      where: { 
+      where: {
         assignedMaintainerId: maintainerId
       },
       relations: ["author"]
@@ -143,7 +159,7 @@ export class ReportRepository {
     reason?: string
   ): Promise<ReportDAO> {
     const report = await this.getReportById(id);
-    
+
     report.state = state;
     if (state === ReportState.DECLINED && reason) {
       report.reason = reason;

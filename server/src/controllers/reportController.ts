@@ -3,6 +3,7 @@
 import { Report } from "@dto/Report";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { UserRepository } from "@repositories/UserRepository";
+import { FollowRepository } from "@repositories/FollowRepository";
 import { mapReportDAOToDTO } from "@services/mapperService";
 import { OfficeType } from "@models/enums/OfficeType";
 import { validatePhotosCount, getPhotoPaths } from "@utils/fileUtils";
@@ -13,7 +14,8 @@ import { BadRequestError } from "@utils/utils";
 export async function getReports(): Promise<Report[]> {
   const reportRepo = new ReportRepository();
   const reports = await reportRepo.getApprovedReports();
-  return reports.map(mapReportDAOToDTO);
+  const opts = { includeFollowerUsers: false };
+  return reports.map(r => mapReportDAOToDTO(r, opts));
 }
 
 //? Get approved reports filtered by office (for officers)
@@ -22,20 +24,23 @@ export async function getReportsByOffice(office: OfficeType): Promise<Report[]> 
   const reports = await reportRepo.getApprovedReports();
   // Filter by office/category
   const filtered = reports.filter(r => r.category === office);
-  return filtered.map(mapReportDAOToDTO);
+  const opts = { includeFollowerUsers: false };
+  return filtered.map(r => mapReportDAOToDTO(r, opts));
 }
 
 
 export async function getReport(id: number): Promise<Report> {
   const reportRepo = new ReportRepository();
   const report = await reportRepo.getReportById(id);
-  return mapReportDAOToDTO(report);
+  const opts = { includeFollowerUsers: true };
+  return mapReportDAOToDTO(report, opts);
 }
 
 
 export async function uploadReport(reportDto: Report, files: Express.Multer.File[], userId?: number): Promise<Report> {
   const reportRepo = new ReportRepository();
   const userRepo = new UserRepository();
+  const followRepo = new FollowRepository();
   // Validate required fields early to return clear errors
   if (!reportDto) {
     throw new BadRequestError('Missing report data');
@@ -87,6 +92,11 @@ export async function uploadReport(reportDto: Report, files: Express.Multer.File
       Photos: photoPaths
     }
   );
+
+  //? PT-16: if not anonymous, make the author follow their own report
+  if (author && author.id) {
+    await followRepo.follow(author.id, createdReport.id);
+  }
   
   return mapReportDAOToDTO(createdReport);
 }

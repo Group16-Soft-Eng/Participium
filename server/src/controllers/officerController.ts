@@ -7,11 +7,12 @@ import { ReportRepository } from "@repositories/ReportRepository";
 import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
 import { ReportState } from "@models/enums/ReportState";
 import { NotificationRepository } from "@repositories/NotificationRepository";
+import { FollowRepository } from "@repositories/FollowRepository";
 import { NotificationDAO } from "@models/dao/NotificationDAO"
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
 import { stat } from "fs";
-import  {sendTelegramMessage} from "@services/telegramService";
+import { sendTelegramMessage } from "@services/telegramService";
 
 export async function getAllOfficers(): Promise<Officer[]> {
   const officerRepo = new OfficerRepository();
@@ -132,7 +133,7 @@ export async function removeRoleFromOfficer(
   const current = await officerRepo.getOfficerById(officerId);
 
   const reportRepo = new ReportRepository();
-  if(role === OfficerRole.TECHNICAL_OFFICE_STAFF)
+  if (role === OfficerRole.TECHNICAL_OFFICE_STAFF)
     await reportRepo.resetPartialReportsAssignmentByOfficer(officerId, office);
 
   // Tipizza office come OfficeType | null per compatibilità
@@ -143,7 +144,7 @@ export async function removeRoleFromOfficer(
         office: (r.officeType as OfficeType) ?? null
       }))
       .filter(r => !(r.role === role && r.office === office));
-  
+
 
 
   await officerRepo.updateOfficerRoles(officerId, filtered);
@@ -175,21 +176,23 @@ export async function retrieveDocs(officerId: number): Promise<Report[]> {
 
   const allPending = await reportRepo.getReportsByState(ReportState.PENDING);
   const reports = allPending.filter(r => r.assignedOfficerId === null || r.assignedOfficerId === officerId);
-
-  return reports.map(mapReportDAOToDTO);
+  const opts = { includeFollowerUsers: false };
+  return reports.map(r => mapReportDAOToDTO(r, opts));
 }
 
 export async function getAssignedReports(officerId: number): Promise<Report[]> {
   const reportRepo = new ReportRepository();
   const reports = await reportRepo.getReportsByAssignedOfficer(officerId);
-  return reports.map(mapReportDAOToDTO);
+  const opts = { includeFollowerUsers: false };
+  return reports.map(r => mapReportDAOToDTO(r, opts));
 }
 
 //? added for story 8 (officer can see all assigned reports, also the non-pending ones)
 export async function getAllAssignedReportsOfficer(officerId: number): Promise<Report[]> {
   const reportRepo = new ReportRepository();
   const reports = await reportRepo.getReportsByAssignedOfficer(officerId);
-  return reports.map(mapReportDAOToDTO);
+  const opts = { includeFollowerUsers: false };
+  return reports.map(r => mapReportDAOToDTO(r, opts));
 }
 
 export async function reviewDoc(officerId: number, idDoc: number, state: ReportState, reason?: string): Promise<Report> {
@@ -222,11 +225,18 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
       updatedReport = await reportRepo.assignReportToOfficer(idDoc, preferred.id);
     }
   }
-
   await notificationRepo.createStatusChangeNotification(updatedReport);
-  if(updatedReport.author) {
+  //manda messaggio telegram a tutti quelli che seguono il report
+  /*
+  if (updatedReport.author) {
     await sendTelegramMessage(updatedReport.author.id, `Your report (ID: ${updatedReport.id}), title "${updatedReport.title}" status has been updated to '${updatedReport.state}'.`);
-  }
+  }*/
+ const followRepo = new FollowRepository();
+  const followers = await followRepo.getFollowersOfReport(updatedReport.id, "telegram");
+  for (const follower of followers ?? []) {
+    await sendTelegramMessage(follower.id, `The report (ID: ${updatedReport.id}), title "${updatedReport.title}" you are following has been updated to '${updatedReport.state}'.`);
+  } 
+
   return mapReportDAOToDTO(updatedReport);
 }
 
@@ -237,9 +247,9 @@ export async function deleteOfficer(id: number): Promise<void> {
     throw new Error(`Officer with id '${id}' does not exist.`);
   }
   const reportRepo = new ReportRepository();
-  for(const role of existingOfficer.roles ?? []) {
-    if(role.officerRole === OfficerRole.TECHNICAL_OFFICE_STAFF) {
-      await reportRepo.resetReportsAssignmentByOfficer(existingOfficer.id );
+  for (const role of existingOfficer.roles ?? []) {
+    if (role.officerRole === OfficerRole.TECHNICAL_OFFICE_STAFF) {
+      await reportRepo.resetReportsAssignmentByOfficer(existingOfficer.id);
     }
   }
   await officerRepo.deleteOfficer(id);

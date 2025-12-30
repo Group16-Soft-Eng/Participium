@@ -40,7 +40,7 @@ export const CONFIG = {
   },
 
   TELEGRAM_CONFIG : {
-    TOKEN : "8413586512:AAHkAtWfo3A2LLfwc7_QmEnlYTTsjqn7_UM"
+    TOKEN : "7796981555:AAFAU2xf7n6f-BihJhw5bjXo3H--_fzgwGg"
   },
 
   ROUTES: {
@@ -54,7 +54,8 @@ export const CONFIG = {
     V1_NOTIFICATIONS: APP_V1_BASE_URL + "/notifications",
     V1_PUBLICS: APP_V1_BASE_URL + "/publics",
     V1_ADMIN: APP_V1_BASE_URL + "/admin",
-    V1_INTERNAL_MESSAGES: APP_V1_BASE_URL + "/internal-messages"
+    V1_INTERNAL_MESSAGES: APP_V1_BASE_URL + "/internal-messages",
+    V1_TELEGRAM: APP_V1_BASE_URL + "/telegram"
   },
 
   REDIS_HOST: process.env.REDIS_HOST || "localhost",

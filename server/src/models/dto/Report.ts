@@ -120,6 +120,12 @@ export interface Report {
      * @memberof Report
      */
     reason?: string;
+    /**
+     * Users that follow this report
+     * @type {Array<User>}
+     * @memberof Report
+     */
+    followerUsers?: Array<User>;
 }
 /*
 
@@ -162,6 +168,7 @@ export function ReportFromJSONTyped(json: any, ignoreDiscriminator: boolean): Re
         'assignedOfficerId': json['assignedOfficerId'] == null ? (json['AssignedOfficerId'] == null ? undefined : json['AssignedOfficerId']) : json['assignedOfficerId'],
         'assignedMaintainerId': json['assignedMaintainerId'] == null ? (json['AssignedMaintainerId'] == null ? undefined : json['AssignedMaintainerId']) : json['assignedMaintainerId'],
         'reason': json['reason'] == null ? (json['Reason'] == null ? undefined : json['Reason']) : json['reason'],
+        'followerUsers': json['followerUsers'] == null ? undefined : (json['followerUsers'] as Array<any>).map(UserFromJSON),
     };
 }
 
@@ -188,6 +195,7 @@ export function ReportToJSONTyped(value?: Report | null, ignoreDiscriminator: bo
         'assignedOfficerId': value['assignedOfficerId'],
         'assignedMaintainerId': value['assignedMaintainerId'],
         'reason': value['reason'],
+        'followerUsers': value['followerUsers'] == null ? undefined : (value['followerUsers'] as Array<User>).map(UserToJSON),
     };
 }
 

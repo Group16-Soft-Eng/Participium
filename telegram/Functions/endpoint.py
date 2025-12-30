@@ -16,7 +16,7 @@ from telegram.ext import (
     ContextTypes,
 )
 import httpx
-from .start import BASE_URL, sessions, _httpx_with_retry
+from .start import BASE_URL, TELEGRAM_REPORT_URL,sessions, _httpx_with_retry
 from urllib.parse import urlparse
 # ------------------------------------------------------------------ #
 # Configuration / State
@@ -50,6 +50,7 @@ async def load_categories() -> None:
     except Exception as e:
         print("Failed to load categories:", e)
         categories = []
+
         
 # ------------------------------------------------------------------ #
 # Helpers
@@ -85,14 +86,11 @@ def build_yes_no_keyboard(prefix: str) -> InlineKeyboardMarkup:
         ]
     )
 
-
 def in_turin(latitude: float, longitude: float) -> bool:
     return 44.9 <= latitude <= 45.2 and 7.5 <= longitude <= 7.8
 # ------------------------------------------------------------------ #
 # Handlers
 # ------------------------------------------------------------------ #
-
-
 
 async def sendReport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
@@ -393,4 +391,5 @@ async def handle_start_report(update: Update, context: ContextTypes.DEFAULT_TYPE
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
     return WAITING_TITLE
+
 

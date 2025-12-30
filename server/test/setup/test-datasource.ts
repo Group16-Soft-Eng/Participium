@@ -9,12 +9,13 @@ import { RoleDAO } from "../../src/models/dao/RoleDAO";
 import { MaintainerDAO } from "../../src/models/dao/MaintainerDAO";
 import { NotificationDAO } from "../../src/models/dao/NotificationDAO";
 import { InternalMessageDAO } from "../../src/models/dao/InternalMessageDAO";
+import { FollowDAO } from "../../src/models/dao/FollowDAO";
 // Database in memoria SQLite per i test
 export const TestDataSource = new DataSource({
   type: "sqlite",
   database: ":memory:",
   dropSchema: true,
-  entities: [UserDAO, OfficerDAO, ReportDAO, RoleDAO, MaintainerDAO, NotificationDAO, InternalMessageDAO],
+  entities: [UserDAO, OfficerDAO, ReportDAO, RoleDAO, MaintainerDAO, NotificationDAO, InternalMessageDAO, FollowDAO],
   synchronize: true,
   logging: false // Abilito per vedere cosa succede
 });
