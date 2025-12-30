@@ -4,5 +4,8 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
   }
 }
