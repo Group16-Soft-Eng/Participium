@@ -22,6 +22,9 @@ const getCategoryColor = (category?: string): string => {
   return (category && CATEGORY_COLORS[category.toLowerCase()]) || '#6b7280';
 };
 
+// Status type for better type safety
+type ReportStatusType = 'ASSIGNED' | 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED';
+
 const TechnicalOfficerPage: React.FC = () => {
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -31,11 +34,11 @@ const TechnicalOfficerPage: React.FC = () => {
   const [selectedMaintainerId, setSelectedMaintainerId] = useState<number | null>(null);
   const [maintainers, setMaintainers] = useState<Maintainer[]>([]);
   const [loadingMaintainers, setLoadingMaintainers] = useState(false);
+  const [changingStatusIds, setChangingStatusIds] = useState<number[]>([]); // Track reports with active status changes
   const navigate = useNavigate();
   // Filter state
   const [statusFilter, setStatusFilter] = useState<ReportStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<ReportCategory | 'all' | null>('all');
-
 
   useEffect(() => {
     fetchAssigned();
@@ -47,11 +50,19 @@ const TechnicalOfficerPage: React.FC = () => {
     // Filter out RESOLVED reports from the queue
     const activeReports = data.filter(report => report.state?.toUpperCase() !== 'RESOLVED');
     setReports(activeReports);
+    setChangingStatusIds([]); // Reset changing status when fetching new data
     setLoading(false);
   };
 
   const handleStatusChange = async (reportId: number, newStatus: 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED') => {
+    // Add report ID to changing status list
+    setChangingStatusIds(prev => [...prev, reportId]);
+    
     const success = await updateReportStatus(reportId, newStatus);
+    
+    // Remove report ID from changing status list
+    setChangingStatusIds(prev => prev.filter(id => id !== reportId));
+    
     if (success) {
       fetchAssigned(); // Refresh the list
     }
@@ -170,6 +181,21 @@ const TechnicalOfficerPage: React.FC = () => {
     );
   };
 
+  // Helper function to check if a status button should be disabled
+  const isStatusButtonDisabled = (report: OfficerReport, targetStatus: ReportStatusType) => {
+    // If status is already changing for this report, disable all buttons
+    if (changingStatusIds.includes(report.id)) {
+      return true;
+    }
+    
+    // If the button is for the current status, disable it
+    if (report.state === targetStatus) {
+      return true;
+    }
+    
+    return false;
+  };
+
   return (
     <Box>
       <Paper sx={{ p: 3, mb: 3 }} elevation={1}>
@@ -250,9 +276,27 @@ const TechnicalOfficerPage: React.FC = () => {
 
                             {!r.assignedMaintainerId && (
                               <ButtonGroup size="small" variant="contained">
-                                <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
-                                <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
-                                <Button color="success" onClick={() => handleStatusChange(r.id, 'RESOLVED')}>Resolve</Button>
+                                <Button 
+                                  color="primary" 
+                                  onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')} 
+                                  disabled={isStatusButtonDisabled(r, 'IN_PROGRESS')}
+                                >
+                                  In Progress
+                                </Button>
+                                <Button 
+                                  color="warning" 
+                                  onClick={() => handleStatusChange(r.id, 'SUSPENDED')} 
+                                  disabled={isStatusButtonDisabled(r, 'SUSPENDED')}
+                                >
+                                  Suspend
+                                </Button>
+                                <Button 
+                                  color="success" 
+                                  onClick={() => handleStatusChange(r.id, 'RESOLVED')} 
+                                  disabled={isStatusButtonDisabled(r, 'RESOLVED')}
+                                >
+                                  Resolve
+                                </Button>
                               </ButtonGroup>
                             )}
                           </TableCell>
@@ -303,11 +347,31 @@ const TechnicalOfficerPage: React.FC = () => {
                               {r.state === 'ASSIGNED' && !r.assignedMaintainerId && (
                                 <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
                               )}
+                              {!r.assignedMaintainerId && (
                               <ButtonGroup size="small" variant="contained">
-                                <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
-                                <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
-                                <Button color="success" onClick={() => handleStatusChange(r.id, 'RESOLVED')}>Resolve</Button>
+                                <Button 
+                                  color="primary" 
+                                  onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')} 
+                                  disabled={isStatusButtonDisabled(r, 'IN_PROGRESS')}
+                                >
+                                  In Progress
+                                </Button>
+                                <Button 
+                                  color="warning" 
+                                  onClick={() => handleStatusChange(r.id, 'SUSPENDED')} 
+                                  disabled={isStatusButtonDisabled(r, 'SUSPENDED')}
+                                >
+                                  Suspend
+                                </Button>
+                                <Button 
+                                  color="success" 
+                                  onClick={() => handleStatusChange(r.id, 'RESOLVED')} 
+                                  disabled={isStatusButtonDisabled(r, 'RESOLVED')}
+                                >
+                                  Resolve
+                                </Button>
                               </ButtonGroup>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}

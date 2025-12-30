@@ -1,7 +1,16 @@
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler
-from telegram import BotCommand
-from endpoint import *
-from telegram.ext import ConversationHandler, MessageHandler, filters
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    ConversationHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+)
+
+from Functions.login import *
+from Functions.start import *
+from Functions.endpoint import *
 
 # Pattern constants (rinominati per non collidere con le funzioni)
 BACK_PATTERN = r"^back_"
@@ -47,10 +56,10 @@ conv_handler = ConversationHandler(
     per_message=False
 )
 
-async def post_init(application):
+async def post_init(application: Application) -> None:
     await load_categories()
 
-app = ApplicationBuilder().token("8413586512:AAHkAtWfo3A2LLfwc7_QmEnlYTTsjqn7_UM").post_init(post_init).build()
+app = Application.builder().token("8413586512:AAHkAtWfo3A2LLfwc7_QmEnlYTTsjqn7_UM").post_init(post_init).build()
 
 async def on_error(update, context):
     print(f"Error: {context.error}")

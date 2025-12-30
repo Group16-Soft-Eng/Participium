@@ -5,6 +5,7 @@ from telegram import InputFile
 import aiofiles
 import io
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from .login import build_main_menu
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -15,49 +16,26 @@ from telegram.ext import (
     ContextTypes,
 )
 import httpx
+from .start import BASE_URL, sessions, _httpx_with_retry
 from urllib.parse import urlparse
 # ------------------------------------------------------------------ #
 # Configuration / State
 # ------------------------------------------------------------------ #
-def _normalize_server_url(raw: str) -> str:
-    raw = (raw or "").strip()
-    if not raw:
-        return "http://localhost:5000"
-    if not raw.startswith(("http://", "https://")):
-        # default a http se porta 5000 (tipico dev server)
-        raw = f"http://{raw}"
-    parsed = urlparse(raw)
-    if not parsed.scheme:
-        raw = f"http://{raw}"
-    return raw
 
-server_base_url = "http://127.0.0.1:5000"  # Use IP to avoid DNS issues
-SERVER_URL = _normalize_server_url(os.getenv("SERVER_URL", server_base_url))
-BASE_URL = SERVER_URL.rstrip("/") + "/api/v1"
-print(f"[telegram] BASE_URL={BASE_URL}")
+# Conversation states
+WAITING_TITLE = 1
+WAITING_DESCRIPTION = 2
+WAITING_CATEGORY = 3
+WAITING_PHOTO = 4
+WAITING_LOCATION = 5
+WAITING_ANONYMOUS = 6
+
+# Text strings used in the conversation flow
 str_ch_category = "Please choose a category for your report:"
 str_going_back = "Going back to the previous step."
 str_send_location = "Please send your location (must be within Turin area)."
-sessions: Dict[int, str] = {}
-categories: List[str] = []
 
-async def _httpx_with_retry(method: str, url: str, **kwargs):
-    # Piccolo retry esponenziale per DNS/timeout
-    attempts = 3
-    delay = 0.5
-    last_exc = None
-    async with httpx.AsyncClient(timeout=5) as client:
-        for i in range(attempts):
-            try:
-                return await client.request(method, url, **kwargs)
-            except httpx.ConnectError as e:
-                last_exc = e
-            except httpx.ReadTimeout as e:
-                last_exc = e
-            except httpx.TransportError as e:
-                last_exc = e
-            await asyncio.sleep(delay * (2 ** i))
-    raise last_exc
+categories: List[str] = []
 
 async def load_categories() -> None:
     """Load categories asynchronously at startup."""
@@ -72,16 +50,7 @@ async def load_categories() -> None:
     except Exception as e:
         print("Failed to load categories:", e)
         categories = []
-# Conversation states
-WAITING_TITLE = 1
-WAITING_DESCRIPTION = 2
-WAITING_CATEGORY = 3
-WAITING_PHOTO = 4
-WAITING_LOCATION = 5
-WAITING_ANONYMOUS = 6
-
-
-
+        
 # ------------------------------------------------------------------ #
 # Helpers
 # ------------------------------------------------------------------ #
@@ -119,70 +88,11 @@ def build_yes_no_keyboard(prefix: str) -> InlineKeyboardMarkup:
 
 def in_turin(latitude: float, longitude: float) -> bool:
     return 44.9 <= latitude <= 45.2 and 7.5 <= longitude <= 7.8
-
-def build_main_menu() -> InlineKeyboardMarkup:
-    """Build main menu with available functionalities."""
-    keyboard = [
-        [InlineKeyboardButton("📝 Create Report", callback_data="start_report")],
-        # Add more functionalities here in the future
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
 # ------------------------------------------------------------------ #
 # Handlers
 # ------------------------------------------------------------------ #
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Welcome to the Participium Bot! Use /login to authenticate.")
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    image_path = os.path.join(script_dir, "ParticipiumLogo.webp")
-    if os.path.exists(image_path):
-        # Use asynchronous file I/O to read the image
-        async with aiofiles.open(image_path, "rb") as f:
-            content = await f.read()
-        bio = io.BytesIO(content)
-        bio.name = os.path.basename(image_path)
-        await update.message.reply_sticker(sticker=bio)
-    else:
-        print(f"Warning: Image not found at {image_path}")
 
-async def handle_login(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Callback login handler triggered by inline button."""
-    query = update.callback_query
-    await query.answer()
-    chat_id = update.effective_chat.id
-    username = update.effective_user.username
-    try:
-        response = await _httpx_with_retry("POST", f"{BASE_URL}/auth/telegram", json={"username": username, "chat_id": chat_id})
-    except Exception as e:
-        await query.edit_message_text(f"Error connecting to server: {e}")
-        return
-    if response.status_code == 200:
-        token = response.json()
-        sessions[chat_id] = token
-        await query.edit_message_text(
-            "✅ Login successful! Choose a functionality:",
-            reply_markup=build_main_menu()
-        )
-    else:
-        await query.edit_message_text("❌ Error during login. Make sure you have registered your Telegram username.")
 
-async def retrieveAccount(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.effective_chat.id
-    username = update.effective_user.username
-    try:
-        response = await _httpx_with_retry("POST", f"{BASE_URL}/auth/telegram", json={"username": username, "chatId": chat_id})
-    except Exception as e:
-        await update.message.reply_text(f"Error connecting to server: {e}")
-        return
-    if response.status_code == 200:
-        token = response.json()
-        sessions[chat_id] = token
-        await update.message.reply_text(
-            "✅ Login successful! Choose a functionality:",
-            reply_markup=build_main_menu()
-        )
-    else:
-        await update.message.reply_text("Error during login. Make sure you have registered your Telegram username.")
 
 async def sendReport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
@@ -484,12 +394,3 @@ async def handle_start_report(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
     return WAITING_TITLE
 
-
-async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Logout user and clear session."""
-    chat_id = update.effective_chat.id
-    if chat_id in sessions:
-        sessions.pop(chat_id, None)
-        await update.message.reply_text("✅ Logged out successfully. Use /login to authenticate again.")
-    else:
-        await update.message.reply_text("❌ You are not logged in.")

@@ -33,6 +33,9 @@ const getStatusColor = (reportState?: string) => {
   }
 };
 
+// Status type for better type safety
+type ReportStatusType = 'ASSIGNED' | 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED';
+
 const ExternalMaintainersPage: React.FC = () => {
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -40,6 +43,7 @@ const ExternalMaintainersPage: React.FC = () => {
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMessage, setSnackMessage] = useState('');
   const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
+  const [changingStatusIds, setChangingStatusIds] = useState<number[]>([]); // Track reports with active status changes
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,11 +56,19 @@ const ExternalMaintainersPage: React.FC = () => {
     // Filter out RESOLVED reports from the queue
     const activeReports = data.filter(report => report.state?.toUpperCase() !== 'RESOLVED');
     setReports(activeReports);
+    setChangingStatusIds([]); // Reset changing status when fetching new data
     setLoading(false);
   };
 
   const handleStatusChange = async (reportId: number, newStatus: 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED') => {
+    // Add report ID to changing status list
+    setChangingStatusIds(prev => [...prev, reportId]);
+    
     const success = await updateReportStatusByMaintainer(reportId, newStatus);
+    
+    // Remove report ID from changing status list
+    setChangingStatusIds(prev => prev.filter(id => id !== reportId));
+    
     if (success) {
       setSnackMessage(`Report status updated to ${newStatus.replace('_', ' ')}`);
       setSnackSeverity('success');
@@ -67,6 +79,21 @@ const ExternalMaintainersPage: React.FC = () => {
       setSnackSeverity('error');
       setSnackOpen(true);
     }
+  };
+
+  // Helper function to check if a status button should be disabled
+  const isStatusButtonDisabled = (report: OfficerReport, targetStatus: ReportStatusType) => {
+    // If status is already changing for this report, disable all buttons
+    if (changingStatusIds.includes(report.id)) {
+      return true;
+    }
+    
+    // If the button is for the current status, disable it
+    if (report.state === targetStatus) {
+      return true;
+    }
+    
+    return false;
   };
 
   // group reports by category for a compact overview
@@ -132,9 +159,27 @@ const ExternalMaintainersPage: React.FC = () => {
                               </Badge>
                             </IconButton>
                             <ButtonGroup size="small" variant="contained">
-                              <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
-                              <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
-                              <Button color="success" onClick={() => handleStatusChange(r.id, 'RESOLVED')}>Resolve</Button>
+                              <Button 
+                                color="primary" 
+                                onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}
+                                disabled={isStatusButtonDisabled(r, 'IN_PROGRESS')}
+                              >
+                                In Progress
+                              </Button>
+                              <Button 
+                                color="warning" 
+                                onClick={() => handleStatusChange(r.id, 'SUSPENDED')}
+                                disabled={isStatusButtonDisabled(r, 'SUSPENDED')}
+                              >
+                                Suspend
+                              </Button>
+                              <Button 
+                                color="success" 
+                                onClick={() => handleStatusChange(r.id, 'RESOLVED')}
+                                disabled={isStatusButtonDisabled(r, 'RESOLVED')}
+                              >
+                                Resolve
+                              </Button>
                             </ButtonGroup>
                           </TableCell>
                         </TableRow>
@@ -184,9 +229,27 @@ const ExternalMaintainersPage: React.FC = () => {
                                 </Badge>
                               </IconButton>
                               <ButtonGroup size="small" variant="contained">
-                                <Button color="primary" onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}>In Progress</Button>
-                                <Button color="warning" onClick={() => handleStatusChange(r.id, 'SUSPENDED')}>Suspend</Button>
-                                <Button color="success" onClick={() => handleStatusChange(r.id, 'RESOLVED')}>Resolve</Button>
+                                <Button 
+                                  color="primary" 
+                                  onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}
+                                  disabled={isStatusButtonDisabled(r, 'IN_PROGRESS')}
+                                >
+                                  In Progress
+                                </Button>
+                                <Button 
+                                  color="warning" 
+                                  onClick={() => handleStatusChange(r.id, 'SUSPENDED')}
+                                  disabled={isStatusButtonDisabled(r, 'SUSPENDED')}
+                                >
+                                  Suspend
+                                </Button>
+                                <Button 
+                                  color="success" 
+                                  onClick={() => handleStatusChange(r.id, 'RESOLVED')}
+                                  disabled={isStatusButtonDisabled(r, 'RESOLVED')}
+                                >
+                                  Resolve
+                                </Button>
                               </ButtonGroup>
                             </TableCell>
                           </TableRow>
