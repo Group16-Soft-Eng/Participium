@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Paper, InputBase, IconButton, Autocomplete, CircularProgress, TextField } from '@mui/material';
+import { Paper, IconButton, Autocomplete, CircularProgress, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import throttle from 'lodash/throttle';
 

@@ -137,7 +137,7 @@ async function userRegister(user: User) {
     else {
         const err = await response.text()
 
-        const match = err.match(/<pre>(.*?)<\/pre>/i);
+        const match = /<pre>(.*?)<\/pre>/i.exec(err);
 
         const errorType = match ? match[1] : response.statusText;
 
@@ -159,7 +159,8 @@ async function generateOtp(email: string) {
     else {
         const err = await response.text()
 
-        const match = err.match(/<pre>(.*?)<\/pre>/i);
+        const match = /<pre>(.*?)<\/pre>/i.exec(err);
+
 
         const errorType = match ? match[1] : response.statusText;
 
@@ -182,7 +183,7 @@ async function verifyOtp(code: string, email: string) {
     else {
         const err = await response.text()
 
-        const match = err.match(/<pre>(.*?)<\/pre>/i);
+        const match = /<pre>(.*?)<\/pre>/i.exec(err);
 
         const errorType = match ? match[1] : response.statusText;
 
@@ -190,7 +191,7 @@ async function verifyOtp(code: string, email: string) {
     }
 }
 
-async function officerRegister(officer: Officer | any) {
+async function officerRegister(officer: Officer) {
     const token = getToken();
 
     const headers: HeadersInit = {};
@@ -210,7 +211,7 @@ async function officerRegister(officer: Officer | any) {
     else {
         const err = await response.text()
 
-        const match = err.match(/<pre>(.*?)<\/pre>/i);
+        const match = /<pre>(.*?)<\/pre>/i.exec(err);
 
         const errorType = match ? match[1] : response.statusText;
 
@@ -227,7 +228,7 @@ type Maintainer = {
     active: boolean
 }
 
-async function maintainerRegister(maintainer: Maintainer | any) {
+async function maintainerRegister(maintainer: Maintainer) {
     const token = getToken();
 
     const headers: HeadersInit = {};
@@ -247,7 +248,8 @@ async function maintainerRegister(maintainer: Maintainer | any) {
     else {
         const err = await response.text()
 
-        const match = err.match(/<pre>(.*?)<\/pre>/i);
+        const match = /<pre>(.*?)<\/pre>/i.exec(err);
+
 
         const errorType = match ? match[1] : response.statusText;
 

@@ -11,8 +11,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface ReportDetailsSectionProps {
-  report: any;
-  onUpdate: () => void;
+  readonly report: any;
 }
 
 export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
@@ -269,7 +268,6 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
             <Typography color="text.secondary">
               Location: {report.location.coordinates.latitude}, {report.location.coordinates.longitude}
             </Typography>
-            {/* TODO: Integrate actual map component */}
           </Box>
         </Box>
       )}
@@ -278,9 +276,9 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
 }
 
 interface InfoFieldProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
+  readonly icon: React.ReactNode;
+  readonly label: string;
+  readonly value: string;
 }
 
 function InfoField({ icon, label, value }: InfoFieldProps) {

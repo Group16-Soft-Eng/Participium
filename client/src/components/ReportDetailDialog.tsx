@@ -110,7 +110,7 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
           {report?.document?.photos && openImageIndex !== null && (
             <Box sx={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: '60vh' }}>
               <IconButton
-                onClick={() => setOpenImageIndex(i => (i !== null ? (i - 1 + report.document!.photos!.length) % report.document!.photos!.length : null))}
+                onClick={() => setOpenImageIndex(i => (i === null ? null : (i - 1 + report.document!.photos!.length) % report.document!.photos!.length))}
                 sx={{ color: 'white', position: 'absolute', left: 8, bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }, fontSize: '2rem' }}
               >
                 ‹
@@ -123,7 +123,7 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
               />
 
               <IconButton
-                onClick={() => setOpenImageIndex(i => (i !== null ? (i + 1) % report.document!.photos!.length : null))}
+                onClick={() => setOpenImageIndex(i => (i === null ? null : (i + 1) % report.document!.photos!.length))}
                 sx={{ color: 'white', position: 'absolute', right: 8, bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }, fontSize: '2rem' }}
               >
                 ›

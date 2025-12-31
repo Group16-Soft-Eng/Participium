@@ -34,7 +34,7 @@ const ReportForm: React.FC = () => {
 
   useEffect(() => {
     // 1. Prefer location.state.position if present
-    if (location && (location as any).state && (location as any).state.position) {
+    if ((location as any)?.state?.position) {
       const pos = (location as any).state.position as [number, number];
       if (pos?.length === 2) {
         handleLocationSelect(pos[0], pos[1]);

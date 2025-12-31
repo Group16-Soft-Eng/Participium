@@ -18,7 +18,7 @@ interface Message {
   createdAt: string;
 }
 
-export function InternalChatSection({ reportId }: InternalChatSectionProps) {
+export function InternalChatSection({ reportId }: Readonly<InternalChatSectionProps>) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -240,7 +240,7 @@ interface MessageBubbleProps {
   currentUserName: string;
 }
 
-function MessageBubble({ message, formatTime, currentUserRole, currentUserName }: MessageBubbleProps) {
+function MessageBubble({ message, formatTime, currentUserRole, currentUserName }: Readonly<MessageBubbleProps>) {
   const getInitials = (name?: string) => {
     if (!name || typeof name !== "string") return "";
 

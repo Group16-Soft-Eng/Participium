@@ -51,8 +51,8 @@ export const testReports = {
     title: 'E2E Anonymous Report',
     description: 'This is an anonymous test report for E2E testing purposes. The park lights are not working.',
     category: 'environment',
-    latitude: 45.470000,
-    longitude: 9.200000,
+    latitude: 45.47,
+    longitude: 9.2,
     anonymity: true,
   },
   
@@ -60,8 +60,8 @@ export const testReports = {
     title: 'E2E Sanitation Issue',
     description: 'Garbage bins are overflowing at the city center. This requires immediate sanitation department attention.',
     category: 'sanitation',
-    latitude: 45.475000,
-    longitude: 9.195000,
+    latitude: 45.475,
+    longitude: 9.195,
     anonymity: false,
   },
 };

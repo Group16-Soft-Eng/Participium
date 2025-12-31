@@ -89,21 +89,20 @@ const MapPage: React.FC = () => {
   }, [search]);
 
   const filteredReports = useMemo(() => {
-    if (search != "") {
-      if (!searchCoords) return reports;
-
-      const RADIUS_KM = 0.2;
-
-      return reports.filter((r) => {
-        const dx = (r.longitude - searchCoords[1]) * 111.32 * Math.cos(searchCoords[0] * (Math.PI / 180));
-        const dy = (r.latitude - searchCoords[0]) * 111.13;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance <= RADIUS_KM;
-      });
+    if (search === "") {
+      return reports;
     }
-    else {
-      return reports
-    }
+    
+    if (!searchCoords) return reports;
+
+    const RADIUS_KM = 0.2;
+
+    return reports.filter((r) => {
+      const dx = (r.longitude - searchCoords[1]) * 111.32 * Math.cos(searchCoords[0] * (Math.PI / 180));
+      const dy = (r.latitude - searchCoords[0]) * 111.13;
+      const distance = Math.hypot(dx, dy);
+      return distance <= RADIUS_KM;
+    });
   }, [reports, searchCoords]);
 
   useEffect(() => {
@@ -159,6 +158,28 @@ const MapPage: React.FC = () => {
                 const status = r.status?.toLowerCase();
                 const isInProgress = status === 'in_progress' || status === 'in-progress';
                 const isSuspended = status === 'suspended';
+                
+                let backgroundColor = 'white';
+                if (isInProgress) {
+                  backgroundColor = '#e3f2fd';
+                } else if (isSuspended) {
+                  backgroundColor = '#fff3e0';
+                }
+                
+                let borderLeft = 'none';
+                if (isInProgress) {
+                  borderLeft = '4px solid #1976d2';
+                } else if (isSuspended) {
+                  borderLeft = '4px solid #f57c00';
+                }
+                
+                let authorName = 'Unknown';
+                if (r.anonymity) {
+                  authorName = 'Anonymous';
+                } else if (r.author) {
+                  authorName = `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
+                }
+                
                 return (
                   <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
                     <Paper
@@ -169,8 +190,8 @@ const MapPage: React.FC = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         cursor: 'pointer',
-                        bgcolor: isInProgress ? '#e3f2fd' : isSuspended ? '#fff3e0' : 'white',
-                        borderLeft: isInProgress ? '4px solid #1976d2' : isSuspended ? '4px solid #f57c00' : 'none',
+                        bgcolor: backgroundColor,
+                        borderLeft: borderLeft,
                         '&:hover': { bgcolor: '#f0f0f0' }
                       }}
                       elevation={1}
@@ -179,7 +200,7 @@ const MapPage: React.FC = () => {
                       <Box>
                         <Typography variant="subtitle1" sx={{ lineHeight: 1.2, mb: 0.5 }}>{r.title}</Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {r.anonymity ? 'Anonymous' : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown')}
+                          {authorName}
                           {` • ${new Date(r.createdAt).toLocaleDateString()}`}
                         </Typography>
                       </Box>

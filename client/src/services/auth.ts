@@ -45,7 +45,7 @@ export function logout() {
 }
 
 // Try to decode a JWT and extract the payload. Returns null if not a JWT or invalid.
-export function decodeJwt(token: string | null): any | null {
+export function decodeJwt(token: string | null): any {
   if (!token) return null;
   try {
     const parts = token.split('.');
@@ -57,12 +57,13 @@ export function decodeJwt(token: string | null): any | null {
       atob(b64)
         .split('')
         .map(function (c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          return '%' + ('00' + c.codePointAt(0).toString(16)).slice(-2);
         })
         .join('')
     );
     return JSON.parse(json);
   } catch (e) {
+    console.error('Failed to decode JWT:', e);
     return null;
   }
 }
