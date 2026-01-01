@@ -19,12 +19,6 @@ router.get("/reports", authenticateToken, requireUserType(["user"]), async (req,
     res.status(200).json(reports.map(ReportFromJSON));
 });
 
-router.get("/faq", authenticateToken, requireUserType(["user"]), async (req, res) => {
-    const faqRepo = new FaqRepository();
-    const faqs = await faqRepo.getAllFaqs();
-
-    res.status(200).json(faqs);
-});
 
 //Follow all personal reports
 router.post("/reports", authenticateToken, requireUserType(["user"]), async (req, res) => {
@@ -65,5 +59,11 @@ router.delete("/reports", authenticateToken, requireUserType(["user"]),  async (
     res.status(200).json({ message: "All reports unfollowed successfully." });
 });
 
+router.get("/faq", authenticateToken, requireUserType(["user"]), async (req, res) => {
+    const faqRepo = new FaqRepository();
+    const faqs = await faqRepo.getAllFaqs();
+
+    res.status(200).json(faqs);
+});
 
 export {router as telegramRouter};

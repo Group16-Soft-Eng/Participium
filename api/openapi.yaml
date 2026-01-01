@@ -9,7 +9,6 @@ info:
   version: 1.0.12
 tags:
   - name: Auth
-  - name: Info
   - name: Admin
     description: Admin operations
   - name: Public Relation Officer
@@ -26,6 +25,7 @@ tags:
   - name: Notifications
   - name: Internal Messages
     description: Internal messaging between officers and maintainers
+  - name: Info
 paths:
   /auth/users:
     post:
@@ -1368,6 +1368,217 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /telegram/reports:
+    get:
+      tags:
+        - Telegram
+      summary: Get reports for Telegram notifications
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      tags:
+        - Telegram
+      summary: Update reports for Telegram notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reportIds:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - reportIds
+      responses:
+        "200":
+          description: successful operation
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /telegram/reports/{reportID}:
+    post:
+      tags:
+        - Telegram
+      summary: Add a report to Telegram notifications
+      parameters:
+        - in: path
+          name: reportID
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Telegram
+      summary: Remove a report from Telegram notifications
+      parameters:
+        - in: path
+          name: reportID
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  
+  /faqs:
+    get:
+      tags:
+        - Faq
+      summary: Get FAQ entries
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    question:
+                      type: string
+                    answer:
+                      type: string
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      tags:
+        - Faq
+      summary: Add a new FAQ entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                answer:
+                  type: string
+              required:
+                - question
+                - answer
+      responses:
+        "201":
+          description: FAQ entry created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  question:
+                    type: string
+                  answer:
+                    type: string
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /faqs/{idFaq}:
+    patch:
+      tags:
+        - Faq
+      summary: Update a FAQ entry
+      parameters:
+        - in: path
+          name: idFaq
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                answer:
+                  type: string
+      responses:
+        "200":
+          description: FAQ entry updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  question:
+                    type: string
+                  answer:
+                    type: string
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Faq
+      summary: Delete a FAQ entry
+      parameters:
+        - in: path
+          name: idFaq
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: FAQ entry deleted
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /users/me/followed-reports:
     get:
       tags:
