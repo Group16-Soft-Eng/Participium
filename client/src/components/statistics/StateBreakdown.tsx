@@ -1,5 +1,5 @@
 import { Card, CardContent, Typography, Box, Chip } from '@mui/material';
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import {
   HourglassEmpty,
   Assignment,

@@ -644,25 +644,40 @@ type PublicStatistics = {
 
 async function getPublicStatistics() {
     try {
-        const response = await fetch(URI + `/statistics/public`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-        });
+        // Fetch all three periods in parallel
+        const [dailyResponse, weeklyResponse, monthlyResponse] = await Promise.all([
+            fetch(URI + `/statistics/public?period=day`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            }),
+            fetch(URI + `/statistics/public?period=week`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            }),
+            fetch(URI + `/statistics/public?period=month`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            })
+        ]);
 
-        if (response.ok) {
-            const data = await response.json();
+        if (dailyResponse.ok && weeklyResponse.ok && monthlyResponse.ok) {
+            const [dailyData, weeklyData, monthlyData] = await Promise.all([
+                dailyResponse.json(),
+                weeklyResponse.json(),
+                monthlyResponse.json()
+            ]);
             
             // Transform the response from backend to match frontend expectations
             return {
-                totalReports: data.byCategory.reduce((sum: number, cat: any) => sum + cat.count, 0),
-                byCategory: data.byCategory,
-                byState: data.byState || [],
-                dailyTrend: data.trends?.data || [],
-                weeklyTrend: data.trends?.data || [],
-                monthlyTrend: data.trends?.data || [],
+                totalReports: dailyData.byCategory.reduce((sum: number, cat: any) => sum + cat.count, 0),
+                byCategory: dailyData.byCategory,
+                byState: dailyData.byState || [],
+                dailyTrend: dailyData.trends?.data.map((d: any) => ({ date: d.period, count: d.count })) || [],
+                weeklyTrend: weeklyData.trends?.data.map((d: any) => ({ week: d.period, count: d.count })) || [],
+                monthlyTrend: monthlyData.trends?.data.map((d: any) => ({ month: d.period, count: d.count })) || [],
             } as PublicStatistics;
         } else {
-            const err = await response.text();
+            const err = await dailyResponse.text();
             throw new Error(err || 'Failed to fetch statistics');
         }
     } catch (error) {

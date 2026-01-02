@@ -1,5 +1,5 @@
 import { Card, CardContent, Typography, Box, LinearProgress, Chip } from '@mui/material';
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import {
   Build,
   Park,

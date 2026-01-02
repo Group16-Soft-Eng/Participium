@@ -40,6 +40,59 @@ echo ""
 echo "🌱 Populating database with sample reports..."
 echo ""
 
+# Create uploads directory if it doesn't exist
+UPLOADS_DIR="$SCRIPT_DIR/server/uploads/reports"
+mkdir -p "$UPLOADS_DIR"
+
+# Function to generate a random colored image
+generate_random_image() {
+    local filename="$1"
+    local colors=("red" "blue" "green" "yellow" "purple" "orange" "pink" "cyan" "brown" "gray")
+    local random_color=${colors[$((RANDOM % ${#colors[@]}))]}
+    
+    # Create a simple colored PNG using ImageMagick if available
+    if command -v convert &> /dev/null; then
+        convert -size 300x200 xc:$random_color "$filename" 2>/dev/null || {
+            # Fallback: create a minimal PNG with Python if ImageMagick fails
+            python3 << EOF 2>/dev/null || echo "Cannot generate image"
+import struct
+import zlib
+
+# Create a minimal 2x2 PNG with random color
+width, height = 300, 200
+pixels = b'\xff\x00\x00' * (width * height)  # Red pixels
+
+def create_png(filename):
+    # PNG signature
+    png_data = b'\x89PNG\r\n\x1a\n'
+    
+    # IHDR chunk (width, height, bit depth, color type, etc.)
+    ihdr = struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)
+    ihdr_crc = zlib.crc32(b'IHDR' + ihdr) & 0xffffffff
+    png_data += struct.pack('>I', 13) + b'IHDR' + ihdr + struct.pack('>I', ihdr_crc)
+    
+    # IDAT chunk (image data)
+    scanlines = b'\x00' + b'\xff\x00\x00' * width
+    idat = zlib.compress(scanlines * height)
+    idat_crc = zlib.crc32(b'IDAT' + idat) & 0xffffffff
+    png_data += struct.pack('>I', len(idat)) + b'IDAT' + idat + struct.pack('>I', idat_crc)
+    
+    # IEND chunk
+    iend_crc = zlib.crc32(b'IEND') & 0xffffffff
+    png_data += struct.pack('>I', 0) + b'IEND' + struct.pack('>I', iend_crc)
+    
+    with open(filename, 'wb') as f:
+        f.write(png_data)
+
+create_png("$filename")
+EOF
+        }
+    else
+        # Fallback: create a text file that represents an image
+        echo "Placeholder image for report" > "$filename"
+    fi
+}
+
 # Array of reporter names for metadata
 reporters=(
     "Marco Rossi, local business owner"
@@ -91,14 +144,32 @@ insert_report() {
         anonymity=1
     fi
     
+    # Generate 3 photos for this report
+    local photo_ids=()
+    for i in {1..3}; do
+        local photo_id="report_${report_count}_photo_${i}.png"
+        generate_random_image "$UPLOADS_DIR/$photo_id"
+        photo_ids+=("\"$photo_id\"")
+    done
+    local photos_json="[$(IFS=,; echo "${photo_ids[*]}")]"
+    
     # Escape single quotes in description
     description=$(echo "$description" | sed "s/'/''/g")
     title=$(echo "$title" | sed "s/'/''/g")
     
-    # Set reviewStatus to APPROVED if state is APPROVED, otherwise PENDING
+    # Set reviewStatus and state based on input state parameter
     local review_status="PENDING"
+    local actual_state="PENDING"
     if [[ "$state" == "APPROVED" ]]; then
         review_status="APPROVED"
+        # For approved reports, randomly assign states: ASSIGNED, IN_PROGRESS, SUSPENDED, or RESOLVED
+        local rand=$((RANDOM % 4))
+        case $rand in
+            0) actual_state="ASSIGNED" ;;
+            1) actual_state="IN_PROGRESS" ;;
+            2) actual_state="SUSPENDED" ;;
+            3) actual_state="RESOLVED" ;;
+        esac
     fi
 
     sqlite3 "$DB_PATH" <<EOF
@@ -110,8 +181,8 @@ VALUES (
     $anonymity,
     '$date',
     '$category',
-    '{"Description":"$description","Photos":[[]]}',
-    'PENDING',
+    '{"Description":"$description","Photos":$photos_json}',
+    '$actual_state',
     NULL,
     NULL,
     '$review_status'

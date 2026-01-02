@@ -1,22 +1,36 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Paper, InputBase, IconButton, Autocomplete, CircularProgress, TextField } from '@mui/material';
+import { Paper, IconButton, Autocomplete, CircularProgress, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import throttle from 'lodash/throttle';
 
-export default function SearchBar({ setSearch }) {
+interface SearchBarProps {
+  setSearch: (search: string | null) => void;
+}
+
+interface Address {
+  display_name: string;
+  address: {
+    city?: string;
+    town?: string;
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
+
+export default function SearchBar({ setSearch }: SearchBarProps) {
   const [inputValue, setInputValue] = useState('');
-  const [options, setOptions] = useState([]);
+  const [options, setOptions] = useState<Address[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchAddresses = useMemo(
     () =>
-      throttle(async (query, callback) => {
+      throttle(async (query: string, callback: (data: Address[]) => void) => {
         setLoading(true);
         try {
           const response = await fetch(
             `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}+Torino&addressdetails=1&limit=5&countrycodes=it`
           );
-          const data = await response.json();
+          const data: Address[] = await response.json();
           callback(data);
         } catch (error) {
           console.error("Error fetching addresses:", error);
@@ -32,17 +46,17 @@ export default function SearchBar({ setSearch }) {
       setOptions([]);
       return;
     }
-    fetchAddresses(inputValue, (results) => {
+    fetchAddresses(inputValue, (results: Address[]) => {
       setOptions(results || []);
     });
   }, [inputValue, fetchAddresses]);
 
-  const handleFinalSearch = (value) => {
+  const handleFinalSearch = (value: string | null) => {
     if (value) {
       setSearch(value);
       console.log("Searching for:", value);
     } else {
-      setSearch("");
+      setSearch(null);
     }
   };
 
@@ -63,10 +77,10 @@ export default function SearchBar({ setSearch }) {
           opt.address.city === "Torino" ||
           opt.address.town === "Torino"
         )}
-        onInputChange={(event, newInputValue) => {
+        onInputChange={(_event, newInputValue) => {
           setInputValue(newInputValue);
         }}
-        onChange={(event, newValue) => {
+        onChange={(_event, newValue) => {
           if (newValue) {
             handleFinalSearch(newValue.display_name);
           } else {
