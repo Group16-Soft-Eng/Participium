@@ -632,5 +632,44 @@ async function getReportById(reportId: string) {
     }
 }
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById };
-export type { Notification };
+// Statistics API
+type PublicStatistics = {
+    totalReports: number;
+    byCategory: Array<{ category: string; count: number }>;
+    byState: Array<{ state: string; count: number }>;
+    dailyTrend: Array<{ date: string; count: number }>;
+    weeklyTrend: Array<{ week: string; count: number }>;
+    monthlyTrend: Array<{ month: string; count: number }>;
+};
+
+async function getPublicStatistics() {
+    try {
+        const response = await fetch(URI + `/statistics/public`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Transform the response from backend to match frontend expectations
+            return {
+                totalReports: data.byCategory.reduce((sum: number, cat: any) => sum + cat.count, 0),
+                byCategory: data.byCategory,
+                byState: data.byState || [],
+                dailyTrend: data.trends?.data || [],
+                weeklyTrend: data.trends?.data || [],
+                monthlyTrend: data.trends?.data || [],
+            } as PublicStatistics;
+        } else {
+            const err = await response.text();
+            throw new Error(err || 'Failed to fetch statistics');
+        }
+    } catch (error) {
+        console.error('getPublicStatistics - Error:', error);
+        throw error;
+    }
+}
+
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById, getPublicStatistics };
+export type { Notification, PublicStatistics };

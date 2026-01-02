@@ -209,6 +209,21 @@ export class ReportRepository {
     }));
   }
 
+  // Public statistics: count by state
+  async getReportCountByState(): Promise<Array<{ state: string; count: number }>> {
+    const result = await this.repo
+      .createQueryBuilder("report")
+      .select("report.state", "state")
+      .addSelect("COUNT(*)", "count")
+      .groupBy("report.state")
+      .getRawMany();
+
+    return result.map(r => ({
+      state: r.state,
+      count: parseInt(r.count, 10)
+    }));
+  }
+
   // Public statistics: trends by period (day/week/month)
   async getReportTrendsByPeriod(period: 'day' | 'week' | 'month'): Promise<Array<{ period: string; count: number }>> {
     let dateFormat: string;

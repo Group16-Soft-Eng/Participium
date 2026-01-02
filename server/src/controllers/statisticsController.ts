@@ -20,13 +20,15 @@ export async function getPublicStatistics(period?: 'day' | 'week' | 'month') {
   }
 
   // Get statistics
-  const [reportsByCategory, reportTrends] = await Promise.all([
+  const [reportsByCategory, reportsByState, reportTrends] = await Promise.all([
     reportRepo.getReportCountByCategory(),
+    reportRepo.getReportCountByState(),
     reportRepo.getReportTrendsByPeriod(selectedPeriod)
   ]);
 
   return {
     byCategory: reportsByCategory,
+    byState: reportsByState,
     trends: {
       period: selectedPeriod,
       data: reportTrends
