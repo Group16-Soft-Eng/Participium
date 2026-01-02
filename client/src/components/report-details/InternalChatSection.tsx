@@ -195,7 +195,7 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Write an internal note..."
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             disabled={loading}
           />
           <IconButton

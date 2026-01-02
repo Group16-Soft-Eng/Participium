@@ -140,11 +140,13 @@ const MessagesPage: React.FC = () => {
                         </Box>
                         <ListItemText
                           primary={msg.message}
-                          primaryTypographyProps={{
-                            variant: 'body1',
-                            sx: {
-                              whiteSpace: 'pre-wrap',
-                              wordBreak: 'break-word',
+                          slotProps={{
+                            primary: {
+                              variant: 'body1',
+                              sx: {
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word',
+                              },
                             },
                           }}
                         />

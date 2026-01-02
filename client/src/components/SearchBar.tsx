@@ -63,10 +63,10 @@ export default function SearchBar({ setSearch }) {
           opt.address.city === "Torino" ||
           opt.address.town === "Torino"
         )}
-        onInputChange={(event, newInputValue) => {
+        onInputChange={(_, newInputValue) => {
           setInputValue(newInputValue);
         }}
-        onChange={(event, newValue) => {
+        onChange={(_, newValue) => {
           if (newValue) {
             handleFinalSearch(newValue.display_name);
           } else {
@@ -80,15 +80,17 @@ export default function SearchBar({ setSearch }) {
             placeholder="Search address in Turin..."
             variant="standard"
             fullWidth
-            InputProps={{
-              ...params.InputProps,
-              disableUnderline: true,
-              endAdornment: (
-                <React.Fragment>
-                  {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </React.Fragment>
-              ),
+            slotProps={{
+              input: {
+                ...params.InputProps,
+                disableUnderline: true,
+                endAdornment: (
+                  <React.Fragment>
+                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </React.Fragment>
+                ),
+              }
             }}
             sx={{ ml: 1, flex: 1 }}
           />

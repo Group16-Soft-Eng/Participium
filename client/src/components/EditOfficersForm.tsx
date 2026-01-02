@@ -142,7 +142,7 @@ const EditMaintainerDialog: React.FC<EditMaintainerDialogProps> = ({ open, onClo
                                     <Select
                                         value={newCategory}
                                         label="Category"
-                                        onChange={(e) => setNewCategory(e.target.value as string)}
+                                        onChange={(e) => setNewCategory(e.target.value)}
                                         disabled={allCategories.length === 0}
                                     >
                                         {allCategories.filter(c => !currentCategories.includes(c)).map(category => (

@@ -117,7 +117,7 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
               </IconButton>
 
               <img
-                src={(import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api/v1').replace(/\/api\/v1\/?$/i, '') + report.document.photos[openImageIndex!]}
+                src={(import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api/v1').replace(/\/api\/v1\/?$/i, '') + report.document.photos[openImageIndex]}
                 alt={`full-${openImageIndex}`}
                 style={{ maxWidth: '100%', maxHeight: '80vh', margin: '0 auto', display: 'block' }}
               />

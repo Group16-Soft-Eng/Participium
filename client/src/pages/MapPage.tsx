@@ -4,7 +4,6 @@ import MapClusterView from '../Map/MapComponents/MapClusterView';
 import type { Report } from '../Map/types/report';
 import { Box, List, ListItem, Paper, Typography, Chip, CircularProgress } from '@mui/material';
 import { getAllReports } from '../Map/mapApi/mapApi';
-import { getToken } from '../services/auth';
 import SearchBar from '../components/SearchBar';
 
 const getCategoryColor = (cat: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
@@ -28,8 +27,6 @@ const MapPage: React.FC = () => {
   const [highlightLocation, setHighlightLocation] = useState<[number, number] | null>(null);
   const [search, setSearch] = useState<string | null>(null);
   const [searchCoords, setSearchCoords] = useState<[number, number] | null>(null);
-
-  const logged = getToken() !== null;
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -130,7 +127,7 @@ const MapPage: React.FC = () => {
     <Box sx={{ display: 'flex', gap: 0, alignItems: 'stretch', flexDirection: { xs: 'column', md: 'row' }, width: '100%', height: 'calc(100vh - 64px)' }}>
       <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 66.666%' }, minWidth: 0 }}>
         <MapClusterView
-          reports={logged ? filteredReports : []}
+          reports={filteredReports}
           selectedId={selectedId}
           initialCenter={initialCenter}
           initialZoom={initialZoom}
@@ -146,73 +143,68 @@ const MapPage: React.FC = () => {
         p: 2,
         bgcolor: '#f8f9fa'
       }} elevation={2}>
-        {logged ?
-          <>
-            <Typography variant="h6" gutterBottom>
-              {searchCoords ? `Reports near location (${filteredReports.length})` : `Reports on map (${reports.length})`}
-            </Typography>
+        <Typography variant="h6" gutterBottom>
+          {searchCoords ? `Reports near location (${filteredReports.length})` : `Reports on map (${reports.length})`}
+        </Typography>
 
-            {!highlightLocation && <SearchBar setSearch={setSearch} />}
-            <List>
-              {filteredReports.map((r) => {
-                const status = r.status?.toLowerCase();
-                const isInProgress = status === 'in_progress' || status === 'in-progress';
-                const isSuspended = status === 'suspended';
-                
-                let backgroundColor = 'white';
-                if (isInProgress) {
-                  backgroundColor = '#e3f2fd';
-                } else if (isSuspended) {
-                  backgroundColor = '#fff3e0';
-                }
-                
-                let borderLeft = 'none';
-                if (isInProgress) {
-                  borderLeft = '4px solid #1976d2';
-                } else if (isSuspended) {
-                  borderLeft = '4px solid #f57c00';
-                }
-                
-                let authorName = 'Unknown';
-                if (r.anonymity) {
-                  authorName = 'Anonymous';
-                } else if (r.author) {
-                  authorName = `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
-                }
-                
-                return (
-                  <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
-                    <Paper
-                      sx={{
-                        width: '100%',
-                        p: 1.25,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        cursor: 'pointer',
-                        bgcolor: backgroundColor,
-                        borderLeft: borderLeft,
-                        '&:hover': { bgcolor: '#f0f0f0' }
-                      }}
-                      elevation={1}
-                      onClick={() => setSelectedId(r.id)}
-                    >
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ lineHeight: 1.2, mb: 0.5 }}>{r.title}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {authorName}
-                          {` • ${new Date(r.createdAt).toLocaleDateString()}`}
-                        </Typography>
-                      </Box>
-                      <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
-                    </Paper>
-                  </ListItem>
-                );
-              })}
-            </List>
-          </>
-          : <Typography variant="h6" gutterBottom>Please log in to view the available reports.</Typography>
-        }
+        {!highlightLocation && <SearchBar setSearch={setSearch} />}
+        <List>
+          {filteredReports.map((r) => {
+            const status = r.status?.toLowerCase();
+            const isInProgress = status === 'in_progress' || status === 'in-progress';
+            const isSuspended = status === 'suspended';
+            
+            let backgroundColor = 'white';
+            if (isInProgress) {
+              backgroundColor = '#e3f2fd';
+            } else if (isSuspended) {
+              backgroundColor = '#fff3e0';
+            }
+            
+            let borderLeft = 'none';
+            if (isInProgress) {
+              borderLeft = '4px solid #1976d2';
+            } else if (isSuspended) {
+              borderLeft = '4px solid #f57c00';
+            }
+            
+            let authorName = 'Unknown';
+            if (r.anonymity) {
+              authorName = 'Anonymous';
+            } else if (r.author) {
+              authorName = `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
+            }
+            
+            return (
+              <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
+                <Paper
+                  sx={{
+                    width: '100%',
+                    p: 1.25,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    bgcolor: backgroundColor,
+                    borderLeft: borderLeft,
+                    '&:hover': { bgcolor: '#f0f0f0' }
+                  }}
+                  elevation={1}
+                  onClick={() => setSelectedId(r.id)}
+                >
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ lineHeight: 1.2, mb: 0.5 }}>{r.title}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {authorName}
+                      {` • ${new Date(r.createdAt).toLocaleDateString()}`}
+                    </Typography>
+                  </Box>
+                  <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
+                </Paper>
+              </ListItem>
+            );
+          })}
+        </List>
       </Paper>
     </Box>
   );

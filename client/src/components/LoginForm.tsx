@@ -6,7 +6,7 @@ import { setToken, setRole, getRoleFromToken, setPicture } from '../services/aut
 import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
-    setShowLogin: (show: boolean) => void;
+    readonly setShowLogin: (show: boolean) => void;
 }
 
 export function LoginForm({ setShowLogin }: LoginFormProps) {
@@ -25,10 +25,13 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
         setError(null);
 
         const formData = new FormData(e.currentTarget);
+        const username = (formData.get('username') as string).trim();
+        const password = formData.get('password') as string;
         const user = {
-            username: (formData.get('username') as string).trim(),
-            password: formData.get('password') as string
-        }
+            username,
+            email: username, // Use username as email for maintainer login compatibility
+            password
+        };
 
         try {
             // first try officer login
@@ -39,7 +42,7 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
             const detected = getRoleFromToken(token);
             setRole(detected ?? []);
             console.log(detected);
-            window.dispatchEvent(new Event('authChange'));
+            globalThis.dispatchEvent(new Event('authChange'));
             setLoading(false);
 
             // Redirect based on role
@@ -53,15 +56,17 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                 navigate('/technical'); // default fallback
             }
         } catch (e) {
+            console.error('Officer login failed:', e);
             // if officer login failed, try maintainer login
             try {
                 const token = await maintainerLogin(user);
                 setToken(token);
                 setRole(['external_maintainer']);
-                window.dispatchEvent(new Event('authChange'));
+                globalThis.dispatchEvent(new Event('authChange'));
                 setLoading(false);
                 navigate('/maintainer');
-            } catch (maintainerErr) {
+            } catch (error_) {
+                console.error('Maintainer login failed:', error_);
                 // if maintainer login failed, try user login
                 try {
                     const token = await userLogin(user);
@@ -69,10 +74,11 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                     const details = await getUserProfile();
                     setPicture(details.avatar);
                     setRole(['citizen']);
-                    window.dispatchEvent(new Event('authChange'));
+                    globalThis.dispatchEvent(new Event('authChange'));
                     setLoading(false);
                     navigate('/map');
                 } catch (err) {
+                    console.error('User login failed:', err);
                     setSnackMessage('Login failed. Please check your credentials.');
                     setSnackSeverity('error');
                     setSnackOpen(true);
