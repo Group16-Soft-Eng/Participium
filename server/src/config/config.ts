@@ -55,7 +55,8 @@ export const CONFIG = {
     V1_PUBLICS: APP_V1_BASE_URL + "/publics",
     V1_ADMIN: APP_V1_BASE_URL + "/admin",
     V1_INTERNAL_MESSAGES: APP_V1_BASE_URL + "/internal-messages",
-    V1_TELEGRAM: APP_V1_BASE_URL + "/telegram"
+    V1_TELEGRAM: APP_V1_BASE_URL + "/telegram",
+    V1_STATISTICS: APP_V1_BASE_URL + "/statistics"
   },
 
   REDIS_HOST: process.env.REDIS_HOST || "localhost",
