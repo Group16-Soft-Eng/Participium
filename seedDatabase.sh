@@ -95,8 +95,14 @@ insert_report() {
     description=$(echo "$description" | sed "s/'/''/g")
     title=$(echo "$title" | sed "s/'/''/g")
     
+    # Set reviewStatus to APPROVED if state is APPROVED, otherwise PENDING
+    local review_status="PENDING"
+    if [[ "$state" == "APPROVED" ]]; then
+        review_status="APPROVED"
+    fi
+
     sqlite3 "$DB_PATH" <<EOF
-INSERT INTO reports (title, location, author_id, anonymity, date, category, document, state, reason, assignedOfficerId)
+INSERT INTO reports (title, location, author_id, anonymity, date, category, document, state, reason, assignedOfficerId, reviewStatus)
 VALUES (
     '$title',
     '{"name":"Turin, Italy","Coordinates":{"latitude":$latitude,"longitude":$longitude}}',
@@ -105,9 +111,10 @@ VALUES (
     '$date',
     '$category',
     '{"Description":"$description","Photos":[[]]}',
-    '$state',
+    'PENDING',
     NULL,
-    NULL
+    NULL,
+    '$review_status'
 );
 EOF
     
