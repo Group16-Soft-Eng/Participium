@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MapClusterView from '../Map/MapComponents/MapClusterView';
 import type { Report } from '../Map/types/report';
-import { Box, List, ListItem, Paper, Typography, Chip, CircularProgress } from '@mui/material';
+import { Box, List, ListItem, Paper, Typography, Chip, CircularProgress, Button } from '@mui/material';
 import { getAllReports } from '../Map/mapApi/mapApi';
-import { getToken } from '../services/auth';
+import { getToken, getUserFromToken } from '../services/auth';
 import SearchBar from '../components/SearchBar';
+import { followReport, getFollowedReports, unfollowReport } from '../API/API';
 
 const getCategoryColor = (cat: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
   switch (cat) {
@@ -28,14 +29,32 @@ const MapPage: React.FC = () => {
   const [highlightLocation, setHighlightLocation] = useState<[number, number] | null>(null);
   const [search, setSearch] = useState<string | null>(null);
   const [searchCoords, setSearchCoords] = useState<[number, number] | null>(null);
+  const [followedReports, setFollowedReports] = useState<Report[]>([]);
 
   const logged = getToken() !== null;
+
+  const username = getUserFromToken(getToken())?.username;
+  console.log("Username:", username);
+
+  async function follow(id: string) {
+    await followReport(id)
+    const followedReports = await getFollowedReports();
+    setFollowedReports(followedReports);
+  }
+
+  async function unfollow(id: string) {
+    await unfollowReport(id)
+    const followedReports = await getFollowedReports();
+    setFollowedReports(followedReports);
+  }
 
   useEffect(() => {
     const fetchReports = async () => {
       try {
         setLoading(true);
         const data = await getAllReports();
+        const followedReports = await getFollowedReports();
+        
         let visibleReports = data.filter(report => {
           const status = report.status?.toLowerCase();
           return status === 'approved' || status === 'in_progress' || status === 'suspended';
@@ -51,6 +70,7 @@ const MapPage: React.FC = () => {
         }
 
         setReports(visibleReports);
+        setFollowedReports(followedReports);
       } catch (error) {
         console.error(error);
         setReports([]);
@@ -182,6 +202,13 @@ const MapPage: React.FC = () => {
                           {r.anonymity ? 'Anonymous' : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown')}
                           {` • ${new Date(r.createdAt).toLocaleDateString()}`}
                         </Typography>
+                        {(r.author?.username != username &&(
+                          <>
+                          {!followedReports.some(report => report.id == r.id) && <Button variant='contained' sx={{ marginLeft: 2 }} onClick={() => follow(r.id)}>Follow</Button>}
+                           {followedReports.some(report => report.id == r.id) && <Button variant='outlined' sx={{ marginLeft: 2 }} onClick={() => unfollow(r.id)}>Unfollow</Button>}
+                           </>
+                        ))
+                        }
                       </Box>
                       <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
                     </Paper>
