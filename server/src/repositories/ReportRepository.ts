@@ -257,4 +257,14 @@ export class ReportRepository {
       count: parseInt(r.count, 10)
     }));
   }
+
+  async getReportsByAuthorId(authorId: number): Promise<ReportDAO[]> {
+    return this.repo.find({
+      where: { author: { id: authorId } },
+      relations: ["author"],
+      order: {
+        date: "DESC" // Most recent first
+      }
+    });
+  }
 }

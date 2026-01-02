@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, Button, Skeleton, Alert, Accordion, AccordionSummary, AccordionDetails, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -6,16 +6,36 @@ import { useEffect, useState } from 'react';
 import { getReportById } from '../API/API';
 import { ReportDetailsSection } from '../components/report-details/ReportDetailsSection';
 import { InternalChatSection } from '../components/report-details/InternalChatSection';
+import { PublicChatSection } from '../components/report-details/PublicChatSection';
+import { getRoleFromToken, getToken } from '../services/auth';
 
 export function ReportDetailsPage() {
   const { reportId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(!isMobile); // Collapsed on mobile by default
+
+  // Determine which chat to show: 'internal' for officer-to-officer, 'public' (default) for citizen-officer
+  const chatType = searchParams.get('chatType') || 'public';
+  
+  // Get current user role to determine access
+  const token = getToken();
+  const currentRole = getRoleFromToken(token);
+  const isOfficer = currentRole && (
+    currentRole.includes('technical_office_staff') ||
+    currentRole.includes('public_relations_officer') ||
+    currentRole.includes('municipal_administrator') ||
+    currentRole.includes('maintainer') ||
+    currentRole.includes('external_maintainer')
+  );
+
+  // Only officers can see internal chat
+  const showInternalChat = chatType === 'internal' && isOfficer;
 
   useEffect(() => {
     if (reportId) {
@@ -110,14 +130,18 @@ export function ReportDetailsPage() {
           </Box>
         )}
 
-        {/* Right: Internal Chat - full height */}
+        {/* Right: Chat Section - full height */}
         <Box sx={{ 
           flex: { xs: 1, md: '0 0 55%' }, 
           display: 'flex', 
           flexDirection: 'column', 
           bgcolor: 'white' 
         }}>
-          <InternalChatSection reportId={Number.parseInt(reportId!)} />
+          {showInternalChat ? (
+            <InternalChatSection reportId={Number.parseInt(reportId!)} />
+          ) : (
+            <PublicChatSection reportId={Number.parseInt(reportId!)} />
+          )}
         </Box>
       </Box>
     </Box>

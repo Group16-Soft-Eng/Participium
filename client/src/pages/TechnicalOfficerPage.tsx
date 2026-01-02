@@ -261,9 +261,27 @@ const TechnicalOfficerPage: React.FC = () => {
 
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
 
+                            {/* Public Chat Button */}
+                            <IconButton 
+                              size="small" 
+                              color="primary" 
+                              sx={{ mr: 1 }} 
+                              onClick={() => navigate(`/reports/${r.id}/details?chatType=public`)}
+                              title="Chat with citizen"
+                            >
+                              <ChatIcon />
+                            </IconButton>
+
                             {r.assignedMaintainerId ? (
                               <>
-                                <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                                {/* Internal Chat Button (only when maintainer assigned) */}
+                                <IconButton 
+                                  size="small" 
+                                  color="warning" 
+                                  sx={{ mr: 1 }} 
+                                  onClick={() => navigate(`/reports/${r.id}/details?chatType=internal`)}
+                                  title="Internal chat with maintainer"
+                                >
                                   <Badge badgeContent={0} color="error">
                                     <ChatIcon />
                                   </Badge>
@@ -337,8 +355,27 @@ const TechnicalOfficerPage: React.FC = () => {
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
                               <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
+                              
+                              {/* Public Chat Button */}
+                              <IconButton 
+                                size="small" 
+                                color="primary" 
+                                sx={{ mr: 1 }} 
+                                onClick={() => navigate(`/reports/${r.id}/details?chatType=public`)}
+                                title="Chat with citizen"
+                              >
+                                <ChatIcon />
+                              </IconButton>
+
+                              {/* Internal Chat Button (only when maintainer assigned) */}
                               {r.assignedMaintainerId && (
-                                <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                                <IconButton 
+                                  size="small" 
+                                  color="warning" 
+                                  sx={{ mr: 1 }} 
+                                  onClick={() => navigate(`/reports/${r.id}/details?chatType=internal`)}
+                                  title="Internal chat with maintainer"
+                                >
                                   <Badge badgeContent={0} color="error">
                                     <ChatIcon />
                                   </Badge>

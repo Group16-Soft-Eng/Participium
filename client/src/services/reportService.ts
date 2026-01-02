@@ -185,6 +185,16 @@ export async function getMaintainerAssignedReports(): Promise<OfficerReport[]> {
   }
 }
 
+export async function getMyCitizenReports(): Promise<OfficerReport[]> {
+  try {
+    const res = await api.get<OfficerReport[]>('/users/my-reports');
+    return res.data;
+  } catch (e) {
+    console.error('Error fetching my citizen reports:', e);
+    return [];
+  }
+}
+
 export async function updateReportStatusByMaintainer(reportId: number, status: ReportState, reason?: string): Promise<boolean> {
   try {
     await api.patch(`/maintainers/reports/${reportId}/status`, { state: status, reason });

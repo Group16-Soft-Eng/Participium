@@ -5,7 +5,7 @@ import { AppBar, Toolbar, Typography, Button, Box, Dialog, DialogTitle, DialogCo
 import UserMenu from './components/UserMenu';
 import NotificationBell from './components/NotificationBell';
 import { useEffect, useState } from 'react';
-import { getToken, getRole } from './services/auth';
+import { getToken, getRole, type Role } from './services/auth';
 import { LoginScreen } from './pages/LoginScreen';
 
 import ReportForm from './Map/MapComponents/ReportForm';
@@ -22,6 +22,7 @@ import { UserPage } from './pages/UserPage';
 import { ReportDetailsPage } from './pages/ReportDetailsPage';
 import MaintainerDashboardPage from './pages/MaintainerDashboardPage';
 import StatisticsPage from './pages/StatisticsPage';
+import MyCitizenReportsPage from './pages/MyCitizenReportsPage';
 
 
 type OfficerProps = {
@@ -118,7 +119,7 @@ function UserButton({ isLoggedIn, setShowLoginDialog }: ButtonProps) {
 }
 
 function App() {
-  const [auth, setAuth] = useState<{ token: string | null; role: string | null }>({ token: getToken(), role: getRole() });
+  const [auth, setAuth] = useState<{ token: string | null; role: Role[] | null }>({ token: getToken(), role: getRole() });
   const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   useEffect(() => {
@@ -128,12 +129,12 @@ function App() {
   }, []);
 
   const isLoggedIn = Boolean(auth.token);
-  const isAdmin = auth.role?.includes('municipal_administrator');
-  const isPROfficer = auth.role?.includes('municipal_public_relations_officer');
-  const isTechnicalOfficer = auth.role?.includes('technical_office_staff');
-  const isMaintainer = auth.role?.includes('external_maintainer');
-  const isOfficer = isPROfficer || isTechnicalOfficer
-  const isCitizen = auth.role?.includes('citizen');
+  const isAdmin = auth.role?.includes('municipal_administrator') ?? false;
+  const isPROfficer = auth.role?.includes('municipal_public_relations_officer') ?? false;
+  const isTechnicalOfficer = auth.role?.includes('technical_office_staff') ?? false;
+  const isMaintainer = auth.role?.includes('external_maintainer') ?? false;
+  const isOfficer = isPROfficer || isTechnicalOfficer;
+  const isCitizen = isLoggedIn && !isAdmin && !isPROfficer && !isTechnicalOfficer && !isMaintainer;
 
   return (
     <NotificationProvider>
@@ -189,7 +190,30 @@ function App() {
                 </Button>
               )}
 
-              {isCitizen && (<UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
+              {isCitizen && isLoggedIn && (
+                <>
+                  <Button
+                    className="flex-mobile"
+                    component={Link}
+                    to="/my-reports"
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      px: 2.2,
+                      py: 0.7,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      boxShadow: '0 6px 18px rgba(25,118,210,0.18)'
+                    }}
+                  >
+                    My Reports
+                  </Button>
+                  <UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
+                </>
+              )}
+
+              {!isLoggedIn && (<UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
               )}
 
               {isAdmin && (
@@ -221,6 +245,7 @@ function App() {
             <Route path="/officer" element={<RequirePublicRelations><OfficerPage /></RequirePublicRelations>} />
             <Route path="/officer/messages" element={<RequireTechnical><OfficerMessagesPage /></RequireTechnical>} />
             <Route path="/user" element={<RequireCitizen><UserPage /></RequireCitizen>} />
+            <Route path="/my-reports" element={<RequireCitizen><MyCitizenReportsPage /></RequireCitizen>} />
             <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
             <Route path="/maintainer" element={<RequireMaintainer><MaintainerDashboardPage /></RequireMaintainer>} />
             <Route path="/reports/:reportId/details" element={<RequireLogin><ReportDetailsPage /></RequireLogin>} />

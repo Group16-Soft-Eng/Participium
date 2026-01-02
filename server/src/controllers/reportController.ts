@@ -106,3 +106,10 @@ export async function deleteReport(id: number): Promise<void> {
   const reportRepo = new ReportRepository();
   await reportRepo.deleteReport(id);
 }
+
+export async function getMyReports(userId: number): Promise<Report[]> {
+  const reportRepo = new ReportRepository();
+  const reports = await reportRepo.getReportsByAuthorId(userId);
+  const opts = { includeFollowerUsers: false };
+  return reports.map(r => mapReportDAOToDTO(r, opts));
+}

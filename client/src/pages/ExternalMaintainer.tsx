@@ -153,11 +153,20 @@ const ExternalMaintainersPage: React.FC = () => {
                           <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                           <TableCell align="right">
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                            <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                            
+                            {/* Internal Chat Button - communicate with technical officer */}
+                            <IconButton 
+                              size="small" 
+                              color="warning" 
+                              sx={{ mr: 1 }} 
+                              onClick={() => navigate(`/reports/${r.id}/details?chatType=internal`)}
+                              title="Chat with technical officer"
+                            >
                               <Badge badgeContent={0} color="error">
                                 <ChatIcon />
                               </Badge>
                             </IconButton>
+
                             <ButtonGroup size="small" variant="contained">
                               <Button 
                                 color="primary" 
@@ -223,11 +232,20 @@ const ExternalMaintainersPage: React.FC = () => {
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
                               <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                              <IconButton size="small" color="primary" sx={{ mr: 1 }} onClick={() => navigate(`/reports/${r.id}/details?chat=true`)}>
+                              
+                              {/* Internal Chat Button - communicate with technical officer */}
+                              <IconButton 
+                                size="small" 
+                                color="warning" 
+                                sx={{ mr: 1 }} 
+                                onClick={() => navigate(`/reports/${r.id}/details?chatType=internal`)}
+                                title="Chat with technical officer"
+                              >
                                 <Badge badgeContent={0} color="error">
                                   <ChatIcon />
                                 </Badge>
                               </IconButton>
+
                               <ButtonGroup size="small" variant="contained">
                                 <Button 
                                   color="primary" 
