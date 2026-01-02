@@ -32,6 +32,26 @@ const MapPage: React.FC = () => {
   const logged = getToken() !== null;
 
   useEffect(() => {
+    // Check for lat/lng parameters from report details
+    const lat = searchParams.get('lat');
+    const lng = searchParams.get('lng');
+    const reportId = searchParams.get('reportId');
+    
+    if (lat && lng) {
+      const latitude = parseFloat(lat);
+      const longitude = parseFloat(lng);
+      if (!isNaN(latitude) && !isNaN(longitude)) {
+        setInitialCenter([latitude, longitude]);
+        setInitialZoom(17);
+        setHighlightLocation([latitude, longitude]);
+        if (reportId) {
+          setSelectedId(reportId);
+        }
+      }
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const fetchReports = async () => {
       try {
         setLoading(true);

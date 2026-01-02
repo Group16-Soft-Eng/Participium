@@ -186,7 +186,7 @@ export function PublicChatSection({ reportId }: PublicChatSectionProps) {
   };
 
   return (
-    <>
+    <Stack sx={{ height: '100%', px: 3, pt: 3, pb: 0 }}>
       {/* Header */}
       <Box sx={{ pb: 2, borderBottom: 1, borderColor: 'divider', flexShrink: 0 }}>
         <Box display="flex" alignItems="center" gap={1} mb={0.5}>
@@ -248,7 +248,7 @@ export function PublicChatSection({ reportId }: PublicChatSectionProps) {
           Press Enter to send, Shift+Enter for new line
         </Typography>
       </Box>
-    </>
+    </Stack>
   );
 }
 
