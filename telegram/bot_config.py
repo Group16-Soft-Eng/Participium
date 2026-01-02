@@ -34,6 +34,7 @@ CONTACT_SUPPORT_PATTERN = r"^contact_support$"
 conv_handler = ConversationHandler(
     entry_points=[
         CommandHandler('report', sendReport),
+        CommandHandler('view_reports', handle_view_reports),
         CallbackQueryHandler(handle_start_report, pattern=START_REPORT_PATTERN),
         CallbackQueryHandler(handle_view_reports, pattern=VIEW_ACTIVE_REPORTS_PATTERN),
         CallbackQueryHandler(handle_manage_notifications, pattern=MANAGE_NOTIFICATIONS_PATTERN),
@@ -81,11 +82,9 @@ id_notification_handler = ConversationHandler(
         WAITING_ID_TO_UNFOLLOW: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_id_to_unfollow)],
     },
     fallbacks=[
-        # Questo bottone "Back" ti riporterà al menu delle notifiche
         CallbackQueryHandler(handle_manage_notifications, pattern=r"^back_to_notification_menu$")
     ],
     map_to_parent={
-        # Se la conversazione finisce, non torna a nessun'altra conversazione
         ConversationHandler.END: ConversationHandler.END,
     }
 )
@@ -104,7 +103,7 @@ app.add_handler(CallbackQueryHandler(handle_login, pattern=r"^login$"))
 app.add_handler(CommandHandler("login", retrieveAccount))
 app.add_handler(CommandHandler("logout", logout))
 
-# Aggiungi qui i nuovi handler per follow/unfollow
+# Aggiungi qui i nuovi handler per follow/unfollows
 app.add_handler(CallbackQueryHandler(handle_follow_report, pattern=r"^start_follow_\d+$"))
 app.add_handler(CallbackQueryHandler(handle_follow_all_personal_reports, pattern=FOLLOW_ALL_PERSONAL_REPORT))
 app.add_handler(CallbackQueryHandler(handle_unfollow_report, pattern=r"^stop_follow_\d+$"))

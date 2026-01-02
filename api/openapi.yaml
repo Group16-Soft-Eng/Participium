@@ -9,7 +9,6 @@ info:
   version: 1.0.12
 tags:
   - name: Auth
-  - name: Info
   - name: Admin
     description: Admin operations
   - name: Public Relation Officer
@@ -26,6 +25,7 @@ tags:
   - name: Notifications
   - name: Internal Messages
     description: Internal messaging between officers and maintainers
+  - name: Info
 paths:
   /auth/users:
     post:
@@ -90,7 +90,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /admin/maintainers:
+  /maintainers:
       post:
         tags:
           - Admin
@@ -132,7 +132,6 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/Error"
-  /maintainers/list:
       get:
         tags:
           - Maintainers
@@ -178,7 +177,7 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/Error"
-  /admin/maintainers/{id}:
+  /maintainers/{id}:
       patch:
         tags:
           - Admin
@@ -202,6 +201,33 @@ paths:
               application/json:
                 schema:
                   $ref: "#/components/schemas/Maintainer"
+          default:
+            description: Unexpected error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Error"
+      delete:
+        tags:
+          - Admin
+        summary: Admin deletes a maintainer
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: integer
+        responses:
+          "200":
+            description: successful operation
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "Maintainer with id '1' deleted successfully"
           default:
             description: Unexpected error
             content:
@@ -690,7 +716,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /admin:
+  /officers:
     post:
       tags:
         - Admin
@@ -718,6 +744,83 @@ paths:
             application/xml:
               schema:
                 $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags:
+        - Admin
+      summary: Admin lists all officers
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /officers/{id}:
+    patch:
+      tags:
+        - Admin
+      summary: Admin updates officer info
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Officer"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Officer"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Admin
+      summary: Admin deletes an officer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Officer with id '1' deleted successfully"
         default:
           description: Unexpected error
           content:
@@ -1125,77 +1228,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /admin/officers/{id}:
-    delete:
-      tags:
-        - Admin
-      summary: Admin deletes an officer
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Officer with id '1' deleted successfully"
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /admin/officers:
-    get:
-      tags:
-        - Admin
-      summary: Admin lists all officers
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Officer"
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    patch:
-      tags:
-        - Admin
-      summary: Admin updates officer info
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Officer"
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Officer"
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+
   /internal-messages:
     post:
       tags:
@@ -1335,6 +1368,217 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /telegram/reports:
+    get:
+      tags:
+        - Telegram
+      summary: Get reports for Telegram notifications
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      tags:
+        - Telegram
+      summary: Update reports for Telegram notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reportIds:
+                  type: array
+                  items:
+                    type: integer
+              required:
+                - reportIds
+      responses:
+        "200":
+          description: successful operation
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /telegram/reports/{reportID}:
+    post:
+      tags:
+        - Telegram
+      summary: Add a report to Telegram notifications
+      parameters:
+        - in: path
+          name: reportID
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Telegram
+      summary: Remove a report from Telegram notifications
+      parameters:
+        - in: path
+          name: reportID
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  
+  /faqs:
+    get:
+      tags:
+        - Faq
+      summary: Get FAQ entries
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    question:
+                      type: string
+                    answer:
+                      type: string
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      tags:
+        - Faq
+      summary: Add a new FAQ entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                answer:
+                  type: string
+              required:
+                - question
+                - answer
+      responses:
+        "201":
+          description: FAQ entry created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  question:
+                    type: string
+                  answer:
+                    type: string
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /faqs/{idFaq}:
+    patch:
+      tags:
+        - Faq
+      summary: Update a FAQ entry
+      parameters:
+        - in: path
+          name: idFaq
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                answer:
+                  type: string
+      responses:
+        "200":
+          description: FAQ entry updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  question:
+                    type: string
+                  answer:
+                    type: string
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags:
+        - Faq
+      summary: Delete a FAQ entry
+      parameters:
+        - in: path
+          name: idFaq
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: FAQ entry deleted
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /users/me/followed-reports:
     get:
       tags:
