@@ -9,6 +9,13 @@ import { UserRepository } from "@repositories/UserRepository";
 import { mapUserDAOToDTO } from "@services/mapperService";
 import { sendNotificationEmail } from "@services/notificationService";
 
+function formatString(input: string): string {
+    return input
+      .toLowerCase()
+      .replaceAll('_', ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
 export class NotificationRepository {
     private repo: Repository<NotificationDAO>;
 
@@ -112,9 +119,9 @@ export class NotificationRepository {
     private buildStatusMessage(report: ReportDAO): string {
         // stato == declined (scrivo perchè in risposta, prendendo la reason implementata in precedenza)
         if (report.state === "DECLINED") {
-            return `Your report #${report.id} has been DECLINED. Reason: ${report.reason || "N/A"}`;
+            return `Your report ${report.title} has been DECLINED. Reason: ${report.reason || "N/A"}`;
         }
         // stato diverso da declined -> segno nuovo stato
-        return `Your report #${report.id} is now ${report.state}`;
+        return `Your report ${report.title} is now ${formatString(report.state)}`;
     }
 }

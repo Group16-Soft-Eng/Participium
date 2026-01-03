@@ -41,6 +41,13 @@ const CITIZEN_STATUSES: StatusOption[] = [
   { value: 'RESOLVED', label: 'Resolved', color: '#10b981' },
 ];
 
+  function formatString(str: string): string {
+    return str
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
 export default function MyCitizenReportsPage() {
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +83,10 @@ export default function MyCitizenReportsPage() {
   const handleChat = (reportId: number) => {
     navigate(`/reports/${reportId}/details?chatType=public`);
   };
+
+  function formatStatus(state: string): string {
+    return state.replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
 
   const getStateColor = (state?: string): 'default' | 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' => {
     switch (state) {
@@ -247,7 +258,7 @@ export default function MyCitizenReportsPage() {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={report.category || 'Other'}
+                    label={formatString(report.category) || 'Other'}
                     size="small"
                     sx={{
                       bgcolor: getCategoryColor(report.category),
@@ -258,7 +269,7 @@ export default function MyCitizenReportsPage() {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={report.state || 'PENDING'}
+                    label={formatStatus(report.state) || 'PENDING'}
                     color={getStateColor(report.state)}
                     size="small"
                     variant="outlined"

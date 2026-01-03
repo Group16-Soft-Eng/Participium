@@ -451,7 +451,7 @@ const TechnicalOfficerPage: React.FC = () => {
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Typography variant="body2" gutterBottom>
-            Available External Maintainers for {selectedReportForAssignment?.category || 'unknown'} category:
+            Available External Maintainers for {formatString(selectedReportForAssignment?.category || 'unknown')} category:
           </Typography>
           {(() => {
             if (loadingMaintainers) {
