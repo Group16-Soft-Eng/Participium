@@ -1,7 +1,7 @@
 //! MIDDLEWARE PER GESTIONE UPLOAD FOTO
 
 import multer from "multer";
-import path from "path";
+import path from "node:path";
 import { Request } from "express";
 import { BadRequestError } from "@utils/utils";
 

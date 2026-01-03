@@ -7,6 +7,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useEffect, useState } from "react";
 import { getUserProfile, updateUserProfile, static_ip_address } from "../API/API";
+import { EditUserForm } from "../components/EditUserForm";
 
 export interface User {
     id?: number;
@@ -27,7 +28,6 @@ export function UserPage() {
     const [user, setUser] = useState<User>({});
     const [telegramValue, setTelegramValue] = useState('');
     const [emailNotificationsValue, setEmailNotificationsValue] = useState(false);
-    const [, setAvatarFile] = useState<File | null>(null);
 
     useEffect(() => {
         getUserProfile().then((data) => {
@@ -61,7 +61,6 @@ export function UserPage() {
     const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            setAvatarFile(file);
             try {
                 await updateUserProfile({ avatar: file });
                 getUserProfile().then((data) => {
@@ -84,7 +83,6 @@ export function UserPage() {
     }
 
     return (
-        <>
             <Container maxWidth="sm">
                 <Box my={4}>
                     <Box 
@@ -110,7 +108,9 @@ export function UserPage() {
                             pb: 3
                         }}
                     >
-                        {!edit ? (
+                        {edit ? (
+                            <EditUserForm setShowEdit={setEdit} avatar={userData.avatar} telegram={userData.telegram} emailNotifications={userData.emailNotifications} />
+                        ) : (
                             <Box>
                                 <Box display="flex" justifyContent="center" mb={2.5} mt={-5}>
                                     <Badge
@@ -222,12 +222,9 @@ export function UserPage() {
                                     </Box>
                                 </Stack>
                             </Box>
-                        ) : (
-                            <EditUserForm setShowEdit={setEdit} avatar={userData.avatar} telegram={userData.telegram} emailNotifications={userData.emailNotifications} />
                         )}
                     </Box>
             </Box>
         </Container>
-        </>
     );
 }

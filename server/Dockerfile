@@ -14,10 +14,10 @@ ENV NODE_ENV=production
 
 # Install only production dependencies
 COPY package*.json ./
-RUN npm install --only=production --no-audit --no-fund
 
-# Ensure tsconfig-paths is available at runtime (guard against lockfile mismatches)
-RUN npm install tsconfig-paths --no-audit --no-fund --no-save
+RUN npm install --only=production --no-audit --no-fund && \
+    # Ensure tsconfig-paths is available at runtime (guard against lockfile mismatches)
+    npm install tsconfig-paths --no-audit --no-fund --no-save
 
 # Copy built app and uploads if present
 COPY --from=builder /usr/src/app/dist ./dist

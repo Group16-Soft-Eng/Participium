@@ -1,8 +1,8 @@
 import {app}  from "@app";
 import { CONFIG } from "@config";
 import { initializeDatabase, initializeRedis } from "@database";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import * as http from "http";
 import { Server as IOServer, Socket } from "socket.io";
 import { setIO } from "@services/ioService";

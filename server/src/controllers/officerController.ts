@@ -11,7 +11,7 @@ import { FollowRepository } from "@repositories/FollowRepository";
 import { NotificationDAO } from "@models/dao/NotificationDAO"
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
-import { stat } from "fs";
+import { stat } from "node:fs";
 import { sendTelegramMessage } from "@services/telegramService";
 
 export async function getAllOfficers(): Promise<Officer[]> {

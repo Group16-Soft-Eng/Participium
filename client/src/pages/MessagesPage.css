@@ -97,14 +97,6 @@
   white-space: nowrap;
 }
 
-.conversation-message-count {
-  font-size: 0.875rem;
-  color: #757575;
-  background-color: #e3f2fd;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-weight: 500;
-}
 
 .conversation-messages-list {
   padding: 0;
@@ -218,10 +210,6 @@
   .conversation-report-title {
     max-width: 100%;
     white-space: normal;
-  }
-
-  .conversation-message-count {
-    font-size: 0.75rem;
   }
 
   .message-item {

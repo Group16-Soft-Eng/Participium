@@ -217,7 +217,7 @@ const ReportForm: React.FC = () => {
                   name="title"
                   value={report.title}
                   onChange={handleInputChange}
-                  className={`form-input ${!isFieldValid('title') ? 'form-input-error' : ''}`}
+                  className={`form-input ${isFieldValid('title') ? '' : 'form-input-error'}`}
                   placeholder="e.g., Broken sidewalk on Via Roma"
                 />
                 {!isFieldValid('title') && (
@@ -233,7 +233,7 @@ const ReportForm: React.FC = () => {
                   name="category"
                   value={report.category}
                   onChange={handleInputChange}
-                  className={`form-input ${!isFieldValid('category') ? 'form-input-error' : ''}`}
+                  className={`form-input ${isFieldValid('category') ? '' : 'form-input-error'}`}
                 >
                   <option value="">Select the issue type</option>
                   {CATEGORIES.map(cat => (
@@ -257,7 +257,7 @@ const ReportForm: React.FC = () => {
                   value={report.description}
                   onChange={handleInputChange}
                   rows={4}
-                  className={`form-input ${!isFieldValid('description') ? 'form-input-error' : ''}`}
+                  className={`form-input ${isFieldValid('description') ? '' : 'form-input-error'}`}
                   placeholder="Please provide detailed information about the issue (min 30 characters)..."
                 />
                 {!isFieldValid('description') && (

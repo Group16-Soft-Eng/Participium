@@ -671,7 +671,7 @@ async function unfollowReport(reportId: string) {
     });
     
     if (response.ok) {
-        return await response;
+        return response;
     } else {
         const err = await response.text();
         throw new Error(err || 'Failed to fetch report');
