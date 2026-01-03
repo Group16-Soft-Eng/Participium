@@ -301,7 +301,7 @@ const TechnicalOfficerPage: React.FC = () => {
                                 <Typography variant="body2" color="text.secondary">Report assigned to external maintainer {r.assignedMaintainerId}</Typography>
                               </>
                             ) : (
-                              <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
+                              <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
                             )}
 
                             {!r.assignedMaintainerId && (
