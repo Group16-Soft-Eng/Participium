@@ -28,7 +28,6 @@ export function UserPage() {
     const [user, setUser] = useState<User>({});
     const [telegramValue, setTelegramValue] = useState('');
     const [emailNotificationsValue, setEmailNotificationsValue] = useState(false);
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
     useEffect(() => {
         getUserProfile().then((data) => {
@@ -62,7 +61,6 @@ export function UserPage() {
     const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            setAvatarFile(file);
             try {
                 await updateUserProfile({ avatar: file });
                 getUserProfile().then((data) => {

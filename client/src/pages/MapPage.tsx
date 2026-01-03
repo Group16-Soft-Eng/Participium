@@ -187,8 +187,6 @@ const MapPage: React.FC = () => {
                 } else if (isSuspended) {
                   cardBgColor = '#fff3e0';
                   cardBorder = '4px solid #f57c00';
-                } else {
-                  cardBorder = 'none';
                 }
 
                 let authorName = 'Unknown';
