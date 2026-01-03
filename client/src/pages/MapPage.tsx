@@ -54,7 +54,7 @@ const MapPage: React.FC = () => {
         setLoading(true);
         const data = await getAllReports();
         const followedReports = await getFollowedReports();
-        
+
         let visibleReports = data.filter(report => {
           const status = report.status?.toLowerCase();
           return status === 'approved' || status === 'in_progress' || status === 'suspended';
@@ -112,7 +112,7 @@ const MapPage: React.FC = () => {
     if (search === "") {
       return reports;
     }
-    
+
     if (!searchCoords) return reports;
 
     const RADIUS_KM = 0.2;
@@ -178,6 +178,33 @@ const MapPage: React.FC = () => {
                 const status = r.status?.toLowerCase();
                 const isInProgress = status === 'in_progress' || status === 'in-progress';
                 const isSuspended = status === 'suspended';
+                let cardBgColor = 'white';
+                let cardBorder = 'none';
+
+                if (isInProgress) {
+                  cardBgColor = '#e3f2fd';
+                  cardBorder = '4px solid #1976d2';
+                } else if (isSuspended) {
+                  cardBgColor = '#fff3e0';
+                  cardBorder = '4px solid #f57c00';
+                } else {
+                  cardBorder = 'none';
+                }
+
+                let authorName = 'Unknown';
+
+                if (r.anonymity) {
+                  authorName = 'Anonymous';
+                } else if (r.author) {
+                  const { firstName, lastName } = r.author;
+
+                  const fullName = `${firstName || ''} ${lastName || ''}`.trim();
+
+                  if (fullName) {
+                    authorName = fullName;
+                  }
+                }
+
                 return (
                   <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
                     <Paper
@@ -188,8 +215,8 @@ const MapPage: React.FC = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         cursor: 'pointer',
-                        bgcolor: isInProgress ? '#e3f2fd' : isSuspended ? '#fff3e0' : 'white',
-                        borderLeft: isInProgress ? '4px solid #1976d2' : isSuspended ? '4px solid #f57c00' : 'none',
+                        bgcolor: cardBgColor,
+                        borderLeft: cardBorder,
                         '&:hover': { bgcolor: '#f0f0f0' }
                       }}
                       elevation={1}
@@ -198,14 +225,14 @@ const MapPage: React.FC = () => {
                       <Box>
                         <Typography variant="subtitle1" sx={{ lineHeight: 1.2, mb: 0.5 }}>{r.title}</Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {r.anonymity ? 'Anonymous' : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown')}
+                          {authorName}
                           {` • ${new Date(r.createdAt).toLocaleDateString()}`}
                         </Typography>
-                        {(r.author?.username != username &&(
+                        {(r.author?.username != username && (
                           <>
-                          {!followedReports.some(report => report.id == r.id) && <Button variant='contained' sx={{ marginLeft: 2 }} onClick={() => follow(r.id)}>Follow</Button>}
-                           {followedReports.some(report => report.id == r.id) && <Button variant='outlined' sx={{ marginLeft: 2 }} onClick={() => unfollow(r.id)}>Unfollow</Button>}
-                           </>
+                            {!followedReports.some(report => report.id == r.id) && <Button variant='contained' sx={{ marginLeft: 2 }} onClick={() => follow(r.id)}>Follow</Button>}
+                            {followedReports.some(report => report.id == r.id) && <Button variant='outlined' sx={{ marginLeft: 2 }} onClick={() => unfollow(r.id)}>Unfollow</Button>}
+                          </>
                         ))
                         }
                       </Box>

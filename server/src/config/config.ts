@@ -1,4 +1,4 @@
-import { readdirSync } from "fs";
+import { readdirSync } from "node:fs";
 import path = require("path");
 import * as dotenv from "dotenv";
 

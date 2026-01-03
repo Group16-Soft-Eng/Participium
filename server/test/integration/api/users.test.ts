@@ -31,8 +31,8 @@ import { UserRepository } from "../../../src/repositories/UserRepository";
 import { generateToken } from "../../../src/services/authService";
 import { sendMail } from "../../../src/services/mailService";
 import { generateOtp, verifyOtp } from "../../../src/services/otpService";
-import path from "path";
-import fs from "fs";
+import path from "node:path";
+import fs from "node:fs";
 
 describe("Users API Integration Tests", () => {
   let userRepo: UserRepository;
