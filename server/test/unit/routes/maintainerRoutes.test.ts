@@ -58,9 +58,9 @@ describe("MaintainerRoutes", () => {
 
       expect(res.status).toBe(500);
     });
+*/
   });
 
-*/
   describe("GET /maintainers/by-category/:officeType", () => {
     it("should return maintainers by category", async () => {
       const maintainersMock = [
