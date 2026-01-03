@@ -13,6 +13,7 @@ import { notificationRouter } from "@routes/NotificationRoutes";
 import { maintainerRouter } from "@routes/MaintainerRoutes";
 import { telegramRouter } from "@routes/TelegramRoutes";
 import { internalMessageRouter } from "@routes/InternalMessageRoutes";
+import { publicMessageRouter } from "@routes/PublicMessageRoutes";
 import { faqRouter } from "@routes/FaqRoutes";
 import { statisticsRouter } from "@routes/StatisticsRoutes";
 
@@ -40,6 +41,7 @@ app.use(routes.V1_AUTH, authRouter);
 app.use(routes.V1_USERS, userRouter);
 app.use(routes.V1_REPORTS, reportRouter);
 app.use(routes.V1_REPORTS, internalMessageRouter);
+app.use(routes.V1_REPORTS, publicMessageRouter);
 app.use(routes.V1_OFFICERS, officerRouter);
 app.use(routes.V1_MAINTAINERS, maintainerRouter);
 app.use(routes.V1_INFO_TYPES, infoTypeRouter);

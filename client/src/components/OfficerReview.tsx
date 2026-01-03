@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getAssignedReports, reviewReport } from '../services/reportService';
 import type { OfficerReport } from '../services/reportService';
-import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Snackbar, Alert, Dialog, DialogContent } from '@mui/material';
+import { Box, Button, Chip, DialogActions, DialogContentText, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Snackbar, Alert, Dialog, DialogContent, IconButton } from '@mui/material';
+import ChatIcon from '@mui/icons-material/Chat';
 import ReportDetailDialog from './ReportDetailDialog';
 import AssignOfficerDialog from './AssignOfficerDialog';
 import { CategoryFilter } from './filters';
@@ -28,6 +30,7 @@ const getCategoryColor = (category?: string): string => {
 };
 
 const OfficerReview: React.FC = () => {
+  const navigate = useNavigate();
   const [reports, setReports] = useState<OfficerReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [reject, setReject] = useState<RejectState>({ open: false, reportId: null, reason: '' });
@@ -183,6 +186,15 @@ const OfficerReview: React.FC = () => {
                     <TableCell sx={{ width: 180 }}>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                     <TableCell align="right">
                       <Button variant="contained" color="primary" size="small" onClick={() => openView(r)} sx={{ mr: 1 }}>View</Button>
+                      <IconButton 
+                        size="small" 
+                        color="primary" 
+                        sx={{ mr: 1 }} 
+                        onClick={() => navigate(`/reports/${r.id}/details?chatType=public`)}
+                        title="Chat with citizen"
+                      >
+                        <ChatIcon />
+                      </IconButton>
                       <Button variant="contained" color="success" size="small" onClick={() => openAssign(r)} sx={{ mr: 1 }}>Assign</Button>
                       <Button variant="outlined" color="error" size="small" onClick={() => openRejectDialog(r.id)}>Reject</Button>
                     </TableCell>

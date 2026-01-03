@@ -1,24 +1,24 @@
 import { Box, Typography, TextField, IconButton, Stack, Avatar, Paper } from '@mui/material';
-import LockIcon from '@mui/icons-material/Lock';
+import PublicIcon from '@mui/icons-material/Public';
 import SendIcon from '@mui/icons-material/Send';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import { useState, useEffect, useRef } from 'react';
 import { getToken, getUserFromToken, getRoleFromToken } from '../../services/auth';
 import { io, Socket } from 'socket.io-client';
 
-interface InternalChatSectionProps {
+interface PublicChatSectionProps {
   reportId: number;
 }
 
 interface Message {
   id: number;
-  authorName: string;
-  authorRole: string;
+  senderName: string;
+  senderType: 'citizen' | 'officer';
   content: string;
   createdAt: string;
 }
 
-export function InternalChatSection({ reportId }: Readonly<InternalChatSectionProps>) {
+export function PublicChatSection({ reportId }: PublicChatSectionProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,6 +32,14 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
   const currentRole = getRoleFromToken(token);
   const authorName = currentUser?.username || currentUser?.name || currentUser?.email || 'Unknown User';
 
+  // Determine if current user is an officer
+  const isOfficer = currentRole && (
+    currentRole.includes('technical_office_staff') ||
+    currentRole.includes('municipal_public_relations_officer') ||
+    currentRole.includes('municipal_administrator') ||
+    currentRole.includes('external_maintainer')
+  );
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -41,25 +49,25 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
     const fetchMessages = async () => {
       try {
         const token = getToken();
-        const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/internal-messages`, {
+        const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/public-messages`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         if (response.ok) {
           const data = await response.json();
-          console.log('Fetched messages:', data);
+          console.log('Fetched public messages:', data);
           const formattedMessages = data.map((msg: any) => ({
             id: msg.id,
-            authorName: msg.senderName,
-            authorRole: msg.senderType,
+            senderName: msg.senderName,
+            senderType: msg.senderType,
             content: msg.message,
             createdAt: msg.createdAt
           }));
           setMessages(formattedMessages);
         }
       } catch (error) {
-        console.error('Failed to fetch messages:', error);
+        console.error('Failed to fetch public messages:', error);
       }
     };
 
@@ -75,8 +83,8 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
     socket.emit('join-report', reportId);
 
     // Listen for new messages
-    socket.on('internal-message:new', (message: any) => {
-      console.log('New message from socket:', message);
+    socket.on('public-message:new', (message: any) => {
+      console.log('New public message from socket:', message);
       
       // Ignore messages we just sent (they're already added via optimistic update)
       if (sentMessageIdsRef.current.has(message.id)) {
@@ -87,8 +95,8 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
       
       const formattedMessage: Message = {
         id: message.id,
-        authorName: message.senderName,
-        authorRole: message.senderType,
+        senderName: message.senderName,
+        senderType: message.senderType,
         content: message.message,
         createdAt: message.createdAt
       };
@@ -116,8 +124,7 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
       setLoading(true);
       const token = getToken();
 
-      // Send message to API - receiver is automatically determined from report assignment
-      const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/internal-messages`, {
+      const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/public-messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -136,8 +143,8 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
         // Optimistic update: add message immediately to local state (with duplicate check)
         const formattedMessage: Message = {
           id: savedMessage.id,
-          authorName: savedMessage.senderName,
-          authorRole: savedMessage.senderType,
+          senderName: savedMessage.senderName,
+          senderType: savedMessage.senderType,
           content: savedMessage.message,
           createdAt: savedMessage.createdAt
         };
@@ -183,20 +190,22 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
       {/* Header */}
       <Box sx={{ pb: 2, borderBottom: 1, borderColor: 'divider', flexShrink: 0 }}>
         <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-          <LockIcon fontSize="small" color="warning" />
+          <PublicIcon fontSize="small" color="primary" />
           <Typography variant="subtitle1" fontWeight={600}>
-            Internal Communication
+            Public Communication
           </Typography>
         </Box>
         <Typography variant="caption" color="text.secondary">
-          Private conversation - not visible to citizens
+          {isOfficer 
+            ? 'Communication with the citizen who submitted this report' 
+            : 'Direct communication with municipal operators about your report'}
         </Typography>
       </Box>
 
       {/* Messages Area */}
       <Box sx={{ flex: 1, overflowY: 'auto', py: 2, maxHeight: '50vh' }}>
         {messages.length === 0 ? (
-          <EmptyState />
+          <EmptyState isOfficer={isOfficer || false} />
         ) : (
           <Stack spacing={2}>
             {messages.map((msg) => (
@@ -204,7 +213,7 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
                 key={msg.id}
                 message={msg}
                 formatTime={formatTime}
-                currentUserRole={currentRole}
+                currentUserIsOfficer={isOfficer || false}
                 currentUserName={authorName}
               />
             ))}
@@ -223,8 +232,8 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
             maxRows={3}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Write an internal note..."
-            onKeyDown={handleKeyPress}
+            placeholder={isOfficer ? "Reply to the citizen..." : "Send a message to the operators..."}
+            onKeyPress={handleKeyPress}
             disabled={loading}
           />
           <IconButton
@@ -243,7 +252,7 @@ export function InternalChatSection({ reportId }: Readonly<InternalChatSectionPr
   );
 }
 
-function EmptyState() {
+function EmptyState({ isOfficer }: { isOfficer: boolean }) {
   return (
     <Box
       display="flex"
@@ -256,7 +265,7 @@ function EmptyState() {
       <ChatBubbleOutlineIcon sx={{ fontSize: 64, mb: 2, opacity: 0.3 }} />
       <Typography variant="body2" fontWeight={500}>No messages yet</Typography>
       <Typography variant="caption">
-        Start the conversation with your team
+        {isOfficer ? 'Start the conversation with the citizen' : 'Start a conversation about your report'}
       </Typography>
     </Box>
   );
@@ -265,11 +274,11 @@ function EmptyState() {
 interface MessageBubbleProps {
   message: Message;
   formatTime: (date: string) => string;
-  currentUserRole: string | null;
+  currentUserIsOfficer: boolean;
   currentUserName: string;
 }
 
-function MessageBubble({ message, formatTime, currentUserRole, currentUserName }: Readonly<MessageBubbleProps>) {
+function MessageBubble({ message, formatTime, currentUserIsOfficer, currentUserName }: MessageBubbleProps) {
   const getInitials = (name?: string) => {
     if (!name || typeof name !== "string") return "";
 
@@ -282,21 +291,17 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
       .slice(0, 2);
   };
 
-
-  const getRoleColor = (role: string) => {
-    if (role.includes('technical_office_staff')) return 'primary.main';
-    if (role.includes('external_maintainer')) return 'secondary.main';
-    return 'grey.500';
+  const getRoleColor = (senderType: string) => {
+    return senderType === 'officer' ? 'primary.main' : 'success.main';
   };
 
   // Check if message is sent by current user
-  const isSentByMe =
-    (currentUserRole?.includes('technical_office_staff') && (message.authorRole.includes('technical_office_staff_OFFICE_STAFF') || message.authorRole.includes('technical_office_staff'))) ||
-    (currentUserRole?.includes('maintainer') && message.authorRole.includes('external_maintainer')) ||
-    (currentUserRole?.includes('external_maintainer') && message.authorRole.includes('external_maintainer'));
+  const isSentByMe = 
+    (currentUserIsOfficer && message.senderType === 'officer') ||
+    (!currentUserIsOfficer && message.senderType === 'citizen');
 
-  // Use authorName which comes from backend (senderName)
-  const displayName = isSentByMe ? currentUserName : message.authorName;
+  const displayName = isSentByMe ? currentUserName : message.senderName;
+  const roleLabel = message.senderType === 'officer' ? 'Officer' : 'Citizen';
 
   return (
     <Box display="flex" gap={1.5} justifyContent={isSentByMe ? 'flex-end' : 'flex-start'}>
@@ -305,7 +310,7 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
           sx={{
             width: 36,
             height: 36,
-            bgcolor: getRoleColor(message.authorRole),
+            bgcolor: getRoleColor(message.senderType),
             fontSize: '0.875rem'
           }}
         >
@@ -322,6 +327,9 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
         >
           <Typography variant="subtitle2" fontSize="0.875rem">
             {displayName}
+            <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+              ({roleLabel})
+            </Typography>
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {formatTime(message.createdAt)}
@@ -347,7 +355,7 @@ function MessageBubble({ message, formatTime, currentUserRole, currentUserName }
           sx={{
             width: 36,
             height: 36,
-            bgcolor: getRoleColor(message.authorRole),
+            bgcolor: getRoleColor(message.senderType),
             fontSize: '0.875rem'
           }}
         >

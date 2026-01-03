@@ -7,7 +7,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { static_ip_address } from '../../API/API';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface ReportDetailsSectionProps {
@@ -18,6 +18,7 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [addressText, setAddressText] = useState<string>('');
 
   const handlePhotoClick = (index: number) => {
     setSelectedPhotoIndex(index);
@@ -35,6 +36,40 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
       setSelectedPhotoIndex((prev) => (prev - 1 + report.document.photos.length) % report.document.photos.length);
     }
   };
+
+  // Reverse geocoding: convert coordinates to address
+  useEffect(() => {
+    const lat = report.location?.Coordinates?.latitude;
+    const lng = report.location?.Coordinates?.longitude;
+    
+    console.log('Report location:', report.location);
+    console.log('Coordinates:', lat, lng);
+    
+    if (lat && lng) {
+      const fetchAddress = async () => {
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+          );
+          const data = await response.json();
+          console.log('Reverse geocoding result:', data);
+          if (data && data.display_name) {
+            setAddressText(data.display_name);
+          } else {
+            setAddressText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          }
+        } catch (error) {
+          console.error('Reverse geocoding error:', error);
+          setAddressText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        }
+      };
+      fetchAddress();
+    } else if (typeof report.location === 'string') {
+      setAddressText(report.location);
+    } else {
+      setAddressText('Not specified');
+    }
+  }, [report.location]);
 
   const currentPhoto = report.document?.photos?.[selectedPhotoIndex];
   const formatDate = (date: string) => {
@@ -97,7 +132,15 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
           <Link
             component="button"
             variant="body2"
-            onClick={() => navigate('/map')}
+            onClick={() => {
+              const lat = report.location?.Coordinates?.latitude;
+              const lng = report.location?.Coordinates?.longitude;
+              if (lat && lng) {
+                navigate(`/map?lat=${lat}&lng=${lng}&reportId=${report.id}`);
+              } else {
+                navigate('/map');
+              }
+            }}
             sx={{ 
               textAlign: 'left',
               cursor: 'pointer',
@@ -105,7 +148,7 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
               '&:hover': { textDecoration: 'underline' }
             }}
           >
-            {typeof report.location === 'string' ? report.location : (report.location?.name || 'Not specified')}
+            {addressText || 'Loading...'}
           </Link>
         </Box>
         <InfoField 
