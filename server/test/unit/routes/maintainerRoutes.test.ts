@@ -28,7 +28,7 @@ describe("MaintainerRoutes", () => {
   });
 
   describe("GET /maintainers/list", () => {
-    /*
+    
     it("should return all maintainers with status 200", async () => {
       const maintainersMock = [
         { id: 1, name: "Test Maintainer 1", email: "test1@example.com", categories: [OfficeType.INFRASTRUCTURE] },
@@ -36,7 +36,7 @@ describe("MaintainerRoutes", () => {
       ];
       (maintainerController.getAllMaintainers as jest.Mock).mockResolvedValue(maintainersMock);
 
-      const res = await request(app).get("/maintainers/list");
+      const res = await request(app).get("/maintainers");
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual(maintainersMock);
@@ -45,7 +45,7 @@ describe("MaintainerRoutes", () => {
     it("should return empty array if no maintainers exist", async () => {
       (maintainerController.getAllMaintainers as jest.Mock).mockResolvedValue([]);
 
-      const res = await request(app).get("/maintainers/list");
+      const res = await request(app).get("/maintainers");
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
@@ -54,11 +54,10 @@ describe("MaintainerRoutes", () => {
     it("should handle controller errors", async () => {
       (maintainerController.getAllMaintainers as jest.Mock).mockRejectedValue(new Error("Database error"));
 
-      const res = await request(app).get("/maintainers/list");
+      const res = await request(app).get("/maintainers");
 
       expect(res.status).toBe(500);
     });
-*/
   });
 
   describe("GET /maintainers/by-category/:officeType", () => {

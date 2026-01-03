@@ -1,6 +1,8 @@
 import request from "supertest";
 import express from "express";
 import { AdminRouter } from "../../../src/routes/AdminRoutes";
+import { officerRouter } from "../../../src/routes/OfficerRoutes";
+import { maintainerRouter } from "../../../src/routes/MaintainerRoutes";
 import * as officerController from "../../../src/controllers/officerController";
 import * as maintainerController from "../../../src/controllers/maintainerController";
 import { OfficerRole } from "../../../src/models/enums/OfficerRole";
@@ -27,15 +29,18 @@ jest.mock("@dto/Officer", () => ({
 
 const app = express();
 app.use(express.json());
+
+app.use("/officers", officerRouter);
 app.use("/admin", AdminRouter);
+app.use("/maintainers", maintainerRouter);
 
 describe("AdminRoutes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("POST /admin", () => {
-    /*
+  describe("POST /officers", () => {
+  
     it("should create a new officer", async () => {
       const mockOfficer = {
         id: 1,
@@ -47,7 +52,7 @@ describe("AdminRoutes", () => {
       (officerController.createOfficer as jest.Mock).mockResolvedValue(mockOfficer);
 
       const res = await request(app)
-        .post("/admin")
+        .post("/officers")
         .send({
           username: "officer1",
           name: "Officer",
@@ -62,7 +67,7 @@ describe("AdminRoutes", () => {
     });
     it("should return 400 if email is missing", async () => {
       const res = await request(app)
-        .post("/admin")
+        .post("/officers")
         .send({
           username: "officer1",
           name: "Officer",
@@ -74,7 +79,7 @@ describe("AdminRoutes", () => {
       expect(res.body).toEqual({ error: "email is required" });
     });
 
-*/
+
     it("should handle errors from controller", async () => {
       (officerController.createOfficer as jest.Mock).mockRejectedValue(new Error("Create error"));
 
@@ -92,8 +97,8 @@ describe("AdminRoutes", () => {
     });
   });
 
-  describe("GET /admin/admin", () => {
-    /*
+  describe("GET /officers", () => {
+    
     it("should return all officers", async () => {
       const mockOfficers = [
         { id: 1, username: "officer1", email: "officer1@example.com" },
@@ -101,25 +106,25 @@ describe("AdminRoutes", () => {
       ];
       (officerController.getAllOfficers as jest.Mock).mockResolvedValue(mockOfficers);
 
-      const res = await request(app).get("/admin/admin");
+      const res = await request(app).get("/officers");
 
       expect(res.status).toBe(200);
       expect(officerController.getAllOfficers).toHaveBeenCalled();
       expect(res.body).toEqual(mockOfficers);
     });
-    */
+    
 
     it("should handle errors from controller", async () => {
       (officerController.getAllOfficers as jest.Mock).mockRejectedValue(new Error("Get all error"));
 
-      const res = await request(app).get("/admin/admin");
+      const res = await request(app).get("/officers");
 
       expect(res.status).toBeGreaterThanOrEqual(400);
     });
   });
 
-  describe("PATCH /admin", () => {
-    /*
+  describe("PATCH /officers", () => {
+    
     it("should update an officer", async () => {
       const mockOfficer = {
         id: 1,
@@ -131,7 +136,7 @@ describe("AdminRoutes", () => {
       (officerController.updateOfficer as jest.Mock).mockResolvedValue(mockOfficer);
 
       const res = await request(app)
-        .patch("/admin")
+        .patch("/officers/1")
         .send({
           id: 1,
           name: "Updated"
@@ -141,7 +146,7 @@ describe("AdminRoutes", () => {
       expect(officerController.updateOfficer).toHaveBeenCalled();
       expect(res.body).toEqual(mockOfficer);
     });
-*/
+
     it("should handle errors from controller", async () => {
       (officerController.updateOfficer as jest.Mock).mockRejectedValue(new Error("Update error"));
 
@@ -299,36 +304,36 @@ describe("AdminRoutes", () => {
     });
   });
 
-  describe("DELETE /admin/officers/:id", () => {
-    /*
+  describe("DELETE /officers/:id", () => {
+    
     it("should delete an officer", async () => {
       (officerController.deleteOfficer as jest.Mock).mockResolvedValue(undefined);
 
-      const res = await request(app).delete("/admin/officers/1");
+      const res = await request(app).delete("/officers/1");
 
       expect(res.status).toBe(200);
       expect(officerController.deleteOfficer).toHaveBeenCalledWith(1);
       expect(res.body).toEqual({ message: "Officer with id '1' deleted successfully" });
     });
     it("should return 400 if id is invalid", async () => {
-      const res = await request(app).delete("/admin/officers/invalid");
+      const res = await request(app).delete("/officers/invalid");
 
       expect(res.status).toBe(400);
       expect(res.body).toEqual({ error: "id is required" });
     });
 
-*/
+
     it("should handle errors from controller", async () => {
       (officerController.deleteOfficer as jest.Mock).mockRejectedValue(new Error("Delete error"));
 
-      const res = await request(app).delete("/admin/officers/1");
+      const res = await request(app).delete("/officers/1");
 
       expect(res.status).toBeGreaterThanOrEqual(400);
     });
   });
 
-  describe("POST /admin/maintainers", () => {
-    /*
+  describe("POST /maintainers", () => {
+    
     it("should create a new maintainer", async () => {
       const mockMaintainer = {
         id: 1,
@@ -340,7 +345,7 @@ describe("AdminRoutes", () => {
       (maintainerController.createMaintainer as jest.Mock).mockResolvedValue(mockMaintainer);
 
       const res = await request(app)
-        .post("/admin/maintainers")
+        .post("/maintainers")
         .send({
           name: "Maintainer One",
           email: "maintainer@example.com",
@@ -362,7 +367,7 @@ describe("AdminRoutes", () => {
 
     it("should return 400 if name is missing", async () => {
       const res = await request(app)
-        .post("/admin/maintainers")
+        .post("/maintainers")
         .send({
           email: "maintainer@example.com",
           password: "password123",
@@ -375,7 +380,7 @@ describe("AdminRoutes", () => {
 
     it("should return 400 if email is missing", async () => {
       const res = await request(app)
-        .post("/admin/maintainers")
+        .post("/maintainers")
         .send({
           name: "Maintainer One",
           password: "password123",
@@ -388,7 +393,7 @@ describe("AdminRoutes", () => {
 
     it("should return 400 if password is missing", async () => {
       const res = await request(app)
-        .post("/admin/maintainers")
+        .post("/maintainers")
         .send({
           name: "Maintainer One",
           email: "maintainer@example.com",
@@ -401,7 +406,7 @@ describe("AdminRoutes", () => {
 
     it("should return 400 if categories is missing", async () => {
       const res = await request(app)
-        .post("/admin/maintainers")
+        .post("/maintainers")
         .send({
           name: "Maintainer One",
           email: "maintainer@example.com",
@@ -423,7 +428,7 @@ describe("AdminRoutes", () => {
       (maintainerController.createMaintainer as jest.Mock).mockResolvedValue(mockMaintainer);
 
       const res = await request(app)
-        .post("/admin/maintainers")
+        .post("/maintainers")
         .send({
           name: "Maintainer One",
           email: "maintainer@example.com",
@@ -441,12 +446,12 @@ describe("AdminRoutes", () => {
       );
     });
 
-    */
+    
     it("should handle errors from controller", async () => {
       (maintainerController.createMaintainer as jest.Mock).mockRejectedValue(new Error("Create maintainer error"));
 
       const res = await request(app)
-        .post("/admin/maintainers")
+        .post("/maintainers")
         .send({
           name: "Maintainer One",
           email: "maintainer@example.com",
@@ -458,8 +463,8 @@ describe("AdminRoutes", () => {
     });
   });
 
-  describe("PATCH /admin/maintainers/:id", () => {
-    /*
+  describe("PATCH /maintainers/:id", () => {
+    
     it("should update a maintainer", async () => {
       const mockMaintainer = {
         id: 1,
@@ -471,7 +476,7 @@ describe("AdminRoutes", () => {
       (maintainerController.updateMaintainer as jest.Mock).mockResolvedValue(mockMaintainer);
 
       const res = await request(app)
-        .patch("/admin/maintainers/1")
+        .patch("/maintainers/1")
         .send({
           name: "Updated Maintainer",
           categories: [OfficeType.ENVIRONMENT],
@@ -486,12 +491,12 @@ describe("AdminRoutes", () => {
       });
       expect(res.body).toEqual(mockMaintainer);
     });
-*/
+
     it("should handle errors from controller", async () => {
       (maintainerController.updateMaintainer as jest.Mock).mockRejectedValue(new Error("Update maintainer error"));
 
       const res = await request(app)
-        .patch("/admin/maintainers/1")
+        .patch("/maintainers/1")
         .send({ name: "Updated Maintainer" });
 
       expect(res.status).toBeGreaterThanOrEqual(400);
