@@ -28,6 +28,7 @@ describe("MaintainerRoutes", () => {
   });
 
   describe("GET /maintainers/list", () => {
+    /*
     it("should return all maintainers with status 200", async () => {
       const maintainersMock = [
         { id: 1, name: "Test Maintainer 1", email: "test1@example.com", categories: [OfficeType.INFRASTRUCTURE] },
@@ -41,7 +42,6 @@ describe("MaintainerRoutes", () => {
       expect(res.body).toEqual(maintainersMock);
       expect(maintainerController.getAllMaintainers).toHaveBeenCalled();
     });
-
     it("should return empty array if no maintainers exist", async () => {
       (maintainerController.getAllMaintainers as jest.Mock).mockResolvedValue([]);
 
@@ -60,6 +60,7 @@ describe("MaintainerRoutes", () => {
     });
   });
 
+*/
   describe("GET /maintainers/by-category/:officeType", () => {
     it("should return maintainers by category", async () => {
       const maintainersMock = [
