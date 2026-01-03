@@ -142,7 +142,7 @@ const EditMaintainerDialog: React.FC<EditMaintainerDialogProps> = ({ open, onClo
                                     <Select
                                         value={newCategory}
                                         label="Category"
-                                        onChange={(e) => setNewCategory(e.target.value as string)}
+                                        onChange={(e) => setNewCategory(e.target.value)}
                                         disabled={allCategories.length === 0}
                                     >
                                         {allCategories.filter(c => !currentCategories.includes(c)).map(category => (
@@ -465,22 +465,25 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                                 <Typography color="textSecondary">No roles assigned yet.</Typography>
                             ) : (
                                 <Box sx={{ maxHeight: 200, overflowY: 'auto', pr: 1 }}>
-                                    {currentRoles.map((assignment, index) => (
-                                        <Paper key={index} elevation={1} sx={{ p: 1.5, mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Typography>
-                                                {assignment.office != null && formatString(assignment.office) + " - "} {formatString(assignment.role)}
-                                            </Typography>
-                                            <IconButton
-                                                edge="end"
-                                                aria-label="remove"
-                                                onClick={() => handleRemoveRole(index)}
-                                                size="small"
-                                                color="error"
-                                            >
-                                                <RemoveCircleOutlineIcon fontSize="small" />
-                                            </IconButton>
-                                        </Paper>
-                                    ))}
+                                    {currentRoles.map((assignment) => {
+                                        const uniqueKey = `${assignment.office || 'no-office'}-${assignment.role}`;
+                                        return (
+                                            <Paper key={uniqueKey} elevation={1} sx={{ p: 1.5, mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <Typography>
+                                                    {assignment.office != null && formatString(assignment.office) + " - "} {formatString(assignment.role)}
+                                                </Typography>
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="remove"
+                                                    onClick={() => handleRemoveRole(currentRoles.indexOf(assignment))}
+                                                    size="small"
+                                                    color="error"
+                                                >
+                                                    <RemoveCircleOutlineIcon fontSize="small" />
+                                                </IconButton>
+                                            </Paper>
+                                        );
+                                    })}
                                 </Box>
                             )}
 
@@ -645,14 +648,19 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                                                 <TableCell sx={{ fontWeight: 'bold' }}>{officer.name} {officer.surname}</TableCell>
                                                 <TableCell>{officer.email}</TableCell>
                                                 <TableCell>
-                                                    {officer.roles.map((r, idx) => (
-                                                        <Chip
-                                                            key={idx}
-                                                            label={`${formatString(r.role)}${r.office && r.role === 'technical_office_staff' ? ` in ${formatString(r.office)} Office` : ''}`}
-                                                            size="small"
-                                                            sx={{ mr: 1, mb: 0.5, backgroundColor: getCategoryColor(r.office), color: '#fff' }}
-                                                        />
-                                                    ))}
+                                                    {officer.roles.map((r) => {
+                                                        const roleLabel = r.office && r.role === 'technical_office_staff'
+                                                            ? formatString(r.role) + ' in ' + formatString(r.office) + ' Office'
+                                                            : formatString(r.role);
+                                                        return (
+                                                            <Chip
+                                                                key={`${r.role}-${r.office || 'no-office'}`}
+                                                                label={roleLabel}
+                                                                size="small"
+                                                                sx={{ mr: 1, mb: 0.5, backgroundColor: getCategoryColor(r.office), color: '#fff' }}
+                                                            />
+                                                        );
+                                                    })}
                                                 </TableCell>
                                                 <TableCell align="right">
                                                     <Button variant="contained" color="primary" size="small" sx={{ mr: 1 }} onClick={() => openEditOfficer(officer)}>Edit Roles</Button>
@@ -695,10 +703,9 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                                                 <TableCell sx={{ fontWeight: 'bold' }}>{maintainer.name}</TableCell>
                                                 <TableCell>{maintainer.email}</TableCell>
                                                 <TableCell>
-                                                    {maintainer.categories.map((c, idx) => (
+                                                    {maintainer.categories.map((c) => (
                                                         <Chip
-                                                            key={idx}
-
+                                                            key={c}
                                                             label={formatString(c)}
                                                             size="small"
                                                             sx={{ mr: 1, mb: 0.5, backgroundColor: getCategoryColor(c), color: '#fff' }}

@@ -6,10 +6,10 @@ import {  setPicture } from '../services/auth';
 import UploadAvatar from "./UploadAvatar";
 
 interface EditUserFormProps {
-    setShowEdit: (show: boolean) => void;
-    avatar: string | File;
-    telegram?: string;
-    emailNotifications: boolean;
+    readonly setShowEdit: (show: boolean) => void;
+    readonly avatar: string | File;
+    readonly telegram?: string;
+    readonly emailNotifications: boolean;
 }
 
 
@@ -44,7 +44,7 @@ export function EditUserForm({ setShowEdit, avatar, telegram, emailNotifications
 
         const updatedData: UpdatedData = {
             telegram: form.get("telegram") as string || "",
-            emailNotifications: form.get("emailNotifications") === "on" ? true : false,
+            emailNotifications: form.get("emailNotifications") === "on",
             avatar: userAvatar instanceof File ? userAvatar : undefined,
         };
 

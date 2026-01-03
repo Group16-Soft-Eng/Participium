@@ -5,7 +5,7 @@ import PhotoUpload from './PhotoUpload';
 import { createReport } from '../mapApi/mapApi';
 import { CATEGORIES } from '../types/report';
 import type { ReportData } from '../types/report';
-import { Snackbar, Alert } from '@mui/material';
+import { Snackbar, Alert, FormControlLabel, Switch } from '@mui/material';
 import '../CssMap/ReportForm.css';
 
 const ReportForm: React.FC = () => {
@@ -16,6 +16,7 @@ const ReportForm: React.FC = () => {
     photos: [],
     latitude: null,
     longitude: null,
+    anonymity: false,
   });
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
   const [touched, setTouched] = useState({
@@ -34,7 +35,7 @@ const ReportForm: React.FC = () => {
 
   useEffect(() => {
     // 1. Prefer location.state.position if present
-    if (location && (location as any).state && (location as any).state.position) {
+    if ((location as any)?.state?.position) {
       const pos = (location as any).state.position as [number, number];
       if (pos?.length === 2) {
         handleLocationSelect(pos[0], pos[1]);
@@ -124,6 +125,7 @@ const ReportForm: React.FC = () => {
         photos: [],
         latitude: null,
         longitude: null,
+        anonymity: false,
       });
       setSelectedLocation(null);
       setTouched({
@@ -199,10 +201,11 @@ const ReportForm: React.FC = () => {
             />
           </div>
         </div>
+        
         <div>
           <div className="form-section">
-            <h3 className="form-title">📝 Submit New Report</h3>
-
+            <h3 className="form-title">Submit New Report</h3>
+            
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="title" className="form-label">
@@ -243,6 +246,7 @@ const ReportForm: React.FC = () => {
                   <p className="form-error">Please select a category</p>
                 )}
               </div>
+              
               <div className="form-group">
                 <label htmlFor="description" className="form-label">
                   Detailed Description *
@@ -260,16 +264,43 @@ const ReportForm: React.FC = () => {
                   <p className="form-error">Please provide a detailed description (minimum 30 characters)</p>
                 )}
               </div>
+
               <div className="form-group">
                 <PhotoUpload
                   photos={report.photos}
                   onPhotosChange={handlePhotosChange}
                   maxPhotos={3}
                 />
-                <p className="form-hint">Allowed file types: JPG, JPEG, PNG, WebP. Minimum 1 and maximum 3 photos.</p>
                 {!isFieldValid('photos') && (
                   <p className="form-error">Please upload between 1 and 3 photos (JPG/PNG/WebP).</p>
                 )}
+              </div>
+
+              <div className="form-group" style={{ 
+                border: '2px solid #e0e0e0', 
+                borderRadius: '8px', 
+                padding: '16px', 
+                backgroundColor: '#f9f9f9',
+                marginTop: '8px'
+              }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={report.anonymity || false}
+                      onChange={(e) => setReport(prev => ({ ...prev, anonymity: e.target.checked }))}
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <span style={{ fontSize: '0.95rem' }}>
+                       <strong>Submit Anonymously</strong>
+                      <br />
+                      <span style={{ fontSize: '0.85rem', color: '#666' }}>
+                        Your name will not be displayed with this report
+                      </span>
+                    </span>
+                  }
+                />
               </div>
 
               {/*

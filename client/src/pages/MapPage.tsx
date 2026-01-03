@@ -109,21 +109,20 @@ const MapPage: React.FC = () => {
   }, [search]);
 
   const filteredReports = useMemo(() => {
-    if (search != "") {
-      if (!searchCoords) return reports;
-
-      const RADIUS_KM = 0.2;
-
-      return reports.filter((r) => {
-        const dx = (r.longitude - searchCoords[1]) * 111.32 * Math.cos(searchCoords[0] * (Math.PI / 180));
-        const dy = (r.latitude - searchCoords[0]) * 111.13;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance <= RADIUS_KM;
-      });
+    if (search === "") {
+      return reports;
     }
-    else {
-      return reports
-    }
+    
+    if (!searchCoords) return reports;
+
+    const RADIUS_KM = 0.2;
+
+    return reports.filter((r) => {
+      const dx = (r.longitude - searchCoords[1]) * 111.32 * Math.cos(searchCoords[0] * (Math.PI / 180));
+      const dy = (r.latitude - searchCoords[0]) * 111.13;
+      const distance = Math.hypot(dx, dy);
+      return distance <= RADIUS_KM;
+    });
   }, [reports, searchCoords]);
 
   useEffect(() => {
@@ -151,7 +150,7 @@ const MapPage: React.FC = () => {
     <Box sx={{ display: 'flex', gap: 0, alignItems: 'stretch', flexDirection: { xs: 'column', md: 'row' }, width: '100%', height: 'calc(100vh - 64px)' }}>
       <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 66.666%' }, minWidth: 0 }}>
         <MapClusterView
-          reports={logged ? filteredReports : []}
+          reports={filteredReports}
           selectedId={selectedId}
           initialCenter={initialCenter}
           initialZoom={initialZoom}

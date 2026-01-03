@@ -4,7 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { getAvailableOfficerTypes, maintainerRegister, officerRegister } from "../API/API";
 
 interface AdminFormProps {
-    setShowForm: (show: boolean) => void;
+    readonly setShowForm: (show: boolean) => void;
 }
 
 type RegisterState =

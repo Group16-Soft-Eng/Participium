@@ -25,6 +25,7 @@ export interface ReportData {
   photos: File[];
   latitude: number | null;
   longitude: number | null;
+  anonymity?: boolean;
 }
 
 export type ReportCategory = 

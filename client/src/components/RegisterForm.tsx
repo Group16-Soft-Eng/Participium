@@ -1,12 +1,12 @@
 import { Alert, Button, Container, Grid, Snackbar, TextField } from "@mui/material";
 import './Forms.css';
 import {  useNavigate, useLocation } from "react-router-dom";
-import { useActionState, useState } from "react";
+import React, { useActionState, useState } from "react";
 import { userLogin, userRegister, generateOtp, verifyOtp } from "../API/API";
 import { clearPicture, setRole, setToken } from "../services/auth";
 
 interface RegisterFormProps {
-    setShowRegister: (show: boolean) => void;
+    readonly setShowRegister: (show: boolean) => void;
 }
 
 type RegisterState =
@@ -14,9 +14,9 @@ type RegisterState =
     | { error: string };
 
 
-export function OtpForm({ username, email, password, setSnackMessage, setSnackSeverity, setSnackOpen, setOtp, fromPath }: { username: string, email: string, password: string, setSnackMessage: React.Dispatch<React.SetStateAction<string>>, setSnackSeverity: React.Dispatch<React.SetStateAction<'success' | 'error' | 'info'>>, setSnackOpen: React.Dispatch<React.SetStateAction<boolean>>, setOtp: React.Dispatch<React.SetStateAction<boolean>>, fromPath: string | null }) {
+export function OtpForm({ username, email, password, setSnackMessage, setSnackSeverity, setSnackOpen, setOtp, fromPath }: Readonly<{ username: string, email: string, password: string, setSnackMessage: React.Dispatch<React.SetStateAction<string>>, setSnackSeverity: React.Dispatch<React.SetStateAction<'success' | 'error' | 'info'>>, setSnackOpen: React.Dispatch<React.SetStateAction<boolean>>, setOtp: React.Dispatch<React.SetStateAction<boolean>>, fromPath: string | null }>) {
     const navigate = useNavigate();
-    async function register(prevData: RegisterState, formData: FormData) {
+    async function register(_prevData: RegisterState, formData: FormData) {
         const otp = formData.get('otp') as string
         try {
             await verifyOtp(otp, email);
@@ -38,9 +38,11 @@ export function OtpForm({ username, email, password, setSnackMessage, setSnackSe
             return { success: true }
         }
         catch (error) {
+            console.error('OTP verification error:', error);
             setSnackMessage('OTP authentication failed, please try again');
             setSnackSeverity('error');
             setSnackOpen(true);
+            return { error: 'OTP authentication failed' };
         }
     }
 
@@ -76,7 +78,7 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
     const [otp, setOtp] = useState(false);
     const [user, setUser] = useState<{ username: string, email: string, password: string } | null>(null);
     
-    async function register(prevData: RegisterState, formData: FormData) {
+    async function register(_prevData: RegisterState, formData: FormData) {
         const user = {
             firstName: formData.get('name') as string,
             lastName: formData.get('surname') as string,

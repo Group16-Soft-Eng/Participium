@@ -1,7 +1,7 @@
 import React from 'react';
 import { IconButton, Avatar, Menu, MenuItem, Typography, Box } from '@mui/material';
 import { getPicture, getRole, getToken, getUserFromToken, logout } from '../services/auth';
-import { href, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { static_ip_address } from '../API/API';
 
 const UserMenu: React.FC = () => {

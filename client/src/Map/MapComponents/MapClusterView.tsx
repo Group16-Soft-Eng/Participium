@@ -151,7 +151,7 @@ const isPointInPolygon = (point: number[], polygon: number[][][]): boolean => {
   return inside;
 };
 
-function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedId?: string | null }) {
+function ClusteringLayer({ reports, selectedId }: { readonly reports: readonly Report[]; readonly selectedId?: string | null }) {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
   const navigate = useNavigate();
@@ -176,7 +176,9 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
       setPinned(p);
       try {
         localStorage.setItem('pendingReportLocation', JSON.stringify([p.lat, p.lng]));
-      } catch (err) { }
+      } catch (err) {
+        console.error('Failed to save location to localStorage:', err);
+      }
     },
   });
 
@@ -191,7 +193,7 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
         }
       }
     } catch (err) {
-      // ignore
+      console.error('Failed to restore location from localStorage:', err);
     }
   }, []);
 
@@ -208,7 +210,7 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
     }
   }, [selectedId, reports, map]);
 
-  const [scIndex, setScIndex] = useState<any | null>(null);
+  const [scIndex, setScIndex] = useState<any>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -227,7 +229,8 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
         sc.load(points);
         if (mounted) setScIndex(sc);
       } catch (e) {
-        // ignore and keep scIndex null to use fallback
+        console.error('Failed to load supercluster:', e);
+        // keep scIndex null to use fallback
       }
     })();
     return () => { mounted = false; };
@@ -286,18 +289,18 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
           <Marker position={[pinned.lat, pinned.lng]} icon={createPinIcon()}>
             <Popup>
               <div style={{ maxWidth: 260 }}>
-                {!getToken() ? (
-                  <div>
-                    <div>To submit a report please login</div>
-                    <div style={{ marginTop: 8 }}>
-                      <button onClick={() => navigate('/login')}>Login</button>
-                    </div>
-                  </div>
-                ) : (
+                {getToken() ? (
                   <div>
                     <div>Ready to submit a report from this location?</div>
                     <div style={{ marginTop: 8 }}>
                       <button onClick={() => navigate('/submitReport', { state: { position: [pinned.lat, pinned.lng] } })}>Submit a report</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div>To submit a report please login</div>
+                    <div style={{ marginTop: 8 }}>
+                      <button onClick={() => navigate('/login')}>Login</button>
                     </div>
                   </div>
                 )}
@@ -338,7 +341,7 @@ function ClusteringLayer({ reports, selectedId }: { reports: Report[]; selectedI
 
   return (
     <>
-      {clusters.map((c, i) => {
+      {clusters.map((c) => {
         // At high zoom levels (17+), always show individual markers
         if (zoom >= 17) {
           return c.items.map((r) => {
