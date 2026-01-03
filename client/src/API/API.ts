@@ -634,6 +634,60 @@ async function getReportById(reportId: string) {
     }
 }
 
+// Statistics API
+type PublicStatistics = {
+    totalReports: number;
+    byCategory: Array<{ category: string; count: number }>;
+    byState: Array<{ state: string; count: number }>;
+    dailyTrend: Array<{ date: string; count: number }>;
+    weeklyTrend: Array<{ week: string; count: number }>;
+    monthlyTrend: Array<{ month: string; count: number }>;
+};
+
+async function getPublicStatistics() {
+    try {
+        // Fetch all three periods in parallel
+        const [dailyResponse, weeklyResponse, monthlyResponse] = await Promise.all([
+            fetch(URI + `/statistics/public?period=day`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            }),
+            fetch(URI + `/statistics/public?period=week`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            }),
+            fetch(URI + `/statistics/public?period=month`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            })
+        ]);
+
+        if (dailyResponse.ok && weeklyResponse.ok && monthlyResponse.ok) {
+            const [dailyData, weeklyData, monthlyData] = await Promise.all([
+                dailyResponse.json(),
+                weeklyResponse.json(),
+                monthlyResponse.json()
+            ]);
+            
+            // Transform the response from backend to match frontend expectations
+            return {
+                totalReports: dailyData.byCategory.reduce((sum: number, cat: any) => sum + cat.count, 0),
+                byCategory: dailyData.byCategory,
+                byState: dailyData.byState || [],
+                dailyTrend: dailyData.trends?.data.map((d: any) => ({ date: d.period, count: d.count })) || [],
+                weeklyTrend: weeklyData.trends?.data.map((d: any) => ({ week: d.period, count: d.count })) || [],
+                monthlyTrend: monthlyData.trends?.data.map((d: any) => ({ month: d.period, count: d.count })) || [],
+            } as PublicStatistics;
+        } else {
+            const err = await dailyResponse.text();
+            throw new Error(err || 'Failed to fetch statistics');
+        }
+    } catch (error) {
+        console.error('getPublicStatistics - Error:', error);
+        throw error;
+    }
+}
+
 async function followReport(reportId: string) {
     const token = getToken();
 
@@ -700,5 +754,5 @@ async function getFollowedReports() {
     }
 }
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById, followReport, unfollowReport, getFollowedReports };
-export type { Notification };
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById, followReport, unfollowReport, getFollowedReports, getPublicStatistics };
+export type { Notification, PublicStatistics };
