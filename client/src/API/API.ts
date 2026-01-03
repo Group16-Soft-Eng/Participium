@@ -634,5 +634,71 @@ async function getReportById(reportId: string) {
     }
 }
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById };
+async function followReport(reportId: string) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/reports/${reportId}/follow`, {
+        method: 'POST',
+        headers: headers,
+    });
+    
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to fetch report');
+    }
+}
+
+async function unfollowReport(reportId: string) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/reports/${reportId}/follow`, {
+        method: 'DELETE',
+        headers: headers,
+    });
+    
+    if (response.ok) {
+        return await response;
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to fetch report');
+    }
+}
+
+async function getFollowedReports() {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/users/me/followed-reports`, {
+        method: 'GET',
+        headers: headers,
+    });
+    
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to fetch report');
+    }
+}
+
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById, followReport, unfollowReport, getFollowedReports };
 export type { Notification };

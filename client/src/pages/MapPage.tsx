@@ -2,9 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MapClusterView from '../Map/MapComponents/MapClusterView';
 import type { Report } from '../Map/types/report';
-import { Box, List, ListItem, Paper, Typography, Chip, CircularProgress } from '@mui/material';
+import { Box, List, ListItem, Paper, Typography, Chip, CircularProgress, Button } from '@mui/material';
 import { getAllReports } from '../Map/mapApi/mapApi';
+import { getToken, getUserFromToken } from '../services/auth';
 import SearchBar from '../components/SearchBar';
+import { followReport, getFollowedReports, unfollowReport } from '../API/API';
 
 const getCategoryColor = (cat: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
   switch (cat) {
@@ -27,12 +29,32 @@ const MapPage: React.FC = () => {
   const [highlightLocation, setHighlightLocation] = useState<[number, number] | null>(null);
   const [search, setSearch] = useState<string | null>(null);
   const [searchCoords, setSearchCoords] = useState<[number, number] | null>(null);
+  const [followedReports, setFollowedReports] = useState<Report[]>([]);
+
+  const logged = getToken() !== null;
+
+  const username = getUserFromToken(getToken())?.username;
+  console.log("Username:", username);
+
+  async function follow(id: string) {
+    await followReport(id)
+    const followedReports = await getFollowedReports();
+    setFollowedReports(followedReports);
+  }
+
+  async function unfollow(id: string) {
+    await unfollowReport(id)
+    const followedReports = await getFollowedReports();
+    setFollowedReports(followedReports);
+  }
 
   useEffect(() => {
     const fetchReports = async () => {
       try {
         setLoading(true);
         const data = await getAllReports();
+        const followedReports = await getFollowedReports();
+        
         let visibleReports = data.filter(report => {
           const status = report.status?.toLowerCase();
           return status === 'approved' || status === 'in_progress' || status === 'suspended';
@@ -48,6 +70,7 @@ const MapPage: React.FC = () => {
         }
 
         setReports(visibleReports);
+        setFollowedReports(followedReports);
       } catch (error) {
         console.error(error);
         setReports([]);
@@ -143,68 +166,58 @@ const MapPage: React.FC = () => {
         p: 2,
         bgcolor: '#f8f9fa'
       }} elevation={2}>
-        <Typography variant="h6" gutterBottom>
-          {searchCoords ? `Reports near location (${filteredReports.length})` : `Reports on map (${reports.length})`}
-        </Typography>
+        {logged ?
+          <>
+            <Typography variant="h6" gutterBottom>
+              {searchCoords ? `Reports near location (${filteredReports.length})` : `Reports on map (${reports.length})`}
+            </Typography>
 
-        {!highlightLocation && <SearchBar setSearch={setSearch} />}
-        <List>
-          {filteredReports.map((r) => {
-            const status = r.status?.toLowerCase();
-            const isInProgress = status === 'in_progress' || status === 'in-progress';
-            const isSuspended = status === 'suspended';
-            
-            let backgroundColor = 'white';
-            if (isInProgress) {
-              backgroundColor = '#e3f2fd';
-            } else if (isSuspended) {
-              backgroundColor = '#fff3e0';
-            }
-            
-            let borderLeft = 'none';
-            if (isInProgress) {
-              borderLeft = '4px solid #1976d2';
-            } else if (isSuspended) {
-              borderLeft = '4px solid #f57c00';
-            }
-            
-            let authorName = 'Unknown';
-            if (r.anonymity) {
-              authorName = 'Anonymous';
-            } else if (r.author) {
-              authorName = `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
-            }
-            
-            return (
-              <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
-                <Paper
-                  sx={{
-                    width: '100%',
-                    p: 1.25,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    bgcolor: backgroundColor,
-                    borderLeft: borderLeft,
-                    '&:hover': { bgcolor: '#f0f0f0' }
-                  }}
-                  elevation={1}
-                  onClick={() => setSelectedId(r.id)}
-                >
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ lineHeight: 1.2, mb: 0.5 }}>{r.title}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {authorName}
-                      {` • ${new Date(r.createdAt).toLocaleDateString()}`}
-                    </Typography>
-                  </Box>
-                  <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
-                </Paper>
-              </ListItem>
-            );
-          })}
-        </List>
+            {!highlightLocation && <SearchBar setSearch={setSearch} />}
+            <List>
+              {filteredReports.map((r) => {
+                const status = r.status?.toLowerCase();
+                const isInProgress = status === 'in_progress' || status === 'in-progress';
+                const isSuspended = status === 'suspended';
+                return (
+                  <ListItem key={r.id} disablePadding sx={{ mb: 1 }}>
+                    <Paper
+                      sx={{
+                        width: '100%',
+                        p: 1.25,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        bgcolor: isInProgress ? '#e3f2fd' : isSuspended ? '#fff3e0' : 'white',
+                        borderLeft: isInProgress ? '4px solid #1976d2' : isSuspended ? '4px solid #f57c00' : 'none',
+                        '&:hover': { bgcolor: '#f0f0f0' }
+                      }}
+                      elevation={1}
+                      onClick={() => setSelectedId(r.id)}
+                    >
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ lineHeight: 1.2, mb: 0.5 }}>{r.title}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {r.anonymity ? 'Anonymous' : (r.author ? `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim() : 'Unknown')}
+                          {` • ${new Date(r.createdAt).toLocaleDateString()}`}
+                        </Typography>
+                        {(r.author?.username != username &&(
+                          <>
+                          {!followedReports.some(report => report.id == r.id) && <Button variant='contained' sx={{ marginLeft: 2 }} onClick={() => follow(r.id)}>Follow</Button>}
+                           {followedReports.some(report => report.id == r.id) && <Button variant='outlined' sx={{ marginLeft: 2 }} onClick={() => unfollow(r.id)}>Unfollow</Button>}
+                           </>
+                        ))
+                        }
+                      </Box>
+                      <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
+                    </Paper>
+                  </ListItem>
+                );
+              })}
+            </List>
+          </>
+          : <Typography variant="h6" gutterBottom>Please log in to view the available reports.</Typography>
+        }
       </Paper>
     </Box>
   );
