@@ -7,15 +7,15 @@ import { useState } from 'react';
 import { approveReport, declineReport } from '../../API/API';
 
 interface ReportActionsProps {
-  report: any;
-  onUpdate: () => void;
-  onOpenChat?: () => void;
+  readonly report: any;
+  readonly onUpdate: () => void;
+  readonly onOpenChat?: () => void;
 }
 
 export function ReportActions({ report, onUpdate, onOpenChat }: ReportActionsProps) {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [unreadCount] = useState(0); // TODO: Get from API
+  const [unreadCount] = useState(0);
 
   const handleApprove = async () => {
     if (!confirm('Are you sure you want to approve this report?')) return;

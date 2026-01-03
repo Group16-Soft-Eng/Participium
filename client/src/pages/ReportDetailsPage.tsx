@@ -26,7 +26,7 @@ export function ReportDetailsPage() {
   const fetchReport = async () => {
     try {
       setLoading(true);
-      const data = await getReportById(reportId!);
+      const data = await getReportById(reportId);
       setReport(data);
       setError(null);
     } catch (err: any) {
@@ -117,7 +117,7 @@ export function ReportDetailsPage() {
           flexDirection: 'column', 
           bgcolor: 'white' 
         }}>
-          <InternalChatSection reportId={Number.parseInt(reportId!)} />
+          <InternalChatSection reportId={Number.parseInt(reportId)} />
         </Box>
       </Box>
     </Box>

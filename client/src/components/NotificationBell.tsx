@@ -68,11 +68,13 @@ const NotificationBell: React.FC = () => {
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        PaperProps={{
-          sx: {
-            maxHeight: 400,
-            width: 360,
-            mt: 1.5,
+        slotProps={{
+          paper: {
+            sx: {
+              maxHeight: 400,
+              width: 360,
+              mt: 1.5,
+            },
           },
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
@@ -121,18 +123,20 @@ const NotificationBell: React.FC = () => {
                 <ListItemText
                   primary={notification.message}
                   secondary={formatTimestamp(notification.timestamp)}
-                  primaryTypographyProps={{
-                    variant: 'body2',
-                    sx: {
-                      fontWeight: notification.read ? 400 : 600,
-                      color: notification.read ? 'text.secondary' : 'text.primary',
-                      whiteSpace: 'normal',
-                      wordBreak: 'break-word',
+                  slotProps={{
+                    primary: {
+                      variant: 'body2',
+                      sx: {
+                        fontWeight: notification.read ? 400 : 600,
+                        color: notification.read ? 'text.secondary' : 'text.primary',
+                        whiteSpace: 'normal',
+                        wordBreak: 'break-word',
+                      },
                     },
-                  }}
-                  secondaryTypographyProps={{
-                    variant: 'caption',
-                    sx: { mt: 0.5 },
+                    secondary: {
+                      variant: 'caption',
+                      sx: { mt: 0.5 },
+                    },
                   }}
                 />
               </Box>

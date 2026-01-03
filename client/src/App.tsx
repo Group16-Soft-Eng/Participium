@@ -24,7 +24,7 @@ import MaintainerDashboardPage from './pages/MaintainerDashboardPage';
 
 
 type OfficerProps = {
-  technical: boolean;
+  readonly technical: boolean;
 };
 
 function OfficerButton({ technical }: OfficerProps) {
@@ -66,8 +66,8 @@ function PublicRelationsButton() {
 }
 
 type ButtonProps = {
-  isLoggedIn: boolean;
-  setShowLoginDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly isLoggedIn: boolean;
+  readonly setShowLoginDialog: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export function AdminButton({ isLoggedIn, setShowLoginDialog }: ButtonProps) {

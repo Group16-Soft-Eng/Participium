@@ -141,15 +141,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setAllNotifications((prev) => [notification, ...prev]);
   };
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = (id: string) => {
     const notification = allNotifications.find(n => n.id === id);
     
     if (notification?.backendId) {
-      try {
-        await markNotificationAsRead(notification.backendId);
-      } catch (error) {
+      markNotificationAsRead(notification.backendId).catch((error) => {
         console.error('Error marking notification as read on backend:', error);
-      }
+      });
     }
 
     setAllNotifications((prev) =>
@@ -157,13 +155,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     );
   };
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = () => {
     const backendNotifications = allNotifications.filter(n => n.backendId && !n.read);
-    await Promise.all(
+    Promise.all(
       backendNotifications.map(n => 
         n.backendId ? markNotificationAsRead(n.backendId).catch(e => console.error('Error marking as read:', e)) : Promise.resolve()
       )
-    );
+    ).catch(() => {});
 
     setAllNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
@@ -174,17 +172,28 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const unreadCount = allNotifications.filter((n) => !n.read).length;
 
+  const contextValue = React.useMemo(() => ({
+    addNotification,
+    allNotifications,
+    unreadCount,
+    checkPendingNotifications,
+    refreshNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification
+  }), [
+    addNotification,
+    allNotifications,
+    unreadCount,
+    checkPendingNotifications,
+    refreshNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification
+  ]);
+
   return (
-    <NotificationContext.Provider value={{ 
-      addNotification, 
-      allNotifications,
-      unreadCount,
-      checkPendingNotifications,
-      refreshNotifications,
-      markAsRead,
-      markAllAsRead,
-      deleteNotification
-    }}>
+    <NotificationContext.Provider value={contextValue}>
       {children}
     </NotificationContext.Provider>
   );

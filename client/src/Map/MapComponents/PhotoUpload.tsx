@@ -73,11 +73,6 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
     }
   };
 
-  // Helper function to check if file is allowed
-  const isFileAllowed = (file: File): boolean => {
-    return file.type.startsWith('image/') && ALLOWED_MIME_TYPES.has(file.type);
-  };
-
   const canAddMore = photos.length < maxPhotos;
 
   return (

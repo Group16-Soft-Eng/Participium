@@ -14,7 +14,7 @@ api.interceptors.request.use((config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   } catch (e) {
-    // ignore
+    console.error('Failed to retrieve token from localStorage:', e);
   }
   return config;
 });

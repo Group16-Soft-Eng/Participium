@@ -10,6 +10,7 @@ async function createReport(reportData: ReportData): Promise<Report> {
     formData.append('title', reportData.title);
     formData.append('description', reportData.description);
     formData.append('category', reportData.category);
+    formData.append('anonymity', reportData.anonymity ? 'true' : 'false');
     
     if (reportData.latitude !== null) {
         formData.append('latitude', reportData.latitude.toString());

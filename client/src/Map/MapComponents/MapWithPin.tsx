@@ -129,7 +129,6 @@ const isPointInPolygon = (point: number[], polygon: number[][][]): boolean => {
 
 interface MapWithPinProps {
   onLocationSelect: (lat: number, lng: number) => void;
-  initialPosition?: [number, number];
   reports: Report[];
   selectedPosition?: [number, number] | null;
 }
@@ -201,7 +200,7 @@ function LocationMarker({
       try {
         localStorage.setItem('pendingReportLocation', JSON.stringify([lat, lng]));
       } catch (err) {
-        // ignore storage errors
+        console.error('Failed to save location to localStorage:', err);
       }
       map.flyTo(e.latlng, map.getZoom());
     },
@@ -352,7 +351,7 @@ const MapWithPin: React.FC<MapWithPinProps> = ({
       <div className="map-overview">
         <strong>🗺️ Map Overview:</strong> 
         <span className="overview-stats">
-          {reports.length} report{reports.length !== 1 ? 's' : ''} submitted
+          {reports.length} report{reports.length === 1 ? '' : 's'} submitted
           {reports.length > 0 && (
             <>
               {' • '}
