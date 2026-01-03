@@ -10,11 +10,13 @@ import type { ReportCategory, ReportStatus } from '../components/filters';
 
 // Category colors matching the map (kept small and consistent)
 const CATEGORY_COLORS: Record<string, string> = {
-  infrastructure: '#8b5cf6',
-  environment: '#10b981',
-  safety: '#ef4444',
-  sanitation: '#f59e0b',
-  transport: '#3b82f6',
+  water_supply: '#8b5cf6',
+  architectural_barriers: '#10b981',
+  public_lighting: '#ef4444',
+  waste: '#f59e0b',
+  road_signs_and_traffic_lights: '#3b82f6',
+  roads_and_urban_furnishings: '#955c51ff',
+  public_green_areas_and_playgrounds: '#af589bff',
   other: '#6b7280',
 };
 
@@ -57,12 +59,12 @@ const TechnicalOfficerPage: React.FC = () => {
   const handleStatusChange = async (reportId: number, newStatus: 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED') => {
     // Add report ID to changing status list
     setChangingStatusIds(prev => [...prev, reportId]);
-    
+
     const success = await updateReportStatus(reportId, newStatus);
-    
+
     // Remove report ID from changing status list
     setChangingStatusIds(prev => prev.filter(id => id !== reportId));
-    
+
     if (success) {
       fetchAssigned(); // Refresh the list
     }
@@ -155,13 +157,18 @@ const TechnicalOfficerPage: React.FC = () => {
   const categories = Object.keys(grouped);
   const singleCategory = categories.length === 1 ? categories[0] : null;
 
+  function formatStatus(str: string) {
+    return str
+      .replaceAll('_', " ");
+  }
+
   const renderStatusChip = (state?: string, hasMaintainer?: boolean) => {
     const effective = state === 'ASSIGNED' && !hasMaintainer ? 'AWAITING_MAINTAINER' : state;
-    const label = effective === 'AWAITING_MAINTAINER' ? 'Awaiting maintainer' : (effective || 'ASSIGNED');
+    const label = effective === 'AWAITING_MAINTAINER' ? 'AWAITING_MAINTAINER' : (effective || 'ASSIGNED');
     const color = (() => {
       switch (effective) {
         case 'AWAITING_MAINTAINER':
-          return 'warning';
+          return 'error';
         case 'RESOLVED':
           return 'success';
         case 'IN_PROGRESS':
@@ -174,7 +181,7 @@ const TechnicalOfficerPage: React.FC = () => {
     })();
     return (
       <Chip
-        label={label}
+        label={formatStatus(label)}
         size="small"
         color={color as any}
       />
@@ -187,15 +194,20 @@ const TechnicalOfficerPage: React.FC = () => {
     if (changingStatusIds.includes(report.id)) {
       return true;
     }
-    
+
     // If the button is for the current status, disable it
     if (report.state === targetStatus) {
       return true;
     }
-    
+
     return false;
   };
-
+  function formatString(str: string) {
+    return str
+      .replaceAll('_', " ")
+      .toLowerCase()
+      .replaceAll(/\b\w/g, c => c.toUpperCase());
+  }
   return (
     <Box>
       <Paper sx={{ p: 3, mb: 3 }} elevation={1}>
@@ -233,7 +245,7 @@ const TechnicalOfficerPage: React.FC = () => {
               // single category: show one chip and a single table
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Chip label={singleCategory} size="small" sx={{ backgroundColor: getCategoryColor(singleCategory), color: 'white', fontWeight: 'bold', textTransform: 'capitalize' }} />
+                  <Chip label={formatString(singleCategory)} size="small" sx={{ backgroundColor: getCategoryColor(singleCategory), color: 'white', fontWeight: 'bold', textTransform: 'capitalize' }} />
                   <Typography variant="body2" color="text.secondary">{reports.length} report{reports.length > 1 ? 's' : ''}</Typography>
                 </Box>
 
@@ -262,10 +274,10 @@ const TechnicalOfficerPage: React.FC = () => {
                             <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
 
                             {/* Public Chat Button */}
-                            <IconButton 
-                              size="small" 
-                              color="primary" 
-                              sx={{ mr: 1 }} 
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              sx={{ mr: 1 }}
                               onClick={() => navigate(`/reports/${r.id}/details?chatType=public`)}
                               title="Chat with citizen"
                             >
@@ -275,10 +287,10 @@ const TechnicalOfficerPage: React.FC = () => {
                             {r.assignedMaintainerId ? (
                               <>
                                 {/* Internal Chat Button (only when maintainer assigned) */}
-                                <IconButton 
-                                  size="small" 
-                                  color="warning" 
-                                  sx={{ mr: 1 }} 
+                                <IconButton
+                                  size="small"
+                                  color="warning"
+                                  sx={{ mr: 1 }}
                                   onClick={() => navigate(`/reports/${r.id}/details?chatType=internal`)}
                                   title="Internal chat with maintainer"
                                 >
@@ -294,23 +306,23 @@ const TechnicalOfficerPage: React.FC = () => {
 
                             {!r.assignedMaintainerId && (
                               <ButtonGroup size="small" variant="contained">
-                                <Button 
-                                  color="primary" 
-                                  onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')} 
+                                <Button
+                                  color="primary"
+                                  onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}
                                   disabled={isStatusButtonDisabled(r, 'IN_PROGRESS')}
                                 >
                                   In Progress
                                 </Button>
-                                <Button 
-                                  color="warning" 
-                                  onClick={() => handleStatusChange(r.id, 'SUSPENDED')} 
+                                <Button
+                                  color="warning"
+                                  onClick={() => handleStatusChange(r.id, 'SUSPENDED')}
                                   disabled={isStatusButtonDisabled(r, 'SUSPENDED')}
                                 >
                                   Suspend
                                 </Button>
-                                <Button 
-                                  color="success" 
-                                  onClick={() => handleStatusChange(r.id, 'RESOLVED')} 
+                                <Button
+                                  color="success"
+                                  onClick={() => handleStatusChange(r.id, 'RESOLVED')}
                                   disabled={isStatusButtonDisabled(r, 'RESOLVED')}
                                 >
                                   Resolve
@@ -329,7 +341,7 @@ const TechnicalOfficerPage: React.FC = () => {
               categories.map(cat => (
                 <Box key={cat}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Chip label={cat} size="small" sx={{ backgroundColor: getCategoryColor(cat), color: 'white', fontWeight: 'bold', textTransform: 'capitalize' }} />
+                    <Chip label={formatString(cat)} size="small" sx={{ backgroundColor: getCategoryColor(cat), color: 'white', fontWeight: 'bold', textTransform: 'capitalize' }} />
                     <Typography variant="body2" color="text.secondary">{grouped[cat].length} report{grouped[cat].length > 1 ? 's' : ''}</Typography>
                   </Box>
 
@@ -355,12 +367,12 @@ const TechnicalOfficerPage: React.FC = () => {
                             <TableCell>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                             <TableCell align="right">
                               <Button variant="outlined" size="small" onClick={() => setSelected(r)} sx={{ mr: 1 }}>View</Button>
-                              
+
                               {/* Public Chat Button */}
-                              <IconButton 
-                                size="small" 
-                                color="primary" 
-                                sx={{ mr: 1 }} 
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                sx={{ mr: 1 }}
                                 onClick={() => navigate(`/reports/${r.id}/details?chatType=public`)}
                                 title="Chat with citizen"
                               >
@@ -369,10 +381,10 @@ const TechnicalOfficerPage: React.FC = () => {
 
                               {/* Internal Chat Button (only when maintainer assigned) */}
                               {r.assignedMaintainerId && (
-                                <IconButton 
-                                  size="small" 
-                                  color="warning" 
-                                  sx={{ mr: 1 }} 
+                                <IconButton
+                                  size="small"
+                                  color="warning"
+                                  sx={{ mr: 1 }}
                                   onClick={() => navigate(`/reports/${r.id}/details?chatType=internal`)}
                                   title="Internal chat with maintainer"
                                 >
@@ -385,29 +397,29 @@ const TechnicalOfficerPage: React.FC = () => {
                                 <Button variant="outlined" size="small" onClick={() => handleOpenAssignDialog(r)} sx={{ mr: 1 }}>Assign to External Maintainer</Button>
                               )}
                               {!r.assignedMaintainerId && (
-                              <ButtonGroup size="small" variant="contained">
-                                <Button 
-                                  color="primary" 
-                                  onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')} 
-                                  disabled={isStatusButtonDisabled(r, 'IN_PROGRESS')}
-                                >
-                                  In Progress
-                                </Button>
-                                <Button 
-                                  color="warning" 
-                                  onClick={() => handleStatusChange(r.id, 'SUSPENDED')} 
-                                  disabled={isStatusButtonDisabled(r, 'SUSPENDED')}
-                                >
-                                  Suspend
-                                </Button>
-                                <Button 
-                                  color="success" 
-                                  onClick={() => handleStatusChange(r.id, 'RESOLVED')} 
-                                  disabled={isStatusButtonDisabled(r, 'RESOLVED')}
-                                >
-                                  Resolve
-                                </Button>
-                              </ButtonGroup>
+                                <ButtonGroup size="small" variant="contained">
+                                  <Button
+                                    color="primary"
+                                    onClick={() => handleStatusChange(r.id, 'IN_PROGRESS')}
+                                    disabled={isStatusButtonDisabled(r, 'IN_PROGRESS')}
+                                  >
+                                    In Progress
+                                  </Button>
+                                  <Button
+                                    color="warning"
+                                    onClick={() => handleStatusChange(r.id, 'SUSPENDED')}
+                                    disabled={isStatusButtonDisabled(r, 'SUSPENDED')}
+                                  >
+                                    Suspend
+                                  </Button>
+                                  <Button
+                                    color="success"
+                                    onClick={() => handleStatusChange(r.id, 'RESOLVED')}
+                                    disabled={isStatusButtonDisabled(r, 'RESOLVED')}
+                                  >
+                                    Resolve
+                                  </Button>
+                                </ButtonGroup>
                               )}
                             </TableCell>
                           </TableRow>

@@ -10,11 +10,13 @@ import { followReport, getFollowedReports, unfollowReport } from '../API/API';
 
 const getCategoryColor = (cat: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
   switch (cat) {
-    case 'infrastructure': return 'secondary';
-    case 'environment': return 'success';
-    case 'safety': return 'error';
-    case 'sanitation': return 'warning';
-    case 'transport': return 'info';
+    case 'water_supply': return 'secondary';
+    case 'architectural_barriers': return 'success';
+    case 'public_lighting': return 'error';
+    case 'waste': return 'warning';
+    case 'road_signs_and_traffic_lights': return 'info';
+    case 'roads_and_urban_furnishings': return 'primary';
+    case 'public_green_areas_and_playgrounds': return 'success';
     default: return 'default';
   }
 };

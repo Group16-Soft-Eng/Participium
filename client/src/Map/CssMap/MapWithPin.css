@@ -153,11 +153,13 @@
 }
 
 /* Category Colors */
-.category-infrastructure { background: #8b5cf6; }
-.category-environment { background: #10b981; }
-.category-safety { background: #ef4444; }
-.category-sanitation { background: #f59e0b; }
-.category-transport { background: #3b82f6; }
+.category-water_supply { background: #8b5cf6; }
+.category-architectural_barriers { background: #10b981; }
+.category-public_lighting { background: #ef4444; }
+.category-waste { background: #f59e0b; }
+.category-road_signs_and_traffic_lights { background: #3b82f6; }
+.category-roads_and_urban_furnishings { background: #955c51ff; }
+.category-public_green_areas_and_playgrounds { background: #af589bff; }
 .category-other { background: #6b7280; }
 
 /* Status Styles */

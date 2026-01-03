@@ -20,35 +20,40 @@ interface CategoryBreakdownProps {
 }
 
 const categoryConfig: Record<string, { label: string; icon: ReactElement; color: string }> = {
-  infrastructure: {
-    label: 'Infrastructure',
+  water_supply: {
+    label: 'Water Supply - Drinking Water',
     icon: <Build />,
     color: '#f57c00'
   },
-  environment: {
-    label: 'Environment',
+  architectural_barriers: {
+    label: 'Architectural Barriers',
     icon: <Park />,
     color: '#388e3c'
   },
-  safety: {
-    label: 'Safety',
+  public_lighting: {
+    label: 'Public Lighting',
     icon: <Security />,
-    color: '#d32f2f'
+    color: '#ef4444'
   },
-  sanitation: {
-    label: 'Sanitation',
+  waste: {
+    label: 'Waste',
     icon: <CleaningServices />,
-    color: '#1976d2'
+    color: '#f59e0b'
   },
-  transport: {
-    label: 'Transport',
+  road_signs_and_traffic_lights: {
+    label: 'Road Signs and Traffic Lights',
     icon: <DirectionsBus />,
-    color: '#7b1fa2'
+    color: '#3b82f6'
   },
-  organization: {
-    label: 'Organization',
+  roads_and_urban_furnishings: {
+    label: 'Roads and Urban Furnishings',
     icon: <Business />,
-    color: '#0288d1'
+    color: '#955c51ff'
+  },
+  public_green_areas_and_playgrounds: {
+    label: 'Public Green Areas and Playgrounds',
+    icon: <CategoryIcon />,
+    color: '#af589bff'
   },
   other: {
     label: 'Other',

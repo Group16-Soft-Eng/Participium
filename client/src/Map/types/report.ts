@@ -29,19 +29,23 @@ export interface ReportData {
 }
 
 export type ReportCategory = 
-  | 'infrastructure' 
-  | 'environment' 
-  | 'safety' 
-  | 'sanitation' 
-  | 'transport' 
+  | 'water_supply' 
+  | 'architectural_barriers' 
+  | 'public_lighting' 
+  | 'waste' 
+  | 'road_signs_and_traffic_lights' 
+  | 'roads_and_urban_furnishings' 
+  | 'public_green_areas_and_playgrounds'
   | 'other';
 
 export const CATEGORIES: { value: ReportCategory; label: string }[] = [
-  { value: 'infrastructure', label: 'Infrastructure Issue' },
-  { value: 'environment', label: 'Environmental Concern' },
-  { value: 'safety', label: 'Safety Hazard' },
-  { value: 'sanitation', label: 'Sanitation Problem' },
-  { value: 'transport', label: 'Transport Issue' },
+  { value: 'water_supply', label: 'Water Supply - Drinking Water' },
+  { value: 'architectural_barriers', label: 'Architectural Barriers' },
+  { value: 'public_lighting', label: 'Public Lighting' },
+  { value: 'waste', label: 'Waste Management' },
+  { value: 'road_signs_and_traffic_lights', label: 'Road Signs and Traffic Lights' },
+  { value: 'roads_and_urban_furnishings', label: 'Roads and Urban Furnishings' },
+  { value: 'public_green_areas_and_playgrounds', label: 'Public Green Areas and Playgrounds' },
   { value: 'other', label: 'Other' },
 ];
 

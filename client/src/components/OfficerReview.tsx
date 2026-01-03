@@ -17,11 +17,13 @@ interface RejectState {
 
 // Category colors matching the map
 const CATEGORY_COLORS: Record<string, string> = {
-  infrastructure: '#8b5cf6',
-  environment: '#10b981',
-  safety: '#ef4444',
-  sanitation: '#f59e0b',
-  transport: '#3b82f6',
+  water_supply: '#8b5cf6',
+  architectural_barriers: '#10b981',
+  public_lighting: '#ef4444',
+  waste: '#f59e0b',
+  road_signs_and_traffic_lights: '#3b82f6',
+  roads_and_urban_furnishings: '#955c51ff',
+  public_green_areas_and_playgrounds: '#af589bff',
   other: '#6b7280',
 };
 
@@ -110,6 +112,13 @@ const OfficerReview: React.FC = () => {
     setReject({ open: false, reportId: null, reason: '' });
   };
 
+  function formatString(str: string) {
+    return str
+      .replaceAll('_', " ")
+      .toLowerCase()
+      .replaceAll(/\b\w/g, c => c.toUpperCase());
+  }
+
   // Filtered reports based on category only
   const filteredReports = useMemo(() => {
     return reports.filter(report => {
@@ -161,7 +170,7 @@ const OfficerReview: React.FC = () => {
                     </TableCell>
                     <TableCell sx={{ width: 160 }}>
                       <Chip
-                        label={r.category || 'Unknown'}
+                        label={formatString(r.category) || 'Unknown'}
                         size="small"
                         sx={{
                           backgroundColor: getCategoryColor(r.category),
@@ -176,20 +185,20 @@ const OfficerReview: React.FC = () => {
                       {r.anonymity
                         ? 'Anonymous'
                         : (() => {
-                            if (r.author) {
-                                return `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
-                            } else {
-                                return '—';
-                            }
+                          if (r.author) {
+                            return `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
+                          } else {
+                            return '—';
+                          }
                         })()}
                     </TableCell>
                     <TableCell sx={{ width: 180 }}>{r.date ? new Date(r.date).toLocaleString() : '—'}</TableCell>
                     <TableCell align="right">
                       <Button variant="contained" color="primary" size="small" onClick={() => openView(r)} sx={{ mr: 1 }}>View</Button>
-                      <IconButton 
-                        size="small" 
-                        color="primary" 
-                        sx={{ mr: 1 }} 
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        sx={{ mr: 1 }}
                         onClick={() => navigate(`/reports/${r.id}/details?chatType=public`)}
                         title="Chat with citizen"
                       >
