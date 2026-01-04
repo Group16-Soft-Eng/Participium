@@ -17,7 +17,7 @@ interface Address {
   [key: string]: any;
 }
 
-export default function SearchBar({ setSearch }: SearchBarProps) {
+export default function SearchBar({ setSearch }: Readonly<SearchBarProps>) {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Address[]>([]);
   const [loading, setLoading] = useState(false);
