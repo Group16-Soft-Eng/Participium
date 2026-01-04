@@ -281,7 +281,7 @@ export default function MyCitizenReportsPage() {
                   <Tooltip title="Send Message">
                     <IconButton
                       size="small"
-                      onClick={() => handleChat(report.id!)}
+                      onClick={() => handleChat(report.id)}
                       color="secondary"
                     >
                       <Message fontSize="small" />
@@ -318,7 +318,7 @@ export default function MyCitizenReportsPage() {
               color="primary"
               onClick={() => {
                 setDetailDialogOpen(false);
-                handleChat(selectedReport.id!);
+                handleChat(selectedReport.id);
               }}
             >
               Send Message

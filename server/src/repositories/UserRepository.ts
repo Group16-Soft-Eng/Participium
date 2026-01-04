@@ -8,7 +8,7 @@ import { findOrThrowNotFound, throwConflictIfFound } from "@utils/utils";
 import { hashPassword } from "@services/authService";
 
 export class UserRepository {
-  private repo: Repository<UserDAO>;
+  private readonly repo: Repository<UserDAO>;
 
   constructor() {
     this.repo = AppDataSource.getRepository(UserDAO);

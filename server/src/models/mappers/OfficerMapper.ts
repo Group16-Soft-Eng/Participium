@@ -41,8 +41,8 @@ export function toOfficerDAO(dto: OfficerDTO): OfficerDAO {
     const role = new RoleDAO();
     role.officer = officer;
     // converte dai tipi DTO agli enum di dominio
-    role.officerRole = OfficerRoleToJSON(entry.role) as any;
-    role.officeType = OfficeTypeToJSON(entry.office) as any;
+    role.officerRole = OfficerRoleToJSON(entry.role);
+    role.officeType = OfficeTypeToJSON(entry.office);
     return role;
   });
 

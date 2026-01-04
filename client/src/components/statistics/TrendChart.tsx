@@ -12,12 +12,12 @@ interface TrendChartProps {
   color?: string;
 }
 
-export function TrendChart({ title, data, color = '#1976d2' }: TrendChartProps) {
+export function TrendChart({ title, data, color = '#1976d2' }: Readonly<TrendChartProps>) {
   const maxValue = useMemo(() => Math.max(...data.map(d => d.value), 1), [data]);
 
   const formatLabel = (label: string) => {
     const date = new Date(label);
-    if (!isNaN(date.getTime())) {
+    if (!Number.isNaN(date.getTime())) {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
     return label;
@@ -43,7 +43,7 @@ export function TrendChart({ title, data, color = '#1976d2' }: TrendChartProps) 
           <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 200 }}>
             {data.map((item, index) => (
               <Box
-                key={index}
+                key={item.label + index}
                 sx={{
                   flex: 1,
                   display: 'flex',

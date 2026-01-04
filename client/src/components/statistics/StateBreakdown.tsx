@@ -51,7 +51,7 @@ const stateConfig: Record<string, { label: string; icon: ReactElement; color: st
   }
 };
 
-export function StateBreakdown({ data }: StateBreakdownProps) {
+export function StateBreakdown({ data }: Readonly<StateBreakdownProps>) {
   const totalReports = data.reduce((sum, item) => sum + item.count, 0);
 
   return (

@@ -9,7 +9,7 @@ import { OfficerRepository } from "./OfficerRepository";
 import { hashPassword } from "@services/authService";
 
 export class MaintainerRepository {
-    private repo: Repository<MaintainerDAO>;
+    private readonly repo: Repository<MaintainerDAO>;
 
     constructor() {
         this.repo = AppDataSource.getRepository(MaintainerDAO);
@@ -34,7 +34,7 @@ export class MaintainerRepository {
         let existingUser: any = null;
         try {
             existingUser = await userRepo.getUserByEmail(email);
-        } catch (_) {
+        } catch {
             existingUser = null;
         }
         if (existingUser) {
@@ -46,7 +46,7 @@ export class MaintainerRepository {
         let existingOfficer: any = null;
         try {
             existingOfficer = await officerRepo.getOfficerByEmail(email);
-        } catch (_) {
+        } catch {
             existingOfficer = null;
         }
         if (existingOfficer) {

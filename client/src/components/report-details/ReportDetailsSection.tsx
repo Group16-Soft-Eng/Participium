@@ -53,7 +53,7 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
           );
           const data = await response.json();
           console.log('Reverse geocoding result:', data);
-          if (data && data.display_name) {
+          if (data?.display_name) {
             setAddressText(data.display_name);
           } else {
             setAddressText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);

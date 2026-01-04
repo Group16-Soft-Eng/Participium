@@ -9,7 +9,7 @@ interface StatCardProps {
   subtitle?: string;
 }
 
-export function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
+export function StatCard({ title, value, icon, color, subtitle }: Readonly<StatCardProps>) {
   return (
     <Card
       sx={{

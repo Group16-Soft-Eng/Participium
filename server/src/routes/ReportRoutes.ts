@@ -1,13 +1,11 @@
 import {Router} from "express";
-import {uploadReport, getReports, getReportsByOffice, getReport } from "@controllers/reportController"
-import {ReportFromJSON} from "@dto/Report";
+import {uploadReport, getReports, getReport } from "@controllers/reportController"
 
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import { uploadPhotos } from "@middlewares/uploadMiddleware";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { NotificationRepository } from "@repositories/NotificationRepository";
-import { OfficerRepository } from "@repositories/OfficerRepository";
 import { ReviewStatus } from "@models/enums/ReviewStatus";
 import { FollowRepository } from "@repositories/FollowRepository";
 import { mapUserDAOToDTO } from "@services/mapperService";

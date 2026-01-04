@@ -8,12 +8,11 @@ import { BadRequestError } from "@utils/utils";
  * Get public statistics about reports
  * Returns count by category and trends by period
  */
-export async function getPublicStatistics(period?: 'day' | 'week' | 'month') {
+export async function getPublicStatistics(selectedPeriod: 'day' | 'week' | 'month' = 'day') {
   const reportRepo = new ReportRepository();
   
   // Validate period parameter if provided
   const validPeriods = ['day', 'week', 'month'];
-  const selectedPeriod = period || 'day';
   
   if (!validPeriods.includes(selectedPeriod)) {
     throw new BadRequestError(`Invalid period. Must be one of: ${validPeriods.join(', ')}`);

@@ -96,7 +96,7 @@ export async function getTelegramChatId(
   userId: number
 ): Promise<number | null> {
   const session = await getSession(userId, "telegram");
-  return session && session.chatId ? session.chatId : null;
+  return session?.chatId ? session.chatId : null;
 }
 
 export async function deleteSession(

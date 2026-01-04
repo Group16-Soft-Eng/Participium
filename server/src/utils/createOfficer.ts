@@ -58,7 +58,7 @@ async function createOfficer() {
       surname: officerData.surname,
       email: officerData.email,
       password: hashedPassword,
-      roles: officerData.roles as Partial<RoleDAO>[],
+      roles: officerData.roles,
     });
 
     await officerRepo.save(newOfficer);

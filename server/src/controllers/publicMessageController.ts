@@ -1,8 +1,6 @@
 import { PublicMessageRepository } from "@repositories/PublicMessageRepository";
 import { PublicMessage } from "@models/dto/PublicMessage";
 import { PublicMessageDAO } from "@models/dao/PublicMessageDAO";
-import { UserRepository } from "@repositories/UserRepository";
-import { OfficerRepository } from "@repositories/OfficerRepository";
 import { getIO } from "@services/ioService";
 
 function mapPublicMessageDAOToDTO(dao: PublicMessageDAO): PublicMessage {

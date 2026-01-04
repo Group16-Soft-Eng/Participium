@@ -10,7 +10,7 @@ import { UnauthorizedError, ForbiddenError } from "@utils/utils";
 export async function authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader?.startsWith("Bearer ")) {
       throw new UnauthorizedError("Missing or invalid Authorization header");
     }
 
@@ -25,7 +25,7 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
 
     // opzionale: verifica esistenza sessione
     const session = await getSession(decoded.id, decoded.sessionType ?? "web");
-    if (!session || session.token !== token) {
+    if (session?.token !== token) {
       throw new UnauthorizedError("Session not found or expired");
     }
 
@@ -45,12 +45,12 @@ export function requireUserType(allowedTypes: OfficerRole[] | string[]): (req: R
       const userTypes: (OfficerRole | string)[] = Array.isArray(user.type) ? user.type : [user.type];
       
       // Normalize allowedTypes: convert OfficerRole enum values to their string values
-      const normalizedAllowed = allowedTypes.map(t => {
+      const normalizedAllowed = allowedTypes.flatMap(t => {
         if (t === OfficerRole.MAINTAINER || t === "MAINTAINER" || t === "external_maintainer") {
           return ["MAINTAINER", "external_maintainer"];
         }
         return t;
-      }).flat();
+      });
       
       const allowed = normalizedAllowed.some(t => userTypes.includes(t));
       if (!allowed) {

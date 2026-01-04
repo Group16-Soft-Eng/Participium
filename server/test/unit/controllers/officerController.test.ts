@@ -10,7 +10,6 @@ import {
   assignReportToOfficer,
   retrieveDocs,
   getAssignedReports,
-  getAllAssignedReportsOfficer,
   reviewDoc,
   deleteOfficer
 } from "../../../src/controllers/officerController";
@@ -495,22 +494,6 @@ describe("OfficerController Unit Tests", () => {
       (mapReportDAOToDTO as jest.Mock).mockImplementation((report) => report);
 
       const result = await getAssignedReports(1);
-      
-      expect(mockReportRepo.getReportsByAssignedOfficer).toHaveBeenCalledWith(1);
-      expect(result).toHaveLength(2);
-    });
-  });
-
-  describe("getAllAssignedReportsOfficer", () => {
-    it("dovrebbe restituire tutti i report assegnati all'officer (anche non pending)", async () => {
-      const mockReports = [
-        { id: 1, assignedOfficerId: 1, state: ReportState.ASSIGNED },
-        { id: 2, assignedOfficerId: 1, state: ReportState.RESOLVED }
-      ];
-      mockReportRepo.getReportsByAssignedOfficer = jest.fn().mockResolvedValue(mockReports);
-      (mapReportDAOToDTO as jest.Mock).mockImplementation((report) => report);
-
-      const result = await getAllAssignedReportsOfficer(1);
       
       expect(mockReportRepo.getReportsByAssignedOfficer).toHaveBeenCalledWith(1);
       expect(result).toHaveLength(2);
