@@ -46,7 +46,7 @@ export class UserDAO {
   private _fillFollowedReports() {
     if (this.follows) {
       // filter(Boolean) filtra i valori falsy
-      this.followedReports = this.follows.map((f) => f.report).filter(Boolean) as ReportDAO[];
+      this.followedReports = this.follows.map((f) => f.report).filter(Boolean);
     }
   }
 }
