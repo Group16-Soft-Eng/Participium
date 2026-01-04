@@ -96,7 +96,7 @@ describe("ReportRoutes", () => {
       const mockReport = {
         id: 1,
         title: "Test Report",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         anonymity: false,
         state: ReportState.PENDING,
       };
@@ -107,7 +107,7 @@ describe("ReportRoutes", () => {
         .post("/reports")
         .send({
           title: "Test Report",
-          category: OfficeType.INFRASTRUCTURE,
+          category: OfficeType.ARCHITECTURAL_BARRIERS,
           description: "Test description",
           latitude: "45.0703",
           longitude: "7.6869",
@@ -123,7 +123,7 @@ describe("ReportRoutes", () => {
       const mockReport = {
         id: 2,
         title: "Anonymous Report",
-        category: OfficeType.SAFETY,
+        category: OfficeType.ROADS_AND_URBAN_FURNISHINGS,
         anonymity: true,
         state: ReportState.PENDING,
       };
@@ -134,7 +134,7 @@ describe("ReportRoutes", () => {
         .post("/reports")
         .send({
           title: "Anonymous Report",
-          category: OfficeType.SAFETY,
+          category: OfficeType.ROADS_AND_URBAN_FURNISHINGS,
           description: "Anonymous description",
           anonymity: "1",
         });
@@ -154,7 +154,7 @@ describe("ReportRoutes", () => {
       const mockReport = {
         id: 3,
         title: "Test Report",
-        category: OfficeType.ENVIRONMENT,
+        category: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
         anonymity: true,
       };
 
@@ -164,7 +164,7 @@ describe("ReportRoutes", () => {
         .post("/reports")
         .send({
           title: "Test Report",
-          category: OfficeType.ENVIRONMENT,
+          category: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
           anonymity: true,
         });
 
@@ -182,7 +182,7 @@ describe("ReportRoutes", () => {
       const mockReport = {
         id: 4,
         title: "Test Report",
-        category: OfficeType.SANITATION,
+        category: OfficeType.WATER_SUPPLY,
         anonymity: true,
       };
 
@@ -192,7 +192,7 @@ describe("ReportRoutes", () => {
         .post("/reports")
         .send({
           title: "Test Report",
-          category: OfficeType.SANITATION,
+          category: OfficeType.WATER_SUPPLY,
           anonymity: "true",
         });
 
@@ -210,7 +210,7 @@ describe("ReportRoutes", () => {
       const mockReport = {
         id: 5,
         title: "Report with location",
-        category: OfficeType.TRANSPORT,
+        category: OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
       };
 
       (reportController.uploadReport as jest.Mock).mockResolvedValue(mockReport);
@@ -219,7 +219,7 @@ describe("ReportRoutes", () => {
         .post("/reports")
         .send({
           title: "Report with location",
-          category: OfficeType.TRANSPORT,
+          category: OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
           latitude: "45.1234",
           longitude: "7.5678",
         });
@@ -269,7 +269,7 @@ describe("ReportRoutes", () => {
       const mockReport = {
         id: 7,
         title: "Partial location",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
       };
 
       (reportController.uploadReport as jest.Mock).mockResolvedValue(mockReport);
@@ -278,7 +278,7 @@ describe("ReportRoutes", () => {
         .post("/reports")
         .send({
           title: "Partial location",
-          category: OfficeType.INFRASTRUCTURE,
+          category: OfficeType.ARCHITECTURAL_BARRIERS,
           latitude: "45.1234",
         });
 
@@ -296,7 +296,7 @@ describe("ReportRoutes", () => {
       const mockReport = {
         id: 8,
         title: "Partial location",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
       };
 
       (reportController.uploadReport as jest.Mock).mockResolvedValue(mockReport);
@@ -305,7 +305,7 @@ describe("ReportRoutes", () => {
         .post("/reports")
         .send({
           title: "Partial location",
-          category: OfficeType.INFRASTRUCTURE,
+          category: OfficeType.ARCHITECTURAL_BARRIERS,
           longitude: "7.5678",
         });
 
@@ -326,7 +326,7 @@ describe("ReportRoutes", () => {
         .post("/reports")
         .send({
           title: "Test Report",
-          category: OfficeType.INFRASTRUCTURE,
+          category: OfficeType.ARCHITECTURAL_BARRIERS,
         });
 
       expect(res.status).toBe(500);
@@ -341,7 +341,7 @@ describe("ReportRoutes", () => {
         .post("/reports")
         .send({
           title: "Test",
-          category: OfficeType.INFRASTRUCTURE,
+          category: OfficeType.ARCHITECTURAL_BARRIERS,
         });
 
       expect(reportController.uploadReport).toHaveBeenCalledWith(

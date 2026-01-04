@@ -18,7 +18,7 @@ describe("maintainerController", () => {
     name: "Test Maintainer",
     email: "test@example.com",
     password: "hashedPassword",
-    categories: [OfficeType.INFRASTRUCTURE],
+    categories: [OfficeType.ARCHITECTURAL_BARRIERS],
     active: true,
   };
 
@@ -73,16 +73,16 @@ describe("maintainerController", () => {
     it("should return maintainers by category", async () => {
       (MaintainerRepository.prototype.getMaintainersByCategory as jest.Mock).mockResolvedValue([maintainerMock]);
 
-      const result = await maintainerController.getMaintainersByCategory(OfficeType.INFRASTRUCTURE);
+      const result = await maintainerController.getMaintainersByCategory(OfficeType.ARCHITECTURAL_BARRIERS);
 
-      expect(MaintainerRepository.prototype.getMaintainersByCategory).toHaveBeenCalledWith(OfficeType.INFRASTRUCTURE);
+      expect(MaintainerRepository.prototype.getMaintainersByCategory).toHaveBeenCalledWith(OfficeType.ARCHITECTURAL_BARRIERS);
       expect(result).toEqual([maintainerMock]);
     });
 
     it("should return empty array if no maintainers found", async () => {
       (MaintainerRepository.prototype.getMaintainersByCategory as jest.Mock).mockResolvedValue([]);
 
-      const result = await maintainerController.getMaintainersByCategory(OfficeType.ENVIRONMENT);
+      const result = await maintainerController.getMaintainersByCategory(OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS);
 
       expect(result).toEqual([]);
     });
@@ -161,7 +161,7 @@ describe("maintainerController", () => {
         ...maintainerMock, 
         name: "Updated", 
         email: "newemail@example.com",
-        categories: [OfficeType.ENVIRONMENT, OfficeType.INFRASTRUCTURE],
+        categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.ARCHITECTURAL_BARRIERS],
         active: false
       };
       (MaintainerRepository.prototype.updateMaintainer as jest.Mock).mockResolvedValue(updatedMaintainer);
@@ -169,14 +169,14 @@ describe("maintainerController", () => {
       const result = await maintainerController.updateMaintainer(1, { 
         name: "Updated",
         email: "newemail@example.com", 
-        categories: [OfficeType.ENVIRONMENT, OfficeType.INFRASTRUCTURE],
+        categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.ARCHITECTURAL_BARRIERS],
         active: false
       });
 
       expect(MaintainerRepository.prototype.updateMaintainer).toHaveBeenCalledWith(1, { 
         name: "Updated",
         email: "newemail@example.com",
-        categories: [OfficeType.ENVIRONMENT, OfficeType.INFRASTRUCTURE],
+        categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.ARCHITECTURAL_BARRIERS],
         active: false
       });
       expect(result).toEqual(updatedMaintainer);

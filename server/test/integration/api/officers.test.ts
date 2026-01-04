@@ -78,7 +78,7 @@ describe("Officer Routes Integration Tests", () => {
       "Staff",
       "tech@example.com",
       "Password@123",
-      [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+      [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
     );
     technicalOfficerId = technicalOfficer.id;
 
@@ -134,7 +134,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -161,7 +161,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.ENVIRONMENT,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -210,7 +210,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -230,7 +230,7 @@ describe("Officer Routes Integration Tests", () => {
   describe("GET /api/v1/officers/OfficerByOfficeType/:officeType - Get Officers by Office Type", () => {
     it("should return officers by office type", async () => {
       const response = await request(app)
-        .get(`/api/v1/officers/OfficerByOfficeType/${OfficeType.INFRASTRUCTURE}`)
+        .get(`/api/v1/officers/OfficerByOfficeType/${OfficeType.ARCHITECTURAL_BARRIERS}`)
         .set("Authorization", `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -240,7 +240,7 @@ describe("Officer Routes Integration Tests", () => {
 
     it("should work with PR officer authentication", async () => {
       const response = await request(app)
-        .get(`/api/v1/officers/OfficerByOfficeType/${OfficeType.INFRASTRUCTURE}`)
+        .get(`/api/v1/officers/OfficerByOfficeType/${OfficeType.ARCHITECTURAL_BARRIERS}`)
         .set("Authorization", `Bearer ${prOfficerToken}`);
 
       expect(response.status).toBe(200);
@@ -248,7 +248,7 @@ describe("Officer Routes Integration Tests", () => {
 
     it("should return empty array for office type with no officers", async () => {
       const response = await request(app)
-        .get(`/api/v1/officers/OfficerByOfficeType/${OfficeType.SANITATION}`)
+        .get(`/api/v1/officers/OfficerByOfficeType/${OfficeType.OTHER}`)
         .set("Authorization", `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
@@ -257,14 +257,14 @@ describe("Officer Routes Integration Tests", () => {
 
     it("should return 401 without authentication", async () => {
       const response = await request(app)
-        .get(`/api/v1/officers/OfficerByOfficeType/${OfficeType.INFRASTRUCTURE}`);
+        .get(`/api/v1/officers/OfficerByOfficeType/${OfficeType.ARCHITECTURAL_BARRIERS}`);
 
       expect(response.status).toBe(401);
     });
 
     it("should return 403 for technical officer (wrong role)", async () => {
       const response = await request(app)
-        .get(`/api/v1/officers/OfficerByOfficeType/${OfficeType.INFRASTRUCTURE}`)
+        .get(`/api/v1/officers/OfficerByOfficeType/${OfficeType.ARCHITECTURAL_BARRIERS}`)
         .set("Authorization", `Bearer ${technicalOfficerToken}`);
 
       expect(response.status).toBe(403);
@@ -272,12 +272,14 @@ describe("Officer Routes Integration Tests", () => {
 
     it("should handle all office types", async () => {
       const officeTypes = [
-        OfficeType.INFRASTRUCTURE,
-        OfficeType.ENVIRONMENT,
-        OfficeType.SAFETY,
-        OfficeType.SANITATION,
-        OfficeType.TRANSPORT,
-        OfficeType.ORGANIZATION
+        OfficeType.ARCHITECTURAL_BARRIERS,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
+        OfficeType.PUBLIC_LIGHTING,
+        OfficeType.WATER_SUPPLY,
+        OfficeType.WASTE,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.OTHER
       ];
 
       for (const officeType of officeTypes) {
@@ -304,7 +306,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -330,7 +332,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -357,7 +359,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.ENVIRONMENT,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -392,7 +394,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -428,7 +430,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -454,7 +456,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -484,7 +486,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -494,7 +496,7 @@ describe("Officer Routes Integration Tests", () => {
         "Test Maintainer",
         "maintainer@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -538,7 +540,7 @@ describe("Officer Routes Integration Tests", () => {
         "Test Maintainer 2",
         "maintainer2@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -564,7 +566,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -592,7 +594,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -602,7 +604,7 @@ describe("Officer Routes Integration Tests", () => {
         "Test Maintainer 3",
         "maintainer3@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -651,7 +653,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo1.jpg"] }
       );
 
@@ -660,7 +662,7 @@ describe("Officer Routes Integration Tests", () => {
         { name: "Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Description", Photos: ["photo2.jpg"] }
       );
 

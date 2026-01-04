@@ -28,6 +28,7 @@ import type { OfficerReport } from '../services/reportService';
 import { ReportDetailsSection } from '../components/report-details/ReportDetailsSection';
 import { StatusFilter } from '../components/filters';
 import type { ReportStatus, StatusOption } from '../components/filters';
+import { formatStatus, formatString } from '../utils/StringUtils';
 
 // Status options for citizens viewing their own reports
 const CITIZEN_STATUSES: StatusOption[] = [
@@ -247,7 +248,7 @@ export default function MyCitizenReportsPage() {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={report.category || 'Other'}
+                    label={formatString(report.category) || 'Other'}
                     size="small"
                     sx={{
                       bgcolor: getCategoryColor(report.category),
@@ -258,7 +259,7 @@ export default function MyCitizenReportsPage() {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={report.state || 'PENDING'}
+                    label={formatStatus(report.state) || 'PENDING'}
                     color={getStateColor(report.state)}
                     size="small"
                     variant="outlined"

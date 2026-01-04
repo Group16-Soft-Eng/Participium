@@ -57,7 +57,7 @@ describe("Internal Message Controller Integration Tests", () => {
       "Officer",
       "officer@example.com",
       "Password@123",
-      [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+      [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
     );
     testOfficerId = officer.id;
 
@@ -65,7 +65,7 @@ describe("Internal Message Controller Integration Tests", () => {
       "Test Maintainer",
       "maintainer@example.com",
       "Password@123",
-      [OfficeType.INFRASTRUCTURE],
+      [OfficeType.ARCHITECTURAL_BARRIERS],
       true
     );
     testMaintainerId = maintainer.id;
@@ -75,7 +75,7 @@ describe("Internal Message Controller Integration Tests", () => {
       { name: "Test Location", Coordinates: { longitude: 10.0, latitude: 45.0 } },
       user,
       false,
-      OfficeType.INFRASTRUCTURE,
+      OfficeType.ARCHITECTURAL_BARRIERS,
       { Description: "Test description", Photos: ["photo1.jpg"] }
     );
     testReportId = report.id;
@@ -264,7 +264,7 @@ describe("Internal Message Controller Integration Tests", () => {
         "Officer",
         "another@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const sender: internalMessageController.Participant = {
@@ -286,7 +286,7 @@ describe("Internal Message Controller Integration Tests", () => {
         "Another Maintainer",
         "another.maintainer@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -337,7 +337,7 @@ describe("Internal Message Controller Integration Tests", () => {
         "Another Maintainer",
         "another.maintainer@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -362,7 +362,7 @@ describe("Internal Message Controller Integration Tests", () => {
         "Officer",
         "another@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const sender: internalMessageController.Participant = {
@@ -532,7 +532,7 @@ describe("Internal Message Controller Integration Tests", () => {
         { name: "Location 2", Coordinates: { longitude: 11.0, latitude: 46.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Second description", Photos: ["photo2.jpg"] }
       );
 

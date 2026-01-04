@@ -216,7 +216,7 @@ describe("OfficerRepository", () => {
         { 
           id: 1, 
           username: "officer1",
-          roles: [{ officeType: OfficeType.INFRASTRUCTURE }] 
+          roles: [{ officeType: OfficeType.ARCHITECTURAL_BARRIERS }] 
         }
       ];
 
@@ -228,24 +228,24 @@ describe("OfficerRepository", () => {
 
       mockOfficerRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
-      const result = await officerRepository.getOfficersByOffice(OfficeType.INFRASTRUCTURE);
+      const result = await officerRepository.getOfficersByOffice(OfficeType.ARCHITECTURAL_BARRIERS);
 
       expect(mockOfficerRepo.createQueryBuilder).toHaveBeenCalledWith("officer");
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith("officer.roles", "role");
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(
         "role.officeType = :office",
-        { office: OfficeType.INFRASTRUCTURE }
+        { office: OfficeType.ARCHITECTURAL_BARRIERS }
       );
       expect(result).toEqual(mockOfficers);
     });
 
     it("should handle different office types", async () => {
       const officeTypes = [
-        OfficeType.ENVIRONMENT,
-        OfficeType.SAFETY,
-        OfficeType.TRANSPORT,
-        OfficeType.SANITATION,
-        OfficeType.ORGANIZATION,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
+        OfficeType.WATER_SUPPLY,
+        OfficeType.WASTE,
         OfficeType.OTHER
       ];
 
@@ -281,7 +281,7 @@ describe("OfficerRepository", () => {
       const mockFinalOfficer = {
         ...mockCreatedOfficer,
         roles: [
-          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE }
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ARCHITECTURAL_BARRIERS }
         ]
       };
 
@@ -299,7 +299,7 @@ describe("OfficerRepository", () => {
         "User",
         "new@test.com",
         "plainPassword",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       expect(authService.hashPassword).toHaveBeenCalledWith("plainPassword");
@@ -325,7 +325,7 @@ describe("OfficerRepository", () => {
         ...mockCreatedOfficer,
         roles: [
           { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null },
-          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ENVIRONMENT }
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS }
         ]
       };
 
@@ -345,7 +345,7 @@ describe("OfficerRepository", () => {
         "password",
         [
           { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT }
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS }
         ]
       );
 
@@ -420,8 +420,8 @@ describe("OfficerRepository", () => {
         "filtered@test.com",
         "password",
         [
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE },
-          { role: null as any, office: OfficeType.ENVIRONMENT }
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS },
+          { role: null as any, office: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS }
         ]
       );
 
@@ -496,7 +496,7 @@ describe("OfficerRepository", () => {
         "Name",
         "new@test.com",
         OfficerRole.TECHNICAL_OFFICE_STAFF,
-        OfficeType.INFRASTRUCTURE
+        OfficeType.ARCHITECTURAL_BARRIERS
       );
 
       expect(mockOfficerRepo.save).toHaveBeenCalledWith(
@@ -560,7 +560,7 @@ describe("OfficerRepository", () => {
         ...mockOfficer,
         roles: [
           { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null },
-          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ENVIRONMENT }
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS }
         ]
       };
 
@@ -579,7 +579,7 @@ describe("OfficerRepository", () => {
 
       const result = await officerRepository.updateOfficerRoles(1, [
         { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
-        { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT }
+        { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS }
       ]);
 
       expect(mockDeleteQueryBuilder.delete).toHaveBeenCalled();

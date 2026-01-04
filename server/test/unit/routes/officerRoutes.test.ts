@@ -93,8 +93,8 @@ describe("OfficerRoutes", () => {
   describe("GET /officers/OfficerByOfficeType/:officeType", () => {
     it("should return officers filtered by office type", async () => {
       const mockOfficers = [
-        { id: 1, username: "officer1", roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }] },
-        { id: 2, username: "officer2", roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }] }
+        { id: 1, username: "officer1", roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }] },
+        { id: 2, username: "officer2", roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }] }
       ];
       (officerController.getAllOfficersByOfficeType as jest.Mock).mockResolvedValue(mockOfficers);
 
@@ -117,12 +117,12 @@ describe("OfficerRoutes", () => {
 
     it("should handle all valid office types", async () => {
       const officeTypes = [
-        OfficeType.INFRASTRUCTURE,
-        OfficeType.ENVIRONMENT,
-        OfficeType.SAFETY,
-        OfficeType.SANITATION,
-        OfficeType.TRANSPORT,
-        OfficeType.ORGANIZATION
+        OfficeType.ARCHITECTURAL_BARRIERS,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.WATER_SUPPLY,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
+        OfficeType.WASTE
       ];
 
       for (const officeType of officeTypes) {

@@ -4,20 +4,29 @@ import MapClusterView from '../Map/MapComponents/MapClusterView';
 import type { Report } from '../Map/types/report';
 import { Box, List, ListItem, Paper, Typography, Chip, CircularProgress, Button } from '@mui/material';
 import { getAllReports } from '../Map/mapApi/mapApi';
-import { getToken, getUserFromToken } from '../services/auth';
+import { getRole, getToken, getUserFromToken } from '../services/auth';
 import SearchBar from '../components/SearchBar';
 import { followReport, getFollowedReports, unfollowReport } from '../API/API';
 
-const getCategoryColor = (cat: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
-  switch (cat) {
-    case 'infrastructure': return 'secondary';
-    case 'environment': return 'success';
-    case 'safety': return 'error';
-    case 'sanitation': return 'warning';
-    case 'transport': return 'info';
-    default: return 'default';
+const getCategoryColor = (cat: string): string => {
+  switch (cat) {  
+    case 'water_supply': return '#8b5cf6';
+    case 'architectural_barriers': return '#10b981';
+    case 'public_lighting': return '#ef4444';
+    case 'waste': return '#f59e0b';
+    case 'road_signs_and_traffic_lights': return '#3b82f6';
+    case 'roads_and_urban_furnishings': return '#955c51ff';
+    case 'public_green_areas_and_playgrounds': return '#af589bff';
+    default: return '#6b7280';
   }
 };
+
+const formatString = (str: string): string => {
+  return str
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
 const MapPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -73,7 +82,9 @@ const MapPage: React.FC = () => {
       try {
         setLoading(true);
         const data = await getAllReports();
+        if (getRole() == 'citizen') {
         const followedReports = await getFollowedReports();
+        }
 
         let visibleReports = data.filter(report => {
           const status = report.status?.toLowerCase();
@@ -246,7 +257,7 @@ const MapPage: React.FC = () => {
                           {authorName}
                           {` • ${new Date(r.createdAt).toLocaleDateString()}`}
                         </Typography>
-                        {(r.author?.username != username && (
+                        {(r.author?.username != username && getRole() == 'citizen' && (
                           <>
                             {!followedReports.some(report => report.id == r.id) && <Button variant='contained' sx={{ marginLeft: 2 }} onClick={() => follow(r.id)}>Follow</Button>}
                             {followedReports.some(report => report.id == r.id) && <Button variant='outlined' sx={{ marginLeft: 2 }} onClick={() => unfollow(r.id)}>Unfollow</Button>}
@@ -254,7 +265,7 @@ const MapPage: React.FC = () => {
                         ))
                         }
                       </Box>
-                      <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
+                      <Chip label={formatString(r.category)} size="small" sx={{ backgroundColor: getCategoryColor(r.category), color: 'white' }} />
                     </Paper>
                   </ListItem>
                 );

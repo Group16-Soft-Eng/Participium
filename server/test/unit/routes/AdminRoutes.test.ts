@@ -163,7 +163,7 @@ describe("AdminRoutes", () => {
       const mockOfficer = {
         id: 1,
         username: "officer1",
-        roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       };
       (officerController.addRoleToOfficer as jest.Mock).mockResolvedValue(mockOfficer);
 
@@ -172,11 +172,11 @@ describe("AdminRoutes", () => {
         .send({
           officerId: 1,
           role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          officeType: OfficeType.INFRASTRUCTURE
+          officeType: OfficeType.ARCHITECTURAL_BARRIERS
         });
 
       expect(res.status).toBe(200);
-      expect(officerController.addRoleToOfficer).toHaveBeenCalledWith(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.INFRASTRUCTURE);
+      expect(officerController.addRoleToOfficer).toHaveBeenCalledWith(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.ARCHITECTURAL_BARRIERS);
       expect(res.body).toEqual(mockOfficer);
     });
 
@@ -185,7 +185,7 @@ describe("AdminRoutes", () => {
         .patch("/admin/role/add")
         .send({
           role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          officeType: OfficeType.INFRASTRUCTURE
+          officeType: OfficeType.ARCHITECTURAL_BARRIERS
         });
 
       expect(res.status).toBe(400);
@@ -197,7 +197,7 @@ describe("AdminRoutes", () => {
         .patch("/admin/role/add")
         .send({
           officerId: 1,
-          officeType: OfficeType.INFRASTRUCTURE
+          officeType: OfficeType.ARCHITECTURAL_BARRIERS
         });
 
       expect(res.status).toBe(400);
@@ -224,7 +224,7 @@ describe("AdminRoutes", () => {
         .send({
           officerId: 1,
           role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          officeType: OfficeType.INFRASTRUCTURE
+          officeType: OfficeType.ARCHITECTURAL_BARRIERS
         });
 
       expect(res.status).toBeGreaterThanOrEqual(400);
@@ -245,11 +245,11 @@ describe("AdminRoutes", () => {
         .send({
           officerId: 1,
           role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          officeType: OfficeType.INFRASTRUCTURE
+          officeType: OfficeType.ARCHITECTURAL_BARRIERS
         });
 
       expect(res.status).toBe(200);
-      expect(officerController.removeRoleFromOfficer).toHaveBeenCalledWith(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.INFRASTRUCTURE);
+      expect(officerController.removeRoleFromOfficer).toHaveBeenCalledWith(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.ARCHITECTURAL_BARRIERS);
       expect(res.body).toEqual(mockOfficer);
     });
 
@@ -258,7 +258,7 @@ describe("AdminRoutes", () => {
         .patch("/admin/role/remove")
         .send({
           role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          officeType: OfficeType.INFRASTRUCTURE
+          officeType: OfficeType.ARCHITECTURAL_BARRIERS
         });
 
       expect(res.status).toBe(400);
@@ -270,7 +270,7 @@ describe("AdminRoutes", () => {
         .patch("/admin/role/remove")
         .send({
           officerId: 1,
-          officeType: OfficeType.INFRASTRUCTURE
+          officeType: OfficeType.ARCHITECTURAL_BARRIERS
         });
 
       expect(res.status).toBe(400);
@@ -297,7 +297,7 @@ describe("AdminRoutes", () => {
         .send({
           officerId: 1,
           role: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          officeType: OfficeType.INFRASTRUCTURE
+          officeType: OfficeType.ARCHITECTURAL_BARRIERS
         });
 
       expect(res.status).toBeGreaterThanOrEqual(400);
@@ -339,7 +339,7 @@ describe("AdminRoutes", () => {
         id: 1,
         name: "Maintainer One",
         email: "maintainer@example.com",
-        categories: [OfficeType.INFRASTRUCTURE],
+        categories: [OfficeType.ARCHITECTURAL_BARRIERS],
         active: true
       };
       (maintainerController.createMaintainer as jest.Mock).mockResolvedValue(mockMaintainer);
@@ -350,7 +350,7 @@ describe("AdminRoutes", () => {
           name: "Maintainer One",
           email: "maintainer@example.com",
           password: "password123",
-          categories: [OfficeType.INFRASTRUCTURE],
+          categories: [OfficeType.ARCHITECTURAL_BARRIERS],
           active: true
         });
 
@@ -359,7 +359,7 @@ describe("AdminRoutes", () => {
         "Maintainer One",
         "maintainer@example.com",
         "password123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
       expect(res.body).toEqual(mockMaintainer);
@@ -371,7 +371,7 @@ describe("AdminRoutes", () => {
         .send({
           email: "maintainer@example.com",
           password: "password123",
-          categories: [OfficeType.INFRASTRUCTURE]
+          categories: [OfficeType.ARCHITECTURAL_BARRIERS]
         });
 
       expect(res.status).toBe(400);
@@ -384,7 +384,7 @@ describe("AdminRoutes", () => {
         .send({
           name: "Maintainer One",
           password: "password123",
-          categories: [OfficeType.INFRASTRUCTURE]
+          categories: [OfficeType.ARCHITECTURAL_BARRIERS]
         });
 
       expect(res.status).toBe(400);
@@ -397,7 +397,7 @@ describe("AdminRoutes", () => {
         .send({
           name: "Maintainer One",
           email: "maintainer@example.com",
-          categories: [OfficeType.INFRASTRUCTURE]
+          categories: [OfficeType.ARCHITECTURAL_BARRIERS]
         });
 
       expect(res.status).toBe(400);
@@ -422,7 +422,7 @@ describe("AdminRoutes", () => {
         id: 1,
         name: "Maintainer One",
         email: "maintainer@example.com",
-        categories: [OfficeType.INFRASTRUCTURE],
+        categories: [OfficeType.ARCHITECTURAL_BARRIERS],
         active: true
       };
       (maintainerController.createMaintainer as jest.Mock).mockResolvedValue(mockMaintainer);
@@ -433,7 +433,7 @@ describe("AdminRoutes", () => {
           name: "Maintainer One",
           email: "maintainer@example.com",
           password: "password123",
-          categories: [OfficeType.INFRASTRUCTURE]
+          categories: [OfficeType.ARCHITECTURAL_BARRIERS]
         });
 
       expect(res.status).toBe(200);
@@ -441,7 +441,7 @@ describe("AdminRoutes", () => {
         "Maintainer One",
         "maintainer@example.com",
         "password123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
     });
@@ -456,7 +456,7 @@ describe("AdminRoutes", () => {
           name: "Maintainer One",
           email: "maintainer@example.com",
           password: "password123",
-          categories: [OfficeType.INFRASTRUCTURE]
+          categories: [OfficeType.ARCHITECTURAL_BARRIERS]
         });
 
       expect(res.status).toBeGreaterThanOrEqual(400);
@@ -470,7 +470,7 @@ describe("AdminRoutes", () => {
         id: 1,
         name: "Updated Maintainer",
         email: "maintainer@example.com",
-        categories: [OfficeType.ENVIRONMENT],
+        categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS],
         active: false
       };
       (maintainerController.updateMaintainer as jest.Mock).mockResolvedValue(mockMaintainer);
@@ -479,14 +479,14 @@ describe("AdminRoutes", () => {
         .patch("/maintainers/1")
         .send({
           name: "Updated Maintainer",
-          categories: [OfficeType.ENVIRONMENT],
+          categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS],
           active: false
         });
 
       expect(res.status).toBe(200);
       expect(maintainerController.updateMaintainer).toHaveBeenCalledWith(1, {
         name: "Updated Maintainer",
-        categories: [OfficeType.ENVIRONMENT],
+        categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS],
         active: false
       });
       expect(res.body).toEqual(mockMaintainer);

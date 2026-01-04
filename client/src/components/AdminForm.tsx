@@ -2,6 +2,7 @@ import { Alert, Button, Container, FormControl, Grid, InputLabel, MenuItem, Sele
 import './Forms.css';
 import { useActionState, useEffect, useState } from "react";
 import { getAvailableOfficerTypes, maintainerRegister, officerRegister } from "../API/API";
+import { formatString } from "../utils/StringUtils.ts";
 
 interface AdminFormProps {
     readonly setShowForm: (show: boolean) => void;
@@ -10,13 +11,6 @@ interface AdminFormProps {
 type RegisterState =
     | { success: boolean }
     | { error: string };
-
-function formatString(str: string) {
-  return str
-    .replaceAll('_', " ")            
-    .toLowerCase()                 
-    .replaceAll(/\b\w/g, c => c.toUpperCase());
-}
 
 export function AdminForm({ setShowForm }: AdminFormProps) {
     const [officeTypes, setOfficeTypes] = useState<string[]>([]);

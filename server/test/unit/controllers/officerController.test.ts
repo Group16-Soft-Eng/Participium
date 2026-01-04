@@ -51,7 +51,7 @@ describe("OfficerController Unit Tests", () => {
         email: "luigi@office.com",
         password: "password123",
         roles: [
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }
         ]
       };
 
@@ -85,7 +85,7 @@ describe("OfficerController Unit Tests", () => {
         password: "password456",
         roles: [
           { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT }
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS }
         ]
       };
 
@@ -173,8 +173,8 @@ describe("OfficerController Unit Tests", () => {
   describe("getAllOfficersByOfficeType", () => {
     it("dovrebbe restituire officers filtrati per officeType", async () => {
       const mockOfficers = [
-        { id: 1, office: OfficeType.INFRASTRUCTURE },
-        { id: 2, office: OfficeType.INFRASTRUCTURE }
+        { id: 1, office: OfficeType.ARCHITECTURAL_BARRIERS },
+        { id: 2, office: OfficeType.ARCHITECTURAL_BARRIERS }
       ];
       mockOfficerRepo.getOfficersByOffice = jest.fn().mockResolvedValue(mockOfficers);
       (mapOfficerDAOToDTO as jest.Mock).mockImplementation((officer) => officer);
@@ -186,7 +186,7 @@ describe("OfficerController Unit Tests", () => {
     });
 
     it("dovrebbe gestire diverse categorie di officeType", async () => {
-      const categories = [OfficeType.ENVIRONMENT, OfficeType.SAFETY, OfficeType.TRANSPORT];
+      const categories = [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.ROADS_AND_URBAN_FURNISHINGS, OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS];
       
       for (const category of categories) {
         const mockOfficers = [{ id: 1, office: category }];
@@ -222,7 +222,7 @@ describe("OfficerController Unit Tests", () => {
         surname: "Bianchi",
         email: "luigi@office.com",
         roles: [
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }
         ]
       };
       
@@ -273,7 +273,7 @@ describe("OfficerController Unit Tests", () => {
       const mockCurrentOfficer = {
         id: 1,
         roles: [
-          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE }
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ARCHITECTURAL_BARRIERS }
         ]
       };
       const mockUpdatedOfficer = {
@@ -300,14 +300,14 @@ describe("OfficerController Unit Tests", () => {
       const mockCurrentOfficer = {
         id: 1,
         roles: [
-          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE }
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ARCHITECTURAL_BARRIERS }
         ]
       };
 
       mockOfficerRepo.getOfficerById = jest.fn().mockResolvedValue(mockCurrentOfficer);
       (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockCurrentOfficer);
 
-      const result = await addRoleToOfficer(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.INFRASTRUCTURE);
+      const result = await addRoleToOfficer(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.ARCHITECTURAL_BARRIERS);
 
       expect(mockOfficerRepo.updateOfficerRoles).not.toHaveBeenCalled();
       expect(result).toEqual(mockCurrentOfficer);
@@ -340,7 +340,7 @@ describe("OfficerController Unit Tests", () => {
       const mockCurrentOfficer = {
         id: 1,
         roles: [
-          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE },
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ARCHITECTURAL_BARRIERS },
           { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null }
         ]
       };
@@ -356,9 +356,9 @@ describe("OfficerController Unit Tests", () => {
       mockReportRepo.resetPartialReportsAssignmentByOfficer = jest.fn().mockResolvedValue(undefined);
       (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedOfficer);
 
-      const result = await removeRoleFromOfficer(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.INFRASTRUCTURE);
+      const result = await removeRoleFromOfficer(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.ARCHITECTURAL_BARRIERS);
 
-      expect(mockReportRepo.resetPartialReportsAssignmentByOfficer).toHaveBeenCalledWith(1, OfficeType.INFRASTRUCTURE);
+      expect(mockReportRepo.resetPartialReportsAssignmentByOfficer).toHaveBeenCalledWith(1, OfficeType.ARCHITECTURAL_BARRIERS);
       expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalled();
       expect(result).toEqual(mockUpdatedOfficer);
     });
@@ -382,7 +382,7 @@ describe("OfficerController Unit Tests", () => {
       mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
       (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedOfficer);
 
-      const result = await removeRoleFromOfficer(1, OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficeType.INFRASTRUCTURE);
+      const result = await removeRoleFromOfficer(1, OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficeType.ARCHITECTURAL_BARRIERS);
 
       expect(mockReportRepo.resetPartialReportsAssignmentByOfficer).not.toHaveBeenCalled();
       expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalled();
@@ -398,7 +398,7 @@ describe("OfficerController Unit Tests", () => {
       mockOfficerRepo.updateOfficerRoles = jest.fn().mockResolvedValue(undefined);
       (mapOfficerDAOToDTO as jest.Mock).mockReturnValue(mockCurrentOfficer);
 
-      await removeRoleFromOfficer(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.INFRASTRUCTURE);
+      await removeRoleFromOfficer(1, OfficerRole.TECHNICAL_OFFICE_STAFF, OfficeType.ARCHITECTURAL_BARRIERS);
 
       expect(mockOfficerRepo.updateOfficerRoles).toHaveBeenCalledWith(1, []);
     });
@@ -409,7 +409,7 @@ describe("OfficerController Unit Tests", () => {
       const mockReport = {
         id: 1,
         state: ReportState.PENDING,
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
       const mockOfficer = {
         id: 1,
@@ -523,7 +523,7 @@ describe("OfficerController Unit Tests", () => {
         id: 1,
         assignedOfficerId: 1,
         state: ReportState.PENDING,
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
       const mockUpdatedReport = {
         ...mockReport,
@@ -544,7 +544,7 @@ describe("OfficerController Unit Tests", () => {
       const result = await reviewDoc(1, 1, ReportState.ASSIGNED);
 
       expect(mockReportRepo.updateReportState).toHaveBeenCalledWith(1, ReportState.ASSIGNED, undefined);
-      expect(mockOfficerRepo.getOfficersByOffice).toHaveBeenCalledWith(OfficeType.INFRASTRUCTURE);
+      expect(mockOfficerRepo.getOfficersByOffice).toHaveBeenCalledWith(OfficeType.ARCHITECTURAL_BARRIERS);
       expect(mockReportRepo.assignReportToOfficer).toHaveBeenCalledWith(1, 2);
       expect(mockNotificationRepo.createStatusChangeNotification).toHaveBeenCalled();
     });
@@ -554,7 +554,7 @@ describe("OfficerController Unit Tests", () => {
         id: 1,
         assignedOfficerId: null,
         state: ReportState.PENDING,
-        category: OfficeType.ENVIRONMENT
+        category: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS
       };
       const mockUpdatedReport = { ...mockReport, state: ReportState.ASSIGNED };
       const mockOfficers = [
@@ -578,7 +578,7 @@ describe("OfficerController Unit Tests", () => {
         id: 1,
         assignedOfficerId: null,
         state: ReportState.PENDING,
-        category: OfficeType.SAFETY
+        category: OfficeType.ROADS_AND_URBAN_FURNISHINGS
       };
       const mockUpdatedReport = { ...mockReport, state: ReportState.ASSIGNED };
 
@@ -683,7 +683,7 @@ describe("OfficerController Unit Tests", () => {
       const mockOfficer = {
         id: 1,
         roles: [
-          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE }
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ARCHITECTURAL_BARRIERS }
         ]
       };
 
@@ -727,8 +727,8 @@ describe("OfficerController Unit Tests", () => {
       const mockOfficer = {
         id: 1,
         roles: [
-          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.INFRASTRUCTURE },
-          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ENVIRONMENT },
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.ARCHITECTURAL_BARRIERS },
+          { officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF, officeType: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS },
           { officerRole: OfficerRole.MUNICIPAL_ADMINISTRATOR, officeType: null }
         ]
       };
