@@ -196,7 +196,6 @@ const MapPage: React.FC = () => {
         p: 2,
         bgcolor: '#f8f9fa'
       }} elevation={2}>
-        {logged ?
           <>
             <Typography variant="h6" gutterBottom>
               {searchCoords ? `Reports near location (${filteredReports.length})` : `Reports on map (${reports.length})`}
@@ -256,7 +255,7 @@ const MapPage: React.FC = () => {
                           {authorName}
                           {` • ${new Date(r.createdAt).toLocaleDateString()}`}
                         </Typography>
-                        {(r.author?.username != username && getRole() == 'citizen' && (
+                        {(logged && r.author?.username != username && (
                           <>
                             {!followedReports.some(report => report.id == r.id) && <Button variant='contained' sx={{ marginLeft: 2 }} onClick={() => follow(r.id)}>Follow</Button>}
                             {followedReports.some(report => report.id == r.id) && <Button variant='outlined' sx={{ marginLeft: 2 }} onClick={() => unfollow(r.id)}>Unfollow</Button>}
@@ -271,8 +270,6 @@ const MapPage: React.FC = () => {
               })}
             </List>
           </>
-          : <Typography variant="h6" gutterBottom>Please log in to view the available reports.</Typography>
-        }
       </Paper>
     </Box>
   );
