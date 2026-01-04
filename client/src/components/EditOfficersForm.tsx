@@ -15,6 +15,7 @@ const CATEGORY_COLORS: Record<string, string> = {
     road_signs_and_traffic_lights: '#3b82f6',
     roads_and_urban_furnishings: '#955c51ff',
     public_green_areas_and_playgrounds: '#af589bff',
+    organization: '#79005dff',
     other: '#6b7280',
 };
 
@@ -139,7 +140,7 @@ const EditMaintainerDialog: React.FC<EditMaintainerDialogProps> = ({ open, onClo
                                         onChange={(e) => setNewCategory(e.target.value)}
                                         disabled={allCategories.length === 0}
                                     >
-                                        {allCategories.filter(c => !currentCategories.includes(c)).map(category => (
+                                        {allCategories.filter(c => !currentCategories.includes(c) && c !== "organization").map(category => (
                                             <MenuItem key={category} value={category}>{formatString(category)}</MenuItem>
                                         ))}
                                     </Select>
@@ -192,7 +193,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
     const [officeTypes, setOfficeTypes] = useState<string[]>([]);
     const [officerRoles, setOfficerRoles] = useState<string[]>([]);
 
-    const allCategories: ReportCategory[] = ['water_supply', 'architectural_barriers', 'public_lighting', 'waste', 'road_signs_and_traffic_lights', 'roads_and_urban_furnishings', 'public_green_areas_and_playgrounds', 'other'];
+    const allCategories: ReportCategory[] = ['water_supply', 'architectural_barriers', 'public_lighting', 'waste', 'road_signs_and_traffic_lights', 'roads_and_urban_furnishings', 'public_green_areas_and_playgrounds', 'organization', 'other'];
 
 
     const [currentRoles, setCurrentRoles] = useState<Officer['roles']>([]);
@@ -208,7 +209,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
         const fetchOfficerTypes = async () => {
             try {
                 const types = await getAvailableOfficerTypes();
-                const fetchedOfficeTypes = types.officeTypes || [];
+                const fetchedOfficeTypes = (types.officeTypes || []).filter((office: string) => office !== 'organization');
 
                 const fetchedOfficerRoles = (types.officerRoles || []).filter((role: string) => role !== 'external_maintainer');
 
