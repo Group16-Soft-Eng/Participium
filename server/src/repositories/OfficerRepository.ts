@@ -11,8 +11,8 @@ import { UserRepository } from "./UserRepository";
 import { hashPassword } from "@services/authService";
 
 export class OfficerRepository {
-  private repo: Repository<OfficerDAO>;
-  private roleRepo: Repository<RoleDAO>;
+  private readonly repo: Repository<OfficerDAO>;
+  private readonly roleRepo: Repository<RoleDAO>;
 
   constructor() {
     this.repo = AppDataSource.getRepository(OfficerDAO);

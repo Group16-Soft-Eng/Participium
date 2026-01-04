@@ -76,6 +76,9 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
             ) {
                 officer.roles[0].office = "organization";
             }
+            else if (officer.roles[0].office === "organization") {
+                officer.roles[0].office = "other";
+            }
             return officer;
         };
 
@@ -169,7 +172,7 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                             <InputLabel id="office-select-label">{role === 'technical_office_staff' ? 'Office' : 'Category'}</InputLabel>
                             <Grid size={12}>
                                 <Select id="office" name="office" label={role === 'technical_office_staff' ? 'Office' : 'Category'} variant="outlined" fullWidth defaultValue={''} required> {
-                                    officeTypes.map((type) => (<MenuItem key={type} value={type}>{formatString(type)}</MenuItem>
+                                    officeTypes.filter((type) => type !== "organization").map((type) => (<MenuItem key={type} value={type}>{formatString(type)}</MenuItem>
                                     ))
                                 }
                                 </Select>

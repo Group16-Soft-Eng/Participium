@@ -1,17 +1,12 @@
 import { Router } from "express";
 import {
-  createOfficer,
-  getAllOfficers,
-  updateOfficer,
   addRoleToOfficer,
   removeRoleFromOfficer,
-  deleteOfficer
 } from "@controllers/officerController";
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware";
-import { OfficerFromJSON, OfficerToJSON } from "@dto/Officer";
+import { OfficerToJSON } from "@dto/Officer";
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
-import { createMaintainer, getAllMaintainers, getMaintainersByCategory, updateMaintainer, assignReportToMaintainer, updateReportStatusByMaintainer } from "@controllers/maintainerController";
 
 const router = Router({ mergeParams: true });
 

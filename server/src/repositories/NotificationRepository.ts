@@ -2,7 +2,6 @@ import { AppDataSource } from "@database";
 import { Repository } from "typeorm";
 import { NotificationDAO } from "@dao/NotificationDAO";
 import { ReportDAO } from "@dao/ReportDAO";
-import { UserDAO } from "@dao/UserDAO";
 
 import { FollowRepository } from "@repositories/FollowRepository";
 import { UserRepository } from "@repositories/UserRepository";
@@ -13,11 +12,11 @@ function formatString(input: string): string {
     return input
       .toLowerCase()
       .replaceAll('_', ' ')
-      .replace(/\b\w/g, c => c.toUpperCase());
+      .replaceAll(/\b\w/g, c => c.toUpperCase());
   }
 
 export class NotificationRepository {
-    private repo: Repository<NotificationDAO>;
+    private readonly repo: Repository<NotificationDAO>;
 
     constructor() {
         this.repo = AppDataSource.getRepository(NotificationDAO);
@@ -63,7 +62,7 @@ export class NotificationRepository {
         const repo = new FollowRepository();
         const users = await repo.getFollowersOfReport(report.id);
         const dto = users.map(u => mapUserDAOToDTO(u));
-        if (!report.author || report.author.id === undefined) return null; // anonymous
+        if (report.author?.id === undefined) return null; // anonymous
         let lastNotification: NotificationDAO | null = null;
         const userRepo = new UserRepository();
         
@@ -92,7 +91,7 @@ export class NotificationRepository {
 
     //? come sopra, ma per Message (non per cambio di stato) da officer a user
     async createOfficerMessageNotification(report: ReportDAO, officerId: number, text: string): Promise<NotificationDAO | null> {
-        if (!report.author || report.author.id === undefined) return null; // anonymous
+        if (report.author?.id === undefined) return null; // anonymous
         const msg = `Message from officer #${officerId}: ${text}`;
         const notification = await this.repo.save({
             userId: report.author.id,

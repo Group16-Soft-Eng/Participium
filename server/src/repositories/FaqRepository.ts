@@ -3,7 +3,7 @@ import { AppDataSource } from "@database";
 import { FaqDAO } from "@dao/FaqDAO";
 
 export class FaqRepository {
-  private repo: Repository<FaqDAO>;
+  private readonly repo: Repository<FaqDAO>;
 
   constructor() {
     this.repo = AppDataSource.getRepository(FaqDAO);

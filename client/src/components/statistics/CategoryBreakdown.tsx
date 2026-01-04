@@ -1,12 +1,8 @@
 import { Card, CardContent, Typography, Box, LinearProgress, Chip } from '@mui/material';
 import type { ReactElement } from 'react';
 import {
-  Build,
-  Park,
-  Security,
   CleaningServices,
   DirectionsBus,
-  Business,
   Category as CategoryIcon,
   WaterDrop,
   Lightbulb,
@@ -67,7 +63,7 @@ const categoryConfig: Record<string, { label: string; icon: ReactElement; color:
   }
 };
 
-export function CategoryBreakdown({ data }: CategoryBreakdownProps) {
+export function CategoryBreakdown({ data }: Readonly<CategoryBreakdownProps>) {
   const totalReports = data.reduce((sum, item) => sum + item.count, 0);
 
   return (

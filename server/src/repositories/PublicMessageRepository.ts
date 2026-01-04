@@ -3,7 +3,7 @@ import { Repository } from "typeorm";
 import { PublicMessageDAO } from "@models/dao/PublicMessageDAO";
 
 export class PublicMessageRepository {
-  private repo: Repository<PublicMessageDAO>;
+  private readonly repo: Repository<PublicMessageDAO>;
 
   constructor() {
     this.repo = AppDataSource.getRepository(PublicMessageDAO);

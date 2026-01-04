@@ -80,7 +80,7 @@ export class ReportDAO {
   @AfterLoad()
   private _fillFollowerUsers() {
     if (this.followers) {
-      this.followerUsers = this.followers.map((f) => f.user).filter(Boolean) as UserDAO[];
+      this.followerUsers = this.followers.map((f) => f.user).filter(Boolean);
     }
   }
 }

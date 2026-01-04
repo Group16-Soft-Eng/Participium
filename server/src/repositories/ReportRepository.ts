@@ -7,7 +7,7 @@ import { ReportState } from "@models/enums/ReportState";
 import { findOrThrowNotFound } from "@utils/utils";
 
 export class ReportRepository {
-  private repo: Repository<ReportDAO>;
+  private readonly repo: Repository<ReportDAO>;
 
   constructor() {
     this.repo = AppDataSource.getRepository(ReportDAO);
@@ -205,7 +205,7 @@ export class ReportRepository {
 
     return result.map(r => ({
       category: r.category as OfficeType,
-      count: parseInt(r.count, 10)
+      count: Number.parseInt(r.count, 10)
     }));
   }
 
@@ -220,7 +220,7 @@ export class ReportRepository {
 
     return result.map(r => ({
       state: r.state,
-      count: parseInt(r.count, 10)
+      count: Number.parseInt(r.count, 10)
     }));
   }
 
@@ -254,7 +254,7 @@ export class ReportRepository {
 
     return result.map(r => ({
       period: r.period,
-      count: parseInt(r.count, 10)
+      count: Number.parseInt(r.count, 10)
     }));
   }
 

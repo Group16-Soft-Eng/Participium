@@ -9,7 +9,7 @@ import SearchBar from '../components/SearchBar';
 import { followReport, getFollowedReports, unfollowReport } from '../API/API';
 
 const getCategoryColor = (cat: string): string => {
-  switch (cat) {  
+  switch (cat) {
     case 'water_supply': return '#8b5cf6';
     case 'architectural_barriers': return '#10b981';
     case 'public_lighting': return '#ef4444';
@@ -62,11 +62,11 @@ const MapPage: React.FC = () => {
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
     const reportId = searchParams.get('reportId');
-    
+
     if (lat && lng) {
-      const latitude = parseFloat(lat);
-      const longitude = parseFloat(lng);
-      if (!isNaN(latitude) && !isNaN(longitude)) {
+      const latitude = Number.parseFloat(lat);
+      const longitude = Number.parseFloat(lng);
+      if (!Number.isNaN(latitude) && !Number.isNaN(longitude)) {
         setInitialCenter([latitude, longitude]);
         setInitialZoom(17);
         setHighlightLocation([latitude, longitude]);
@@ -83,7 +83,7 @@ const MapPage: React.FC = () => {
         setLoading(true);
         const data = await getAllReports();
         if (getRole() == 'citizen') {
-        const followedReports = await getFollowedReports();
+           await getFollowedReports();
         }
 
         let visibleReports = data.filter(report => {
@@ -101,7 +101,6 @@ const MapPage: React.FC = () => {
         }
 
         setReports(visibleReports);
-        setFollowedReports(followedReports);
       } catch (error) {
         console.error(error);
         setReports([]);

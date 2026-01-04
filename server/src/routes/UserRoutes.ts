@@ -4,7 +4,7 @@ import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import { UserFromJSON } from "@dto/User";
 import { uploadAvatar } from "@middlewares/uploadMiddleware";
 import { sendMail } from "@services/mailService";
-import { generateOtp, verifyOtp, clearOtp } from "@services/otpService";
+import { generateOtp, verifyOtp } from "@services/otpService";
 import { FollowRepository } from "@repositories/FollowRepository";
 import { getReport, getMyReports } from "@controllers/reportController";
 
@@ -56,7 +56,7 @@ router.patch("/me", authenticateToken, uploadAvatar, async (req, res, next) => {
     // body may come in req.body (fields) and req.file (avatar)
     const telegramUsername = req.body.telegramUsername ?? undefined;
     const emailNotificationsRaw = req.body.emailNotifications;
-    const emailNotifications = emailNotificationsRaw !== undefined ? (emailNotificationsRaw === "true" || emailNotificationsRaw === true) : undefined;
+    const emailNotifications = emailNotificationsRaw === undefined ? undefined : (emailNotificationsRaw === "true" || emailNotificationsRaw === true);
     const avatarPath = req.file ? `/uploads/avatars/${(req.file as any).filename}` : undefined;
     
     const updated = await updateMyProfile(userId, {

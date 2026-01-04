@@ -8,10 +8,8 @@ import { mapOfficerDAOToDTO, mapReportDAOToDTO } from "@services/mapperService";
 import { ReportState } from "@models/enums/ReportState";
 import { NotificationRepository } from "@repositories/NotificationRepository";
 import { FollowRepository } from "@repositories/FollowRepository";
-import { NotificationDAO } from "@models/dao/NotificationDAO"
 import { OfficerRole } from "@models/enums/OfficerRole";
 import { OfficeType } from "@models/enums/OfficeType";
-import { stat } from "node:fs";
 import { sendTelegramMessage } from "@services/telegramService";
 
 export async function getAllOfficers(): Promise<Officer[]> {
@@ -106,7 +104,7 @@ export async function addRoleToOfficer(
   // Tipizza office come OfficeType | null
   const currentRoles: { role: OfficerRole; office: OfficeType | null }[] =
     (current.roles ?? []).map(r => ({
-      role: r.officerRole as OfficerRole,
+      role: r.officerRole,
       office: (r.officeType as OfficeType) ?? null, // normalizza a null
     }));
 
@@ -140,7 +138,7 @@ export async function removeRoleFromOfficer(
   const filtered: { role: OfficerRole; office: OfficeType | null }[] =
     (current.roles ?? [])
       .map(r => ({
-        role: r.officerRole as OfficerRole,
+        role: r.officerRole,
         office: (r.officeType as OfficeType) ?? null
       }))
       .filter(r => !(r.role === role && r.office === office));
@@ -187,14 +185,6 @@ export async function getAssignedReports(officerId: number): Promise<Report[]> {
   return reports.map(r => mapReportDAOToDTO(r, opts));
 }
 
-//? added for story 8 (officer can see all assigned reports, also the non-pending ones)
-export async function getAllAssignedReportsOfficer(officerId: number): Promise<Report[]> {
-  const reportRepo = new ReportRepository();
-  const reports = await reportRepo.getReportsByAssignedOfficer(officerId);
-  const opts = { includeFollowerUsers: false };
-  return reports.map(r => mapReportDAOToDTO(r, opts));
-}
-
 export async function reviewDoc(officerId: number, idDoc: number, state: ReportState, reason?: string): Promise<Report> {
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
@@ -217,7 +207,7 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
 
   // Se stato ASSIGNED, scegli un officer dell'ufficio della categoria
   if (state === ReportState.ASSIGNED) {
-    const officers = await officerRepo.getOfficersByOffice(report.category as OfficeType);
+    const officers = await officerRepo.getOfficersByOffice(report.category);
 
     if (officers.length > 0) {
       // preferisci officer con almeno un ruolo TECHNICAL_OFFICE_STAFF
@@ -226,11 +216,7 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
     }
   }
   await notificationRepo.createStatusChangeNotification(updatedReport);
-  //manda messaggio telegram a tutti quelli che seguono il report
-  /*
-  if (updatedReport.author) {
-    await sendTelegramMessage(updatedReport.author.id, `Your report (ID: ${updatedReport.id}), title "${updatedReport.title}" status has been updated to '${updatedReport.state}'.`);
-  }*/
+
  const followRepo = new FollowRepository();
   const followers = await followRepo.getFollowersOfReport(updatedReport.id, "telegram");
   for (const follower of followers ?? []) {

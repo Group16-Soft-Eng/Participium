@@ -10,6 +10,7 @@ export type ReportCategory =
   | 'road_signs_and_traffic_lights' 
   | 'roads_and_urban_furnishings'
   | 'public_green_areas_and_playgrounds'
+  | 'organization'
   | 'other';
 
 export const ALL_CATEGORIES: { value: ReportCategory; label: string; color: string }[] = [
@@ -20,6 +21,7 @@ export const ALL_CATEGORIES: { value: ReportCategory; label: string; color: stri
   { value: 'road_signs_and_traffic_lights', label: 'Road Signs and Traffic Lights', color: '#3b82f6' },
   { value: 'roads_and_urban_furnishings', label: 'Roads and Urban Furnishings', color: '#955c51ff' },
   { value: 'public_green_areas_and_playgrounds', label: 'Public Green Areas and Playgrounds', color: '#af589bff' },
+  { value: 'organization', label: 'Organization', color: '#79005dff' },
   { value: 'other', label: 'Other', color: '#6b7280' },
 ];
 

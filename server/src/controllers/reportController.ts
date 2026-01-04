@@ -82,7 +82,7 @@ export async function uploadReport(reportDto: Report, files: Express.Multer.File
   }
   
   const createdReport = await reportRepo.createReport(
-    reportDto.title!,
+    reportDto.title,
     normalizedLocation,
     author,
     reportDto.anonymity || false,
@@ -94,7 +94,7 @@ export async function uploadReport(reportDto: Report, files: Express.Multer.File
   );
 
   //? PT-16: if not anonymous, make the author follow their own report
-  if (author && author.id) {
+  if (author?.id) {
     await followRepo.follow(author.id, createdReport.id);
   }
   

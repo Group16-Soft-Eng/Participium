@@ -1,6 +1,6 @@
 import {Router} from "express";
 import {loginOfficer, loginUser,loginMaintainer, getUserByTelegramUsername} from "@controllers/authController"
-import { authenticateToken, requireUserType } from "@middlewares/authMiddleware";
+import { authenticateToken } from "@middlewares/authMiddleware";
 import { deleteSession } from "@services/authService";
 const router = Router({mergeParams : true});
 
