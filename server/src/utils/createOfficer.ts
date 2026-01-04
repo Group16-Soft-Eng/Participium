@@ -24,7 +24,7 @@ async function createOfficer() {
       roles: [
         {
           officerRole: OfficerRole.TECHNICAL_OFFICE_STAFF,
-          officeType: OfficeType.INFRASTRUCTURE, // Infrastructure issues
+          officeType: OfficeType.ARCHITECTURAL_BARRIERS, // Architectural barriers issues
         } as Partial<RoleDAO>,
       ],
     };
@@ -58,7 +58,7 @@ async function createOfficer() {
       surname: officerData.surname,
       email: officerData.email,
       password: hashedPassword,
-      roles: officerData.roles as Partial<RoleDAO>[],
+      roles: officerData.roles,
     });
 
     await officerRepo.save(newOfficer);

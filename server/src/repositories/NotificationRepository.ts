@@ -2,15 +2,21 @@ import { AppDataSource } from "@database";
 import { Repository } from "typeorm";
 import { NotificationDAO } from "@dao/NotificationDAO";
 import { ReportDAO } from "@dao/ReportDAO";
-import { UserDAO } from "@dao/UserDAO";
 
 import { FollowRepository } from "@repositories/FollowRepository";
 import { UserRepository } from "@repositories/UserRepository";
 import { mapUserDAOToDTO } from "@services/mapperService";
 import { sendNotificationEmail } from "@services/notificationService";
 
+function formatString(input: string): string {
+    return input
+      .toLowerCase()
+      .replaceAll('_', ' ')
+      .replaceAll(/\b\w/g, c => c.toUpperCase());
+  }
+
 export class NotificationRepository {
-    private repo: Repository<NotificationDAO>;
+    private readonly repo: Repository<NotificationDAO>;
 
     constructor() {
         this.repo = AppDataSource.getRepository(NotificationDAO);
@@ -56,7 +62,7 @@ export class NotificationRepository {
         const repo = new FollowRepository();
         const users = await repo.getFollowersOfReport(report.id);
         const dto = users.map(u => mapUserDAOToDTO(u));
-        if (!report.author || report.author.id === undefined) return null; // anonymous
+        if (report.author?.id === undefined) return null; // anonymous
         let lastNotification: NotificationDAO | null = null;
         const userRepo = new UserRepository();
         
@@ -85,7 +91,7 @@ export class NotificationRepository {
 
     //? come sopra, ma per Message (non per cambio di stato) da officer a user
     async createOfficerMessageNotification(report: ReportDAO, officerId: number, text: string): Promise<NotificationDAO | null> {
-        if (!report.author || report.author.id === undefined) return null; // anonymous
+        if (report.author?.id === undefined) return null; // anonymous
         const msg = `Message from officer #${officerId}: ${text}`;
         const notification = await this.repo.save({
             userId: report.author.id,
@@ -112,9 +118,9 @@ export class NotificationRepository {
     private buildStatusMessage(report: ReportDAO): string {
         // stato == declined (scrivo perchè in risposta, prendendo la reason implementata in precedenza)
         if (report.state === "DECLINED") {
-            return `Your report #${report.id} has been DECLINED. Reason: ${report.reason || "N/A"}`;
+            return `Your report ${report.title} has been DECLINED. Reason: ${report.reason || "N/A"}`;
         }
         // stato diverso da declined -> segno nuovo stato
-        return `Your report #${report.id} is now ${report.state}`;
+        return `Your report ${report.title} is now ${formatString(report.state)}`;
     }
 }

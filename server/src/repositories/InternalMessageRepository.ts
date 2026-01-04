@@ -3,7 +3,7 @@ import { Repository } from "typeorm";
 import { InternalMessageDAO } from "@dao/InternalMessageDAO";
 
 export class InternalMessageRepository {
-  private repo: Repository<InternalMessageDAO>;
+  private readonly repo: Repository<InternalMessageDAO>;
 
   constructor() {
     this.repo = AppDataSource.getRepository(InternalMessageDAO);

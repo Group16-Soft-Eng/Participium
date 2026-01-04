@@ -33,7 +33,7 @@ export async function initializeDatabase() {
 
         // usa il tipo richiesto da OfficerRepository.createOfficer
         const roles: { role: OfficerRole; office: OfficeType | null }[] = [
-          { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null }
+          { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: OfficeType.ORGANIZATION }
         ];
 
         await officerRepo.createOfficer(

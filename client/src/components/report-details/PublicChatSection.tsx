@@ -18,7 +18,7 @@ interface Message {
   createdAt: string;
 }
 
-export function PublicChatSection({ reportId }: PublicChatSectionProps) {
+export function PublicChatSection({ reportId }: Readonly<PublicChatSectionProps>) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -233,7 +233,7 @@ export function PublicChatSection({ reportId }: PublicChatSectionProps) {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={isOfficer ? "Reply to the citizen..." : "Send a message to the operators..."}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             disabled={loading}
           />
           <IconButton
@@ -252,7 +252,7 @@ export function PublicChatSection({ reportId }: PublicChatSectionProps) {
   );
 }
 
-function EmptyState({ isOfficer }: { isOfficer: boolean }) {
+function EmptyState({ isOfficer }: Readonly<{ isOfficer: boolean }>) {
   return (
     <Box
       display="flex"
@@ -278,7 +278,7 @@ interface MessageBubbleProps {
   currentUserName: string;
 }
 
-function MessageBubble({ message, formatTime, currentUserIsOfficer, currentUserName }: MessageBubbleProps) {
+function MessageBubble({ message, formatTime, currentUserIsOfficer, currentUserName }: Readonly<MessageBubbleProps>) {
   const getInitials = (name?: string) => {
     if (!name || typeof name !== "string") return "";
 

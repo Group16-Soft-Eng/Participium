@@ -48,27 +48,27 @@ describe("OfficerRoutes", () => {
         { id: 1, title: "Report 1", state: ReportState.ASSIGNED },
         { id: 2, title: "Report 2", state: ReportState.IN_PROGRESS }
       ];
-      (officerController.getAllAssignedReportsOfficer as jest.Mock).mockResolvedValue(mockReports);
+      (officerController.getAssignedReports as jest.Mock).mockResolvedValue(mockReports);
 
       const res = await request(app).get("/officers/assigned");
 
-      expect(officerController.getAllAssignedReportsOfficer).toHaveBeenCalledWith(1);
+      expect(officerController.getAssignedReports).toHaveBeenCalledWith(1);
       expect(res.status).toBe(200);
       expect(res.body).toEqual(mockReports);
     });
 
     it("should return empty array when officer has no assigned reports", async () => {
-      (officerController.getAllAssignedReportsOfficer as jest.Mock).mockResolvedValue([]);
+      (officerController.getAssignedReports as jest.Mock).mockResolvedValue([]);
 
       const res = await request(app).get("/officers/assigned");
 
-      expect(officerController.getAllAssignedReportsOfficer).toHaveBeenCalledWith(1);
+      expect(officerController.getAssignedReports).toHaveBeenCalledWith(1);
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
     });
 
-    it("should handle errors in getAllAssignedReportsOfficer", async () => {
-      (officerController.getAllAssignedReportsOfficer as jest.Mock).mockRejectedValue(
+    it("should handle errors in getAssignedReports", async () => {
+      (officerController.getAssignedReports as jest.Mock).mockRejectedValue(
         new Error("Failed to retrieve reports")
       );
 
@@ -79,7 +79,7 @@ describe("OfficerRoutes", () => {
     });
 
     it("should handle database errors gracefully", async () => {
-      (officerController.getAllAssignedReportsOfficer as jest.Mock).mockRejectedValue(
+      (officerController.getAssignedReports as jest.Mock).mockRejectedValue(
         new Error("Database connection error")
       );
 
@@ -93,8 +93,8 @@ describe("OfficerRoutes", () => {
   describe("GET /officers/OfficerByOfficeType/:officeType", () => {
     it("should return officers filtered by office type", async () => {
       const mockOfficers = [
-        { id: 1, username: "officer1", roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }] },
-        { id: 2, username: "officer2", roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }] }
+        { id: 1, username: "officer1", roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }] },
+        { id: 2, username: "officer2", roles: [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }] }
       ];
       (officerController.getAllOfficersByOfficeType as jest.Mock).mockResolvedValue(mockOfficers);
 
@@ -117,12 +117,12 @@ describe("OfficerRoutes", () => {
 
     it("should handle all valid office types", async () => {
       const officeTypes = [
-        OfficeType.INFRASTRUCTURE,
-        OfficeType.ENVIRONMENT,
-        OfficeType.SAFETY,
-        OfficeType.SANITATION,
-        OfficeType.TRANSPORT,
-        OfficeType.ORGANIZATION
+        OfficeType.ARCHITECTURAL_BARRIERS,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.WATER_SUPPLY,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
+        OfficeType.WASTE
       ];
 
       for (const officeType of officeTypes) {

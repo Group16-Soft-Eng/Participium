@@ -4,20 +4,29 @@ import MapClusterView from '../Map/MapComponents/MapClusterView';
 import type { Report } from '../Map/types/report';
 import { Box, List, ListItem, Paper, Typography, Chip, CircularProgress, Button } from '@mui/material';
 import { getAllReports } from '../Map/mapApi/mapApi';
-import { getToken, getUserFromToken } from '../services/auth';
+import { getRole, getToken, getUserFromToken } from '../services/auth';
 import SearchBar from '../components/SearchBar';
 import { followReport, getFollowedReports, unfollowReport } from '../API/API';
 
-const getCategoryColor = (cat: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
+const getCategoryColor = (cat: string): string => {
   switch (cat) {
-    case 'infrastructure': return 'secondary';
-    case 'environment': return 'success';
-    case 'safety': return 'error';
-    case 'sanitation': return 'warning';
-    case 'transport': return 'info';
-    default: return 'default';
+    case 'water_supply': return '#8b5cf6';
+    case 'architectural_barriers': return '#10b981';
+    case 'public_lighting': return '#ef4444';
+    case 'waste': return '#f59e0b';
+    case 'road_signs_and_traffic_lights': return '#3b82f6';
+    case 'roads_and_urban_furnishings': return '#955c51ff';
+    case 'public_green_areas_and_playgrounds': return '#af589bff';
+    default: return '#6b7280';
   }
 };
+
+const formatString = (str: string): string => {
+  return str
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
 const MapPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -53,11 +62,11 @@ const MapPage: React.FC = () => {
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
     const reportId = searchParams.get('reportId');
-    
+
     if (lat && lng) {
-      const latitude = parseFloat(lat);
-      const longitude = parseFloat(lng);
-      if (!isNaN(latitude) && !isNaN(longitude)) {
+      const latitude = Number.parseFloat(lat);
+      const longitude = Number.parseFloat(lng);
+      if (!Number.isNaN(latitude) && !Number.isNaN(longitude)) {
         setInitialCenter([latitude, longitude]);
         setInitialZoom(17);
         setHighlightLocation([latitude, longitude]);
@@ -73,7 +82,9 @@ const MapPage: React.FC = () => {
       try {
         setLoading(true);
         const data = await getAllReports();
-        const followedReports = await getFollowedReports();
+        if (getRole() == 'citizen') {
+           await getFollowedReports();
+        }
 
         let visibleReports = data.filter(report => {
           const status = report.status?.toLowerCase();
@@ -90,7 +101,6 @@ const MapPage: React.FC = () => {
         }
 
         setReports(visibleReports);
-        setFollowedReports(followedReports);
       } catch (error) {
         console.error(error);
         setReports([]);
@@ -253,7 +263,7 @@ const MapPage: React.FC = () => {
                         ))
                         }
                       </Box>
-                      <Chip label={r.category} size="small" color={getCategoryColor(r.category)} />
+                      <Chip label={formatString(r.category)} size="small" sx={{ backgroundColor: getCategoryColor(r.category), color: 'white' }} />
                     </Paper>
                   </ListItem>
                 );

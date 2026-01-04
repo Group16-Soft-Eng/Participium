@@ -72,12 +72,14 @@ const createClusterIcon = (count: number) => {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  infrastructure: '#8b5cf6',
-  environment: '#10b981',
-  safety: '#ef4444',
-  sanitation: '#f59e0b',
-  transport: '#3b82f6',
-  other: '#6b7280',
+    water_supply: '#8b5cf6',
+    architectural_barriers: '#10b981',
+    public_lighting: '#ef4444',
+    waste: '#f59e0b',
+    road_signs_and_traffic_lights: '#3b82f6',
+    roads_and_urban_furnishings: '#955c51ff',
+    public_green_areas_and_playgrounds: '#af589bff',
+    other: '#6b7280',
 };
 
 const createSimpleIcon = (category?: string) => {

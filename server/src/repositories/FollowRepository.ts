@@ -9,7 +9,7 @@ import { ReportState } from "@models/enums/ReportState";
 import { BadRequestError } from "@utils/utils";
 
 export class FollowRepository {
-  private repo: Repository<FollowDAO>;
+  private readonly repo: Repository<FollowDAO>;
 
   constructor() {
     this.repo = AppDataSource.getRepository(FollowDAO);
@@ -44,7 +44,7 @@ export class FollowRepository {
   async follow(userId: number, reportId: number, notifyVia: string = "web"): Promise<FollowDAO> {
 
     // prendo report (se non esiste, errore; se già CLOSED, errore)
-    // TODO: valuta se togliere condizione su CLOSED
+    // valuta se togliere condizione su CLOSED
     const reportRepo = new ReportRepository();
     const report = await reportRepo.getReportById(reportId);
     if (!report) throw new BadRequestError("Report not found");

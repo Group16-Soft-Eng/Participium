@@ -5,15 +5,17 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { CategoryFilter } from './filters';
 import type { ReportCategory } from './filters';
 import { getAllMaintainers, getAllOfficers, getAvailableOfficerTypes, updateOfficer, deleteOfficer, updateMaintainers, deleteMaintainer } from '../API/API';
+import { formatString } from '../utils/StringUtils';
 
 const CATEGORY_COLORS: Record<string, string> = {
-    infrastructure: '#8b5cf6',
-    environment: '#10b981',
-    safety: '#ef4444',
-    sanitation: '#f59e0b',
-    transport: '#3b82f6',
-    public: '#955c51ff',
-    organization: '#af589bff',
+    water_supply: '#8b5cf6',
+    architectural_barriers: '#10b981',
+    public_lighting: '#ef4444',
+    waste: '#f59e0b',
+    road_signs_and_traffic_lights: '#3b82f6',
+    roads_and_urban_furnishings: '#955c51ff',
+    public_green_areas_and_playgrounds: '#af589bff',
+    organization: '#79005dff',
     other: '#6b7280',
 };
 
@@ -46,13 +48,6 @@ type Maintainer = {
 
 interface EditOfficersFormProps {
     setShowForm: (show: boolean) => void;
-}
-
-function formatString(str: string) {
-    return str
-        .replaceAll("_", " ")
-        .toLowerCase()
-        .replaceAll(/\b\w/g, c => c.toUpperCase());
 }
 
 interface EditMaintainerDialogProps {
@@ -145,7 +140,7 @@ const EditMaintainerDialog: React.FC<EditMaintainerDialogProps> = ({ open, onClo
                                         onChange={(e) => setNewCategory(e.target.value)}
                                         disabled={allCategories.length === 0}
                                     >
-                                        {allCategories.filter(c => !currentCategories.includes(c)).map(category => (
+                                        {allCategories.filter(c => !currentCategories.includes(c) && c !== "organization").map(category => (
                                             <MenuItem key={category} value={category}>{formatString(category)}</MenuItem>
                                         ))}
                                     </Select>
@@ -198,7 +193,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
     const [officeTypes, setOfficeTypes] = useState<string[]>([]);
     const [officerRoles, setOfficerRoles] = useState<string[]>([]);
 
-    const allCategories: ReportCategory[] = ['infrastructure', 'environment', 'safety', 'sanitation', 'transport', 'public', 'other'];
+    const allCategories: ReportCategory[] = ['water_supply', 'architectural_barriers', 'public_lighting', 'waste', 'road_signs_and_traffic_lights', 'roads_and_urban_furnishings', 'public_green_areas_and_playgrounds', 'organization', 'other'];
 
 
     const [currentRoles, setCurrentRoles] = useState<Officer['roles']>([]);
@@ -214,7 +209,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
         const fetchOfficerTypes = async () => {
             try {
                 const types = await getAvailableOfficerTypes();
-                const fetchedOfficeTypes = types.officeTypes || [];
+                const fetchedOfficeTypes = (types.officeTypes || []).filter((office: string) => office !== 'organization');
 
                 const fetchedOfficerRoles = (types.officerRoles || []).filter((role: string) => role !== 'external_maintainer');
 

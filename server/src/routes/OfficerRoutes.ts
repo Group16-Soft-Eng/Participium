@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {createOfficer,retrieveDocs,reviewDoc, getAllOfficers, updateOfficer, assignReportToOfficer, getAllAssignedReportsOfficer, getAllOfficersByOfficeType, deleteOfficer} from "@controllers/officerController"
+import {createOfficer,reviewDoc, getAllOfficers, updateOfficer, getAllOfficersByOfficeType, deleteOfficer, getAssignedReports} from "@controllers/officerController"
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import {OfficerFromJSON,OfficerToJSON} from "@dto/Officer";
 import { OfficerRole } from "@models/enums/OfficerRole";
@@ -67,7 +67,7 @@ router.delete("/:id", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_
 router.get("/assigned", authenticateToken, requireUserType([OfficerRole.TECHNICAL_OFFICE_STAFF, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async (req, res, next) => {
     try {
         const officerId = (req as any).user?.id;
-        const result = await getAllAssignedReportsOfficer(officerId);
+        const result = await getAssignedReports(officerId);
         res.status(200).json(result);
     } catch (error) {
         next(error);
@@ -78,7 +78,7 @@ router.get("/assigned", authenticateToken, requireUserType([OfficerRole.TECHNICA
 // Get officers by office type
 router.get("/OfficerByOfficeType/:officeType", authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMINISTRATOR, OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER]), async(req, res, next) =>{
     try{
-        const officeType = req.params.officeType as string;
+        const officeType = req.params.officeType;
         if(!officeType){
             return res.status(400).json({error: "officeType query parameter is required"});
         }

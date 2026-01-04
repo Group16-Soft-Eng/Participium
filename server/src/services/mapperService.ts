@@ -6,8 +6,6 @@ import { ReportDAO } from "@dao/ReportDAO";
 import { User } from "@dto/User";
 import { Officer } from "@dto/Officer";
 import { Report } from "@dto/Report";
-import { OfficerRole as ModelOfficerRole } from "@models/enums/OfficerRole";
-import { OfficeType as ModelOfficeType } from "@models/enums/OfficeType";
 
 // Usa gli enum del DTO per tipizzare il risultato
 import { OfficerRole as DtoOfficerRole } from "@dto/OfficerRole";
@@ -49,10 +47,10 @@ export function mapOfficerDAOToDTO(dao: OfficerDAO): Officer {
     email: dao.email,
     roles: (dao.roles ?? []).map(r => ({
       // converte tra enum di model -> enum di dto
-      role: (r.officerRole as unknown as DtoOfficerRole) as DtoOfficerRole,
+      role: (r.officerRole as unknown as DtoOfficerRole),
       office: r.officeType == null
         ? null
-        : ((r.officeType as unknown as DtoOfficeType) as DtoOfficeType)
+        : ((r.officeType as unknown as DtoOfficeType))
     })),
     password: undefined
   };

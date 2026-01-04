@@ -3,21 +3,25 @@ import { FormControl, InputLabel, Select, MenuItem, Chip, Box } from '@mui/mater
 import type { SelectChangeEvent } from '@mui/material';
 
 export type ReportCategory = 
-  | 'infrastructure' 
-  | 'environment' 
-  | 'safety' 
-  | 'sanitation' 
-  | 'transport' 
+  | 'water_supply' 
+  | 'architectural_barriers' 
+  | 'public_lighting' 
+  | 'waste' 
+  | 'road_signs_and_traffic_lights' 
+  | 'roads_and_urban_furnishings'
+  | 'public_green_areas_and_playgrounds'
   | 'organization'
   | 'other';
 
 export const ALL_CATEGORIES: { value: ReportCategory; label: string; color: string }[] = [
-  { value: 'infrastructure', label: 'Infrastructure', color: '#8b5cf6' },
-  { value: 'environment', label: 'Environment', color: '#10b981' },
-  { value: 'safety', label: 'Safety', color: '#ef4444' },
-  { value: 'sanitation', label: 'Sanitation', color: '#f59e0b' },
-  { value: 'transport', label: 'Transport', color: '#3b82f6' },
-  { value: 'organization', label: 'Organization', color: '#af589bff' },
+  { value: 'water_supply', label: 'Water Supply - Drinking Water', color: '#8b5cf6' },
+  { value: 'architectural_barriers', label: 'Architectural Barriers', color: '#10b981' },
+  { value: 'public_lighting', label: 'Public Lighting', color: '#ef4444' },
+  { value: 'waste', label: 'Waste', color: '#f59e0b' },
+  { value: 'road_signs_and_traffic_lights', label: 'Road Signs and Traffic Lights', color: '#3b82f6' },
+  { value: 'roads_and_urban_furnishings', label: 'Roads and Urban Furnishings', color: '#955c51ff' },
+  { value: 'public_green_areas_and_playgrounds', label: 'Public Green Areas and Playgrounds', color: '#af589bff' },
+  { value: 'organization', label: 'Organization', color: '#79005dff' },
   { value: 'other', label: 'Other', color: '#6b7280' },
 ];
 

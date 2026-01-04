@@ -77,14 +77,14 @@ export async function loginOfficerByMail(email: string, password: string): Promi
   // officer: isStaff=true, type=array di ruoli
   const roles: OfficerRole[] = (officer.roles ?? []).map(r => r.officerRole);
   const token = generateToken({
-    id: officer.id!,
-    username: officer.username!,
+    id: officer.id,
+    username: officer.username,
     isStaff: true,
     type: roles,           // sempre array
     sessionType: "web"
   });
 
-  await saveSession(officer.id!, token, "web");
+  await saveSession(officer.id, token, "web");
   return token;
 }
 export async function loginOfficerByUsername(username: string, password: string): Promise<string> {
@@ -92,7 +92,7 @@ export async function loginOfficerByUsername(username: string, password: string)
   const officers = await officerRepo.getOfficersByUsername(username);
   const officer = officers[0];
 
-  if (!officer || !officer.password) {
+  if (!officer?.password) {
     throw new UnauthorizedError("Invalid username or password");
   }
 
@@ -103,14 +103,14 @@ export async function loginOfficerByUsername(username: string, password: string)
 
   const roles: OfficerRole[] = (officer.roles ?? []).map(r => r.officerRole);
   const token = generateToken({
-    id: officer.id!,
-    username: officer.username!,
+    id: officer.id,
+    username: officer.username,
     isStaff: true,
     type: roles,           // sempre array
     sessionType: "web"
   });
 
-  await saveSession(officer.id!, token, "web");
+  await saveSession(officer.id, token, "web");
   return token;
 }
 
@@ -162,13 +162,13 @@ export async function loginMaintainerByMail(email: string, password: string) {
 
   // maintainer: isStaff=true, type=array di ruoli
   const token = generateToken({
-    id: maintainer.id!,
-    username: maintainer.name!,
+    id: maintainer.id,
+    username: maintainer.name,
     isStaff: true,
     type: [OfficerRole.MAINTAINER],           // sempre array
     sessionType: "web"
   });
-  await saveSession(maintainer.id!, token, "web");
+  await saveSession(maintainer.id, token, "web");
   return token;
 }
 
@@ -186,13 +186,13 @@ export async function loginMaintainerByUsername(username: string, password: stri
     throw new UnauthorizedError("Invalid username or password");
   }
   const token = generateToken({
-    id: maintainer.id!,
-    username: maintainer.name!,
+    id: maintainer.id,
+    username: maintainer.name,
     isStaff: true,
     type: [OfficerRole.MAINTAINER],           // sempre array
     sessionType: "web"
   });
-  await saveSession(maintainer.id!, token, "web");
+  await saveSession(maintainer.id, token, "web");
   return token;
 }
 

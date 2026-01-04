@@ -172,16 +172,16 @@ describe("ReportRepository", () => {
   describe("getReportsByCategory", () => {
     it("should return reports filtered by category", async () => {
       const mockReports = [
-        { id: 1, title: "Report 1", category: OfficeType.INFRASTRUCTURE },
-        { id: 2, title: "Report 2", category: OfficeType.INFRASTRUCTURE }
+        { id: 1, title: "Report 1", category: OfficeType.ARCHITECTURAL_BARRIERS },
+        { id: 2, title: "Report 2", category: OfficeType.ARCHITECTURAL_BARRIERS }
       ];
 
       mockReportRepo.find.mockResolvedValue(mockReports as any);
 
-      const result = await reportRepository.getReportsByCategory(OfficeType.INFRASTRUCTURE);
+      const result = await reportRepository.getReportsByCategory(OfficeType.ARCHITECTURAL_BARRIERS);
 
       expect(mockReportRepo.find).toHaveBeenCalledWith({
-        where: { category: OfficeType.INFRASTRUCTURE },
+        where: { category: OfficeType.ARCHITECTURAL_BARRIERS },
         relations: ["author"]
       });
       expect(result).toEqual(mockReports);
@@ -189,12 +189,12 @@ describe("ReportRepository", () => {
 
     it("should handle all office types", async () => {
       const categories = [
-        OfficeType.INFRASTRUCTURE,
-        OfficeType.ENVIRONMENT,
-        OfficeType.SAFETY,
-        OfficeType.SANITATION,
-        OfficeType.TRANSPORT,
-        OfficeType.ORGANIZATION,
+        OfficeType.ARCHITECTURAL_BARRIERS,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.WATER_SUPPLY,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
+        OfficeType.WASTE,
         OfficeType.OTHER
       ];
 
@@ -277,7 +277,7 @@ describe("ReportRepository", () => {
         },
         author: mockAuthor,
         anonymity: false,
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         document: {
           Description: "Test description",
           Photos: ["photo1.jpg", "photo2.jpg"]
@@ -296,7 +296,7 @@ describe("ReportRepository", () => {
         },
         mockAuthor,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         {
           Description: "Test description",
           Photos: ["photo1.jpg", "photo2.jpg"]
@@ -311,7 +311,7 @@ describe("ReportRepository", () => {
         },
         author: mockAuthor,
         anonymity: false,
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         document: {
           Description: "Test description",
           Photos: ["photo1.jpg", "photo2.jpg"]
@@ -328,7 +328,7 @@ describe("ReportRepository", () => {
         title: "Anonymous Report",
         author: null,
         anonymity: true,
-        category: OfficeType.ENVIRONMENT,
+        category: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
         state: ReportState.PENDING
       };
 
@@ -339,7 +339,7 @@ describe("ReportRepository", () => {
         { name: "Location" },
         null,
         true,
-        OfficeType.ENVIRONMENT,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
         { Description: "Test" }
       );
 
@@ -393,7 +393,7 @@ describe("ReportRepository", () => {
         {},
         null,
         false,
-        OfficeType.SAFETY,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
         {}
       );
 
@@ -488,7 +488,7 @@ describe("ReportRepository", () => {
 
       mockReportRepo.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
-      await reportRepository.resetPartialReportsAssignmentByOfficer(5, OfficeType.INFRASTRUCTURE);
+      await reportRepository.resetPartialReportsAssignmentByOfficer(5, OfficeType.ARCHITECTURAL_BARRIERS);
 
       expect(mockReportRepo.createQueryBuilder).toHaveBeenCalled();
       expect(mockQueryBuilder.update).toHaveBeenCalledWith(ReportDAO);
@@ -503,7 +503,7 @@ describe("ReportRepository", () => {
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'category = :office',
-        { office: OfficeType.INFRASTRUCTURE }
+        { office: OfficeType.ARCHITECTURAL_BARRIERS }
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'state IN (:...states)',
@@ -519,9 +519,9 @@ describe("ReportRepository", () => {
 
     it("should handle different office types", async () => {
       const officeTypes = [
-        OfficeType.ENVIRONMENT,
-        OfficeType.SAFETY,
-        OfficeType.TRANSPORT
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS
       ];
 
       for (const officeType of officeTypes) {

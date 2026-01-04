@@ -2,6 +2,7 @@ import { Alert, Button, Container, FormControl, Grid, InputLabel, MenuItem, Sele
 import './Forms.css';
 import { useActionState, useEffect, useState } from "react";
 import { getAvailableOfficerTypes, maintainerRegister, officerRegister } from "../API/API";
+import { formatString } from "../utils/StringUtils.ts";
 
 interface AdminFormProps {
     readonly setShowForm: (show: boolean) => void;
@@ -10,13 +11,6 @@ interface AdminFormProps {
 type RegisterState =
     | { success: boolean }
     | { error: string };
-
-function formatString(str: string) {
-  return str
-    .replaceAll('_', " ")            
-    .toLowerCase()                 
-    .replaceAll(/\b\w/g, c => c.toUpperCase());
-}
 
 export function AdminForm({ setShowForm }: AdminFormProps) {
     const [officeTypes, setOfficeTypes] = useState<string[]>([]);
@@ -81,6 +75,9 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                 officerRole === "municipal_administrator"
             ) {
                 officer.roles[0].office = "organization";
+            }
+            else if (officer.roles[0].office === "organization") {
+                officer.roles[0].office = "other";
             }
             return officer;
         };
@@ -175,7 +172,7 @@ export function AdminForm({ setShowForm }: AdminFormProps) {
                             <InputLabel id="office-select-label">{role === 'technical_office_staff' ? 'Office' : 'Category'}</InputLabel>
                             <Grid size={12}>
                                 <Select id="office" name="office" label={role === 'technical_office_staff' ? 'Office' : 'Category'} variant="outlined" fullWidth defaultValue={''} required> {
-                                    officeTypes.map((type) => (<MenuItem key={type} value={type}>{formatString(type)}</MenuItem>
+                                    officeTypes.filter((type) => type !== "organization").map((type) => (<MenuItem key={type} value={type}>{formatString(type)}</MenuItem>
                                     ))
                                 }
                                 </Select>
