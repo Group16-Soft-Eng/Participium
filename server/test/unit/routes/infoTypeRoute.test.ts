@@ -9,11 +9,12 @@ describe("OfficeType Enum", () => {
     expect(OfficeType.WASTE).toBe("waste");
     expect(OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS).toBe("road_signs_and_traffic_lights");
     expect(OfficeType.ROADS_AND_URBAN_FURNISHINGS).toBe("roads_and_urban_furnishings");
+    expect(OfficeType.ORGANIZATION).toBe("organization");
     expect(OfficeType.OTHER).toBe("other");
   });
 
-  it("should have 8 values", () => {
-    expect(Object.keys(OfficeType)).toHaveLength(8);
+  it("should have 9 values", () => {
+    expect(Object.keys(OfficeType)).toHaveLength(9);
   });
 
   it("should allow usage as type", () => {
