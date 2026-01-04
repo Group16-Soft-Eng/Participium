@@ -7,6 +7,7 @@ import { assignReportToMaintainer, getMaintainersByCategory, getMyAssignedReport
 import type { Maintainer, OfficerReport } from '../services/reportService';
 import { CategoryFilter, StatusFilter, TECHNICAL_STATUSES } from '../components/filters';
 import type { ReportCategory, ReportStatus } from '../components/filters';
+import { formatStatus, formatString } from '../utils/StringUtils';
 
 // Category colors matching the map (kept small and consistent)
 const CATEGORY_COLORS: Record<string, string> = {
@@ -157,11 +158,6 @@ const TechnicalOfficerPage: React.FC = () => {
   const categories = Object.keys(grouped);
   const singleCategory = categories.length === 1 ? categories[0] : null;
 
-  function formatStatus(str: string) {
-    return str
-      .replaceAll('_', " ");
-  }
-
   const renderStatusChip = (state?: string, hasMaintainer?: boolean) => {
     const effective = state === 'ASSIGNED' && !hasMaintainer ? 'AWAITING_MAINTAINER' : state;
     const label = effective === 'AWAITING_MAINTAINER' ? 'AWAITING_MAINTAINER' : (effective || 'ASSIGNED');
@@ -202,12 +198,7 @@ const TechnicalOfficerPage: React.FC = () => {
 
     return false;
   };
-  function formatString(str: string) {
-    return str
-      .replaceAll('_', " ")
-      .toLowerCase()
-      .replaceAll(/\b\w/g, c => c.toUpperCase());
-  }
+  
   return (
     <Box>
       <Paper sx={{ p: 3, mb: 3 }} elevation={1}>

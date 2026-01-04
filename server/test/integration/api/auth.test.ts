@@ -219,7 +219,7 @@ describe("Auth API Integration Tests", () => {
         surname,
         email,
         plainPassword,
-          [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+          [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const res = await request(app)
@@ -423,7 +423,7 @@ describe("Auth API Integration Tests", () => {
       const name = "Test Maintainer";
       const email = "maintainer@example.com";
       const plainPassword = "Maintainer@1234";
-      const categories = [OfficeType.INFRASTRUCTURE];
+      const categories = [OfficeType.ARCHITECTURAL_BARRIERS];
 
       await maintainerRepo.createMaintainer(name, email, plainPassword, categories, true);
 
@@ -441,7 +441,7 @@ describe("Auth API Integration Tests", () => {
       const name = "Multi Maintainer";
       const email = "multi@example.com";
       const plainPassword = "Multi@1234";
-      const categories = [OfficeType.INFRASTRUCTURE, OfficeType.ENVIRONMENT, OfficeType.SAFETY];
+      const categories = [OfficeType.ARCHITECTURAL_BARRIERS, OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.PUBLIC_LIGHTING];
 
       await maintainerRepo.createMaintainer(name, email, plainPassword, categories, true);
 
@@ -458,7 +458,7 @@ describe("Auth API Integration Tests", () => {
       const name = "Wrong Pass Maintainer";
       const email = "wrongpass@example.com";
       const plainPassword = "Correct@1234";
-      const categories = [OfficeType.SANITATION];
+      const categories = [OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS];
 
       await maintainerRepo.createMaintainer(name, email, plainPassword, categories, true);
 
@@ -513,7 +513,7 @@ describe("Auth API Integration Tests", () => {
       const name = "Username Maintainer";
       const email = "username@example.com";
       const plainPassword = "Username@1234";
-      const categories = [OfficeType.TRANSPORT];
+      const categories = [OfficeType.WATER_SUPPLY];
 
       await maintainerRepo.createMaintainer(name, email, plainPassword, categories, true);
 

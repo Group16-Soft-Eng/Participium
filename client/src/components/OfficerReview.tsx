@@ -8,6 +8,7 @@ import ReportDetailDialog from './ReportDetailDialog';
 import AssignOfficerDialog from './AssignOfficerDialog';
 import { CategoryFilter } from './filters';
 import type { ReportCategory } from './filters';
+import { formatString } from '../utils/StringUtils';
 
 interface RejectState {
   open: boolean;
@@ -112,12 +113,6 @@ const OfficerReview: React.FC = () => {
     setReject({ open: false, reportId: null, reason: '' });
   };
 
-  function formatString(str: string) {
-    return str
-      .replaceAll('_', " ")
-      .toLowerCase()
-      .replaceAll(/\b\w/g, c => c.toUpperCase());
-  }
 
   // Filtered reports based on category only
   const filteredReports = useMemo(() => {

@@ -41,7 +41,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Pending", Photos: ["/uploads/photo1.jpg"] }
       );
 
@@ -50,7 +50,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.1, longitude: 7.1 } },
         user,
         false,
-        OfficeType.ENVIRONMENT,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
         { Description: "Assigned", Photos: ["/uploads/photo2.jpg"] }
       );
       await reportRepo.updateReportState(assignedReport.id, ReportState.ASSIGNED);
@@ -60,7 +60,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.2, longitude: 7.2 } },
         user,
         false,
-        OfficeType.SAFETY,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
         { Description: "In Progress", Photos: ["/uploads/photo3.jpg"] }
       );
       await reportRepo.updateReportState(inProgressReport.id, ReportState.IN_PROGRESS);
@@ -70,7 +70,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.3, longitude: 7.3 } },
         user,
         false,
-        OfficeType.SANITATION,
+        OfficeType.WATER_SUPPLY,
         { Description: "Suspended", Photos: ["/uploads/photo4.jpg"] }
       );
       await reportRepo.updateReportState(suspendedReport.id, ReportState.SUSPENDED);
@@ -80,7 +80,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.4, longitude: 7.4 } },
         user,
         false,
-        OfficeType.TRANSPORT,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
         { Description: "Declined", Photos: ["/uploads/photo5.jpg"] }
       );
       await reportRepo.updateReportState(declinedReport.id, ReportState.DECLINED, "Not valid");
@@ -90,7 +90,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.5, longitude: 7.5 } },
         user,
         false,
-        OfficeType.ORGANIZATION,
+        OfficeType.WASTE,
         { Description: "Resolved", Photos: ["/uploads/photo6.jpg"] }
       );
       await reportRepo.updateReportState(resolvedReport.id, ReportState.RESOLVED);
@@ -115,7 +115,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Pending", Photos: ["/uploads/photo1.jpg"] }
       );
 
@@ -132,7 +132,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Test description", Photos: ["/uploads/photo1.jpg"] }
       );
       await reportRepo.updateReportState(report.id, ReportState.ASSIGNED);
@@ -153,7 +153,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         true,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Anonymous", Photos: ["/uploads/photo1.jpg"] }
       );
       await reportRepo.updateReportState(report.id, ReportState.ASSIGNED);
@@ -175,7 +175,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Infrastructure", Photos: ["/uploads/photo1.jpg"] }
       );
       await reportRepo.updateReportState(infraReport.id, ReportState.ASSIGNED);
@@ -185,15 +185,15 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.1, longitude: 7.1 } },
         user,
         false,
-        OfficeType.ENVIRONMENT,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
         { Description: "Environment", Photos: ["/uploads/photo2.jpg"] }
       );
       await reportRepo.updateReportState(envReport.id, ReportState.ASSIGNED);
 
-      const reports = await reportController.getReportsByOffice(OfficeType.INFRASTRUCTURE);
+      const reports = await reportController.getReportsByOffice(OfficeType.ARCHITECTURAL_BARRIERS);
 
       expect(reports.length).toBe(1);
-      expect(reports[0].category).toBe(OfficeType.INFRASTRUCTURE);
+      expect(reports[0].category).toBe(OfficeType.ARCHITECTURAL_BARRIERS);
     });
 
     it("should return empty array when no reports for office", async () => {
@@ -204,12 +204,12 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Infrastructure", Photos: ["/uploads/photo1.jpg"] }
       );
       await reportRepo.updateReportState(report.id, ReportState.ASSIGNED);
 
-      const reports = await reportController.getReportsByOffice(OfficeType.SAFETY);
+      const reports = await reportController.getReportsByOffice(OfficeType.ROADS_AND_URBAN_FURNISHINGS);
 
       expect(reports.length).toBe(0);
     });
@@ -222,7 +222,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.SAFETY,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
         { Description: "Pending", Photos: ["/uploads/photo1.jpg"] }
       );
 
@@ -231,12 +231,12 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.1, longitude: 7.1 } },
         user,
         false,
-        OfficeType.SAFETY,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
         { Description: "Assigned", Photos: ["/uploads/photo2.jpg"] }
       );
       await reportRepo.updateReportState(assignedSafety.id, ReportState.ASSIGNED);
 
-      const reports = await reportController.getReportsByOffice(OfficeType.SAFETY);
+      const reports = await reportController.getReportsByOffice(OfficeType.ROADS_AND_URBAN_FURNISHINGS);
 
       expect(reports.length).toBe(1);
       expect(reports[0].state).toBe(ReportState.ASSIGNED);
@@ -253,7 +253,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Specific", Photos: ["/uploads/photo1.jpg"] }
       );
 
@@ -276,7 +276,7 @@ describe("Report Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "With author", Photos: ["/uploads/photo1.jpg"] }
       );
 
@@ -298,7 +298,7 @@ describe("Report Controller Integration Tests", () => {
 
       const reportDto: any = {
         title: "New Report",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: {
           Coordinates: { latitude: 45.0, longitude: 7.0 }
         },
@@ -312,7 +312,7 @@ describe("Report Controller Integration Tests", () => {
 
       expect(result).toBeDefined();
       expect(result.title).toBe("New Report");
-      expect(result.category).toBe(OfficeType.INFRASTRUCTURE);
+      expect(result.category).toBe(OfficeType.ARCHITECTURAL_BARRIERS);
       expect(result.state).toBe(ReportState.PENDING);
     });
 
@@ -323,7 +323,7 @@ describe("Report Controller Integration Tests", () => {
 
       const reportDto: any = {
         title: "Anonymous Report",
-        category: OfficeType.ENVIRONMENT,
+        category: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
         location: {
           Coordinates: { latitude: 45.0, longitude: 7.0 }
         },
@@ -354,7 +354,7 @@ describe("Report Controller Integration Tests", () => {
       ] as any[];
 
       const reportDto: any = {
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: {
           Coordinates: { latitude: 45.0, longitude: 7.0 }
         }
@@ -401,7 +401,7 @@ describe("Report Controller Integration Tests", () => {
 
       const reportDto: any = {
         title: "Report without location",
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
 
       await expect(reportController.uploadReport(reportDto, mockFiles)).rejects.toThrow("Missing or invalid location coordinates");
@@ -414,7 +414,7 @@ describe("Report Controller Integration Tests", () => {
 
       const reportDto: any = {
         title: "Report with invalid coords",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: {
           Coordinates: { latitude: "invalid", longitude: 7.0 }
         }
@@ -428,7 +428,7 @@ describe("Report Controller Integration Tests", () => {
 
       const reportDto: any = {
         title: "Report without photos",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: {
           Coordinates: { latitude: 45.0, longitude: 7.0 }
         }
@@ -449,7 +449,7 @@ describe("Report Controller Integration Tests", () => {
 
       const reportDto: any = {
         title: "Report with too many photos",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: {
           Coordinates: { latitude: 45.0, longitude: 7.0 }
         }
@@ -478,19 +478,19 @@ describe("Report Controller Integration Tests", () => {
 
       const reportDto1: any = {
         title: "Report 1 photo",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: { Coordinates: { latitude: 45.0, longitude: 7.0 } }
       };
 
       const reportDto2: any = {
         title: "Report 2 photos",
-        category: OfficeType.ENVIRONMENT,
+        category: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
         location: { Coordinates: { latitude: 45.1, longitude: 7.1 } }
       };
 
       const reportDto3: any = {
         title: "Report 3 photos",
-        category: OfficeType.SAFETY,
+        category: OfficeType.ROADS_AND_URBAN_FURNISHINGS,
         location: { Coordinates: { latitude: 45.2, longitude: 7.2 } }
       };
 
@@ -516,7 +516,7 @@ describe("Report Controller Integration Tests", () => {
 
       const reportDto: any = {
         title: "Report with photos",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: { Coordinates: { latitude: 45.0, longitude: 7.0 } }
       };
 
@@ -535,12 +535,12 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
       const user = await userRepo.createUser("testuser19", "Test19", "User19", "test19@example.com", "Test@1234");
 
       const categories = [
-        OfficeType.INFRASTRUCTURE,
-        OfficeType.ENVIRONMENT,
-        OfficeType.SAFETY,
-        OfficeType.SANITATION,
-        OfficeType.TRANSPORT,
-        OfficeType.ORGANIZATION,
+        OfficeType.ARCHITECTURAL_BARRIERS,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.WATER_SUPPLY,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
+        OfficeType.WASTE,
         OfficeType.OTHER
       ];
 
@@ -569,7 +569,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
 
       const reportDto: any = {
         title: "Report without description",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         document: {}
       };
@@ -591,7 +591,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
 
       const reportDto: any = {
         title: longTitle,
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: { Coordinates: { latitude: 45.0, longitude: 7.0 } }
       };
 
@@ -611,7 +611,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
 
       const reportDto: any = {
         title: specialTitle,
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: { Coordinates: { latitude: 45.0, longitude: 7.0 } }
       };
 
@@ -629,7 +629,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
 
       const reportDto: any = {
         title: "Report to auto-follow",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         anonymity: false
       };
@@ -647,7 +647,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
 
       const reportDto: any = {
         title: "Anonymous no follow",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         anonymity: true
       };
@@ -667,7 +667,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
 
       const reportDto: any = {
         title: "Report default anonymity",
-        category: OfficeType.INFRASTRUCTURE,
+        category: OfficeType.ARCHITECTURAL_BARRIERS,
         location: { Coordinates: { latitude: 45.0, longitude: 7.0 } }
       };
 
@@ -687,7 +687,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Old", Photos: ["/uploads/photo1.jpg"] }
       );
       await reportRepo.updateReportState(report1.id, ReportState.ASSIGNED);
@@ -700,7 +700,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.1, longitude: 7.1 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "New", Photos: ["/uploads/photo2.jpg"] }
       );
       await reportRepo.updateReportState(report2.id, ReportState.ASSIGNED);
@@ -721,7 +721,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Test", Photos: ["/uploads/photo1.jpg"] }
       );
       await reportRepo.updateReportState(report.id, ReportState.ASSIGNED);
@@ -735,7 +735,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
     it("should handle mixed categories in approved reports", async () => {
       const user = await userRepo.createUser("testuser29", "Test29", "User29", "test29@example.com", "Test@1234");
 
-      const categories = [OfficeType.INFRASTRUCTURE, OfficeType.ENVIRONMENT, OfficeType.SAFETY];
+      const categories = [OfficeType.ARCHITECTURAL_BARRIERS, OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.ROADS_AND_URBAN_FURNISHINGS];
 
       for (const category of categories) {
         const report = await reportRepo.createReport(
@@ -752,9 +752,9 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
       const reports = await reportController.getReports();
 
       expect(reports.length).toBe(3);
-      expect(reports.map(r => r.category)).toContain(OfficeType.INFRASTRUCTURE);
-      expect(reports.map(r => r.category)).toContain(OfficeType.ENVIRONMENT);
-      expect(reports.map(r => r.category)).toContain(OfficeType.SAFETY);
+      expect(reports.map(r => r.category)).toContain(OfficeType.ARCHITECTURAL_BARRIERS);
+      expect(reports.map(r => r.category)).toContain(OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS);
+      expect(reports.map(r => r.category)).toContain(OfficeType.ROADS_AND_URBAN_FURNISHINGS);
     });
   });
 
@@ -764,12 +764,12 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
       const user = await userRepo.createUser("testuser30", "Test30", "User30", "test30@example.com", "Test@1234");
 
       const allOffices = [
-        OfficeType.INFRASTRUCTURE,
-        OfficeType.ENVIRONMENT,
-        OfficeType.SAFETY,
-        OfficeType.SANITATION,
-        OfficeType.TRANSPORT,
-        OfficeType.ORGANIZATION,
+        OfficeType.ARCHITECTURAL_BARRIERS,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.WATER_SUPPLY,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
+        OfficeType.WASTE,
         OfficeType.OTHER
       ];
 
@@ -800,7 +800,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Pending", Photos: ["/uploads/photo1.jpg"] }
       );
 
@@ -809,7 +809,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.1, longitude: 7.1 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Declined", Photos: ["/uploads/photo2.jpg"] }
       );
       await reportRepo.updateReportState(declined.id, ReportState.DECLINED);
@@ -819,12 +819,12 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.2, longitude: 7.2 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Assigned", Photos: ["/uploads/photo3.jpg"] }
       );
       await reportRepo.updateReportState(assigned.id, ReportState.ASSIGNED);
 
-      const reports = await reportController.getReportsByOffice(OfficeType.INFRASTRUCTURE);
+      const reports = await reportController.getReportsByOffice(OfficeType.ARCHITECTURAL_BARRIERS);
 
       expect(reports.length).toBe(1);
       expect(reports[0].state).toBe(ReportState.ASSIGNED);
@@ -841,7 +841,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Test", Photos: ["/uploads/photo1.jpg"] }
       );
 
@@ -860,7 +860,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.5, longitude: 7.5 } },
         user,
         false,
-        OfficeType.ENVIRONMENT,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
         { Description: "Complete description", Photos: ["/uploads/photo1.jpg", "/uploads/photo2.jpg"] }
       );
 
@@ -869,7 +869,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
       expect(result.id).toBeDefined();
       expect(result.title).toBe("Complete Report");
       expect(result.location).toBeDefined();
-      expect(result.category).toBe(OfficeType.ENVIRONMENT);
+      expect(result.category).toBe(OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS);
       expect(result.document?.description).toBe("Complete description");
       expect(result.document?.photos?.length).toBe(2);
       expect(result.state).toBe(ReportState.PENDING);
@@ -887,7 +887,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "To be deleted", Photos: ["/uploads/photo1.jpg"] }
       );
 
@@ -908,7 +908,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "To be deleted", Photos: ["/uploads/photo1.jpg"] }
       );
       await reportRepo.updateReportState(report.id, ReportState.ASSIGNED);
@@ -926,7 +926,7 @@ expect(result.document?.photos?.[1]).toBe("/uploads/reports/photo2.jpg");    });
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         true,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "To be deleted", Photos: ["/uploads/photo1.jpg"] }
       );
 

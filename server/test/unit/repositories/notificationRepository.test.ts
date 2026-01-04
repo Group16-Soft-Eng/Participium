@@ -520,7 +520,7 @@ describe('NotificationRepository', () => {
                 userId: 1,
                 reportId: 10,
                 type: 'STATUS_CHANGE',
-                message: 'Your report #10 is now ASSIGNED',
+                message: 'Your report Test Report is now Assigned',
                 createdAt: new Date(),
                 read: false
             };
@@ -534,7 +534,7 @@ describe('NotificationRepository', () => {
                 userId: 1,
                 reportId: 10,
                 type: 'STATUS_CHANGE',
-                message: 'Your report #10 is now ASSIGNED',
+                message: 'Your report Test Report is now Assigned',
                 read: false
             });
             expect(mockUserRepo.getUserById).toHaveBeenCalledWith(1);
@@ -705,7 +705,7 @@ describe('NotificationRepository', () => {
                 userId: 2,
                 reportId: 15,
                 type: 'STATUS_CHANGE',
-                message: 'Your report #15 has been DECLINED. Reason: Insufficient information',
+                message: 'Your report Test Report has been DECLINED. Reason: Insufficient information',
                 read: false
             });
             expect(result?.message).toContain('DECLINED');

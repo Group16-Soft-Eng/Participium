@@ -31,8 +31,8 @@ describe("MaintainerRoutes", () => {
     
     it("should return all maintainers with status 200", async () => {
       const maintainersMock = [
-        { id: 1, name: "Test Maintainer 1", email: "test1@example.com", categories: [OfficeType.INFRASTRUCTURE] },
-        { id: 2, name: "Test Maintainer 2", email: "test2@example.com", categories: [OfficeType.ENVIRONMENT] }
+        { id: 1, name: "Test Maintainer 1", email: "test1@example.com", categories: [OfficeType.ARCHITECTURAL_BARRIERS] },
+        { id: 2, name: "Test Maintainer 2", email: "test2@example.com", categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS] }
       ];
       (maintainerController.getAllMaintainers as jest.Mock).mockResolvedValue(maintainersMock);
 
@@ -63,34 +63,34 @@ describe("MaintainerRoutes", () => {
   describe("GET /maintainers/by-category/:officeType", () => {
     it("should return maintainers by category", async () => {
       const maintainersMock = [
-        { id: 1, name: "Infrastructure Maintainer", categories: [OfficeType.INFRASTRUCTURE] }
+        { id: 1, name: "Infrastructure Maintainer", categories: [OfficeType.ARCHITECTURAL_BARRIERS] }
       ];
       (maintainerController.getMaintainersByCategory as jest.Mock).mockResolvedValue(maintainersMock);
 
-      const res = await request(app).get(`/maintainers/by-category/${OfficeType.INFRASTRUCTURE}`);
+      const res = await request(app).get(`/maintainers/by-category/${OfficeType.ARCHITECTURAL_BARRIERS}`);
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual(maintainersMock);
-      expect(maintainerController.getMaintainersByCategory).toHaveBeenCalledWith(OfficeType.INFRASTRUCTURE);
+      expect(maintainerController.getMaintainersByCategory).toHaveBeenCalledWith(OfficeType.ARCHITECTURAL_BARRIERS);
     });
 
     it("should return maintainers for environment category", async () => {
       const maintainersMock = [
-        { id: 2, name: "Environment Maintainer", categories: [OfficeType.ENVIRONMENT] }
+        { id: 2, name: "Environment Maintainer", categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS] }
       ];
       (maintainerController.getMaintainersByCategory as jest.Mock).mockResolvedValue(maintainersMock);
 
-      const res = await request(app).get(`/maintainers/by-category/${OfficeType.ENVIRONMENT}`);
+      const res = await request(app).get(`/maintainers/by-category/${OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS}`);
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual(maintainersMock);
-      expect(maintainerController.getMaintainersByCategory).toHaveBeenCalledWith(OfficeType.ENVIRONMENT);
+      expect(maintainerController.getMaintainersByCategory).toHaveBeenCalledWith(OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS);
     });
 
     it("should return empty array if no maintainers for category", async () => {
       (maintainerController.getMaintainersByCategory as jest.Mock).mockResolvedValue([]);
 
-      const res = await request(app).get(`/maintainers/by-category/${OfficeType.SAFETY}`);
+      const res = await request(app).get(`/maintainers/by-category/${OfficeType.ROADS_AND_URBAN_FURNISHINGS}`);
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
@@ -99,19 +99,19 @@ describe("MaintainerRoutes", () => {
     it("should handle controller errors", async () => {
       (maintainerController.getMaintainersByCategory as jest.Mock).mockRejectedValue(new Error("Database error"));
 
-      const res = await request(app).get(`/maintainers/by-category/${OfficeType.INFRASTRUCTURE}`);
+      const res = await request(app).get(`/maintainers/by-category/${OfficeType.ARCHITECTURAL_BARRIERS}`);
 
       expect(res.status).toBe(500);
     });
 
     it("should handle all office type categories", async () => {
       const categories = [
-        OfficeType.INFRASTRUCTURE,
-        OfficeType.ENVIRONMENT,
-        OfficeType.SAFETY,
-        OfficeType.SANITATION,
-        OfficeType.TRANSPORT,
-        OfficeType.ORGANIZATION,
+        OfficeType.ARCHITECTURAL_BARRIERS,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.WATER_SUPPLY,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
+        OfficeType.WASTE,
         OfficeType.OTHER
       ];
 

@@ -49,7 +49,7 @@ describe("Officer Controller Integration Tests", () => {
         "Two",
         "officer2@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const officers = await officerController.getAllOfficers();
@@ -73,7 +73,7 @@ describe("Officer Controller Integration Tests", () => {
         "Password@123",
         [
           { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT }
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS }
         ]
       );
 
@@ -93,7 +93,7 @@ describe("Officer Controller Integration Tests", () => {
         "Officer",
         "infra1@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       await officerRepo.createOfficer(
@@ -102,17 +102,17 @@ describe("Officer Controller Integration Tests", () => {
         "Officer",
         "env1@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS }]
       );
 
-      const officers = await officerController.getAllOfficersByOfficeType(OfficeType.INFRASTRUCTURE);
+      const officers = await officerController.getAllOfficersByOfficeType(OfficeType.ARCHITECTURAL_BARRIERS);
 
       expect(officers.length).toBe(1);
-      expect(officers[0].roles?.[0]?.office).toBe(OfficeType.INFRASTRUCTURE);
+      expect(officers[0].roles?.[0]?.office).toBe(OfficeType.ARCHITECTURAL_BARRIERS);
     });
 
     it("should return empty array when no officers for office type", async () => {
-      const officers = await officerController.getAllOfficersByOfficeType(OfficeType.SAFETY);
+      const officers = await officerController.getAllOfficersByOfficeType(OfficeType.ROADS_AND_URBAN_FURNISHINGS);
       expect(officers.length).toBe(0);
     });
   });
@@ -170,7 +170,7 @@ describe("Officer Controller Integration Tests", () => {
         password: "Password@123",
         roles: [
           { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }
         ]
       };
 
@@ -264,8 +264,8 @@ describe("Officer Controller Integration Tests", () => {
         surname: "Role",
         email: "changerole@example.com",
         roles: [
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE },
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT }
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS },
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS }
         ]
       };
 
@@ -290,7 +290,7 @@ describe("Officer Controller Integration Tests", () => {
       const result = await officerController.addRoleToOfficer(
         officer.id,
         OfficerRole.TECHNICAL_OFFICE_STAFF,
-        OfficeType.INFRASTRUCTURE
+        OfficeType.ARCHITECTURAL_BARRIERS
       );
 
       expect(result.roles?.length).toBe(2);
@@ -303,13 +303,13 @@ describe("Officer Controller Integration Tests", () => {
         "Role",
         "duprole@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const result = await officerController.addRoleToOfficer(
         officer.id,
         OfficerRole.TECHNICAL_OFFICE_STAFF,
-        OfficeType.INFRASTRUCTURE
+        OfficeType.ARCHITECTURAL_BARRIERS
       );
 
       expect(result.roles?.length).toBe(1);
@@ -327,14 +327,14 @@ describe("Officer Controller Integration Tests", () => {
         "Password@123",
         [
           { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }
         ]
       );
 
       const result = await officerController.removeRoleFromOfficer(
         officer.id,
         OfficerRole.TECHNICAL_OFFICE_STAFF,
-        OfficeType.INFRASTRUCTURE
+        OfficeType.ARCHITECTURAL_BARRIERS
       );
 
       expect(result.roles?.length).toBe(1);
@@ -350,7 +350,7 @@ describe("Officer Controller Integration Tests", () => {
         "Staff",
         "techstaff@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const report = await reportRepo.createReport(
@@ -358,7 +358,7 @@ describe("Officer Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Test", Photos: ["/photo.jpg"] }
       );
 
@@ -367,7 +367,7 @@ describe("Officer Controller Integration Tests", () => {
       await officerController.removeRoleFromOfficer(
         officer.id,
         OfficerRole.TECHNICAL_OFFICE_STAFF,
-        OfficeType.INFRASTRUCTURE
+        OfficeType.ARCHITECTURAL_BARRIERS
       );
 
       const updatedReport = await reportRepo.getReportById(report.id);
@@ -387,7 +387,7 @@ describe("Officer Controller Integration Tests", () => {
         "Officer",
         "assign@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const report = await reportRepo.createReport(
@@ -395,7 +395,7 @@ describe("Officer Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Assign", Photos: ["/photo.jpg"] }
       );
 
@@ -415,7 +415,7 @@ describe("Officer Controller Integration Tests", () => {
         "Three",
         "officer3@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const report = await reportRepo.createReport(
@@ -423,7 +423,7 @@ describe("Officer Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Non-pending", Photos: ["/photo.jpg"] }
       );
 
@@ -445,7 +445,7 @@ describe("Officer Controller Integration Tests", () => {
         "Officer",
         "retrieve@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       await reportRepo.createReport(
@@ -453,7 +453,7 @@ describe("Officer Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Pending 1", Photos: ["/photo1.jpg"] }
       );
 
@@ -462,7 +462,7 @@ describe("Officer Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.1, longitude: 7.1 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Pending 2", Photos: ["/photo2.jpg"] }
       );
 
@@ -479,7 +479,7 @@ describe("Officer Controller Integration Tests", () => {
         "Pending",
         "nopending@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const reports = await officerController.retrieveDocs(officer.id);
@@ -499,7 +499,7 @@ describe("Officer Controller Integration Tests", () => {
         "Officer",
         "assigned@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const report = await reportRepo.createReport(
@@ -507,7 +507,7 @@ describe("Officer Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Assigned", Photos: ["/photo.jpg"] }
       );
 
@@ -539,7 +539,7 @@ describe("Officer Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Review", Photos: ["/photo.jpg"] }
       );
 
@@ -565,7 +565,7 @@ describe("Officer Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Decline", Photos: ["/photo.jpg"] }
       );
 
@@ -596,7 +596,7 @@ describe("Officer Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Resolved", Photos: ["/photo.jpg"] }
       );
 
@@ -634,7 +634,7 @@ describe("Officer Controller Integration Tests", () => {
         "TechStaff",
         "deletetechstaff@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const report = await reportRepo.createReport(
@@ -642,7 +642,7 @@ describe("Officer Controller Integration Tests", () => {
         { Coordinates: { latitude: 45.0, longitude: 7.0 } },
         user,
         false,
-        OfficeType.INFRASTRUCTURE,
+        OfficeType.ARCHITECTURAL_BARRIERS,
         { Description: "Delete", Photos: ["/photo.jpg"] }
       );
 

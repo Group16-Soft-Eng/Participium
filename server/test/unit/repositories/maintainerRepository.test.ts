@@ -64,7 +64,7 @@ describe("MaintainerRepository", () => {
         name: "Test Maintainer",
         email: "test@example.com",
         password: "plainpassword",
-        categories: [OfficeType.INFRASTRUCTURE],
+        categories: [OfficeType.ARCHITECTURAL_BARRIERS],
         active: true
       };
 
@@ -122,7 +122,7 @@ describe("MaintainerRepository", () => {
           "Test Maintainer",
           "test@example.com",
           "password123",
-          [OfficeType.INFRASTRUCTURE],
+          [OfficeType.ARCHITECTURAL_BARRIERS],
           true
         )
       ).rejects.toThrow("Maintainer with email 'test@example.com' already exists");
@@ -136,7 +136,7 @@ describe("MaintainerRepository", () => {
     //       "Test Maintainer",
     //       "test@example.com",
     //       "password123",
-    //       [OfficeType.INFRASTRUCTURE],
+    //       [OfficeType.ARCHITECTURAL_BARRIERS],
     //       true
     //     )
     //   ).rejects.toThrow("Email 'test@example.com' is already used.");
@@ -150,7 +150,7 @@ describe("MaintainerRepository", () => {
       name: "Test Maintainer",
       email: "test@example.com",
       password: "hashedPassword",
-      categories: [OfficeType.INFRASTRUCTURE],
+      categories: [OfficeType.ARCHITECTURAL_BARRIERS],
       active: true,
     });
       const result = await maintainerRepo.getMaintainerById(1);
@@ -168,13 +168,13 @@ describe("MaintainerRepository", () => {
   describe("getMaintainersByCategory", () => {
     it("should return maintainers by category", async () => {
       mockRepo.find.mockResolvedValue([
-        { id: 1, name: "A", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.INFRASTRUCTURE], active: true },
-        { id: 2, name: "B", email: "b@example.com", password: "hashedPassword", categories: [OfficeType.ENVIRONMENT], active: true },
-        { id: 3, name: "C", email: "c@example.com", password: "hashedPassword", categories: [OfficeType.INFRASTRUCTURE], active: false },
+        { id: 1, name: "A", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.ARCHITECTURAL_BARRIERS], active: true },
+        { id: 2, name: "B", email: "b@example.com", password: "hashedPassword", categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS], active: true },
+        { id: 3, name: "C", email: "c@example.com", password: "hashedPassword", categories: [OfficeType.ARCHITECTURAL_BARRIERS], active: false },
       ]);
-      const result = await maintainerRepo.getMaintainersByCategory(OfficeType.INFRASTRUCTURE);
+      const result = await maintainerRepo.getMaintainersByCategory(OfficeType.ARCHITECTURAL_BARRIERS);
       expect(result).toEqual([
-        { id: 1, name: "A", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.INFRASTRUCTURE], active: true }
+        { id: 1, name: "A", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.ARCHITECTURAL_BARRIERS], active: true }
       ]);
     });
   });
@@ -182,8 +182,8 @@ describe("MaintainerRepository", () => {
   describe("getAllMaintainers", () => {
     it("should return all maintainers", async () => {
       mockRepo.find.mockResolvedValue([
-        { id: 1, name: "A", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.INFRASTRUCTURE], active: true },
-        { id: 2, name: "B", email: "b@example.com", password: "hashedPassword", categories: [OfficeType.ENVIRONMENT], active: true }
+        { id: 1, name: "A", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.ARCHITECTURAL_BARRIERS], active: true },
+        { id: 2, name: "B", email: "b@example.com", password: "hashedPassword", categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS], active: true }
       ]);
       const result = await maintainerRepo.getAllMaintainers();
       expect(result).toHaveLength(2);
@@ -193,7 +193,7 @@ describe("MaintainerRepository", () => {
   describe("getMaintainerByEmail", () => {
     it("should return maintainer by email", async () => {
       mockRepo.find.mockResolvedValue([
-        { id: 1, name: "A", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.INFRASTRUCTURE], active: true }
+        { id: 1, name: "A", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.ARCHITECTURAL_BARRIERS], active: true }
       ]);
       const result = await maintainerRepo.getMaintainerByEmail("a@example.com");
       expect(result).toEqual({
@@ -201,7 +201,7 @@ describe("MaintainerRepository", () => {
         name: "A",
         email: "a@example.com",
         password: "hashedPassword",
-        categories: [OfficeType.INFRASTRUCTURE],
+        categories: [OfficeType.ARCHITECTURAL_BARRIERS],
         active: true
       });
     });
@@ -216,10 +216,10 @@ describe("MaintainerRepository", () => {
 
   describe("updateMaintainer", () => {
     it("should update maintainer fields", async () => {
-      mockRepo.findOne.mockResolvedValue({  id: 1, name: "A", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.INFRASTRUCTURE], active: true });
-      mockRepo.save.mockResolvedValue({ id: 1, name: "B", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.INFRASTRUCTURE], active: false });
+      mockRepo.findOne.mockResolvedValue({  id: 1, name: "A", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.ARCHITECTURAL_BARRIERS], active: true });
+      mockRepo.save.mockResolvedValue({ id: 1, name: "B", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.ARCHITECTURAL_BARRIERS], active: false });
       const result = await maintainerRepo.updateMaintainer(1, { name: "B", active: false });
-      expect(mockRepo.save).toHaveBeenCalledWith({ id: 1, name: "B", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.INFRASTRUCTURE], active: false });
+      expect(mockRepo.save).toHaveBeenCalledWith({ id: 1, name: "B", email: "a@example.com", password: "hashedPassword", categories: [OfficeType.ARCHITECTURAL_BARRIERS], active: false });
       expect(result.name).toBe("B");
       expect(result.active).toBe(false);
     });

@@ -19,7 +19,7 @@ describe("MaintainerController Integration", () => {
     name: "Test Maintainer",
     email: "test@example.com",
     password: "hashedPassword",
-    categories: [OfficeType.INFRASTRUCTURE],
+    categories: [OfficeType.ARCHITECTURAL_BARRIERS],
     active: true,
   };
 
@@ -89,7 +89,7 @@ describe("MaintainerController Integration", () => {
     it("should create maintainer with multiple categories", async () => {
       const multiCategoryMaintainer = {
         ...maintainerMock,
-        categories: [OfficeType.INFRASTRUCTURE, OfficeType.ENVIRONMENT, OfficeType.SAFETY],
+        categories: [OfficeType.ARCHITECTURAL_BARRIERS, OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.ROADS_AND_URBAN_FURNISHINGS],
       };
       (MaintainerRepository.prototype.createMaintainer as jest.Mock).mockResolvedValue(multiCategoryMaintainer);
 
@@ -97,7 +97,7 @@ describe("MaintainerController Integration", () => {
         maintainerMock.name,
         maintainerMock.email,
         "plainPassword",
-        [OfficeType.INFRASTRUCTURE, OfficeType.ENVIRONMENT, OfficeType.SAFETY],
+        [OfficeType.ARCHITECTURAL_BARRIERS, OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.ROADS_AND_URBAN_FURNISHINGS],
         true
       );
 
@@ -110,28 +110,29 @@ describe("MaintainerController Integration", () => {
     it("should return maintainers for a specific category", async () => {
       (MaintainerRepository.prototype.getMaintainersByCategory as jest.Mock).mockResolvedValue([maintainerMock]);
 
-      const result = await maintainerController.getMaintainersByCategory(OfficeType.INFRASTRUCTURE);
+      const result = await maintainerController.getMaintainersByCategory(OfficeType.ARCHITECTURAL_BARRIERS);
 
-      expect(MaintainerRepository.prototype.getMaintainersByCategory).toHaveBeenCalledWith(OfficeType.INFRASTRUCTURE);
+      expect(MaintainerRepository.prototype.getMaintainersByCategory).toHaveBeenCalledWith(OfficeType.ARCHITECTURAL_BARRIERS);
       expect(result).toEqual([maintainerMock]);
     });
 
     it("should return empty array if no maintainers for category", async () => {
       (MaintainerRepository.prototype.getMaintainersByCategory as jest.Mock).mockResolvedValue([]);
 
-      const result = await maintainerController.getMaintainersByCategory(OfficeType.TRANSPORT);
+      const result = await maintainerController.getMaintainersByCategory(OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS);
 
       expect(result).toEqual([]);
     });
 
     it("should work with all office types", async () => {
       const officeTypes = [
-        OfficeType.INFRASTRUCTURE,
-        OfficeType.ENVIRONMENT,
-        OfficeType.SAFETY,
-        OfficeType.SANITATION,
-        OfficeType.TRANSPORT,
-        OfficeType.ORGANIZATION,
+        OfficeType.ARCHITECTURAL_BARRIERS,
+        OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS,
+        OfficeType.PUBLIC_LIGHTING,
+        OfficeType.WATER_SUPPLY,
+        OfficeType.WASTE,
         OfficeType.OTHER,
       ];
 
@@ -230,14 +231,14 @@ describe("MaintainerController Integration", () => {
     });
 
     it("should update maintainer categories", async () => {
-      const updatedMaintainer = { ...maintainerMock, categories: [OfficeType.ENVIRONMENT, OfficeType.SAFETY] };
+      const updatedMaintainer = { ...maintainerMock, categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.ROADS_AND_URBAN_FURNISHINGS] };
       (MaintainerRepository.prototype.updateMaintainer as jest.Mock).mockResolvedValue(updatedMaintainer);
 
       const result = await maintainerController.updateMaintainer(1, {
-        categories: [OfficeType.ENVIRONMENT, OfficeType.SAFETY],
+        categories: [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.ROADS_AND_URBAN_FURNISHINGS],
       });
 
-      expect(result.categories).toEqual([OfficeType.ENVIRONMENT, OfficeType.SAFETY]);
+      expect(result.categories).toEqual([OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.ROADS_AND_URBAN_FURNISHINGS]);
     });
 
     it("should update maintainer active status", async () => {

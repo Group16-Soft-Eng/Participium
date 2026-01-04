@@ -33,7 +33,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
         title: "Test Report",
         state: ReportState.ASSIGNED,
         assignedOfficerId: 123,
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
 
       const mockUpdatedReport = {
@@ -57,7 +57,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
         title: "Test Report",
         state: ReportState.IN_PROGRESS,
         assignedOfficerId: 123,
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
 
       const mockUpdatedReport = {
@@ -81,7 +81,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
         title: "Test Report",
         state: ReportState.IN_PROGRESS,
         assignedOfficerId: 123,
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
 
       const mockUpdatedReport = {
@@ -105,7 +105,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
         title: "Test Report",
         state: ReportState.SUSPENDED,
         assignedOfficerId: 123,
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
 
       const mockUpdatedReport = {
@@ -129,7 +129,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
         title: "Test Report",
         state: ReportState.ASSIGNED,
         assignedOfficerId: 123, // Different from the officer trying to update
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
 
       mockReportRepo.getReportById = jest.fn().mockResolvedValue(mockReport);
@@ -145,7 +145,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
         title: "Test Report",
         state: ReportState.PENDING,
         assignedOfficerId: null,
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
 
       const mockUpdatedReport = {
@@ -159,7 +159,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
       mockReportRepo.assignReportToOfficer = jest.fn().mockResolvedValue(mockUpdatedReport);
       
       mockOfficerRepo.getOfficersByOffice = jest.fn().mockResolvedValue([
-        { id: 123, role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }
+        { id: 123, role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }
       ]);
       
       (mapReportDAOToDTO as jest.Mock).mockReturnValue(mockUpdatedReport);
@@ -178,7 +178,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
         title: "Test Report",
         state: ReportState.ASSIGNED,
         assignedOfficerId: 123,
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
 
       // Step 1: ASSIGNED -> IN_PROGRESS
@@ -204,7 +204,7 @@ describe("PT11: Officer Update Report Status - Unit Tests", () => {
         title: "Test Report",
         state: ReportState.ASSIGNED,
         assignedOfficerId: 123,
-        category: OfficeType.INFRASTRUCTURE
+        category: OfficeType.ARCHITECTURAL_BARRIERS
       };
 
       const states = [

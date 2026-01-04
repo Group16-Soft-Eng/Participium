@@ -5,6 +5,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { CategoryFilter } from './filters';
 import type { ReportCategory } from './filters';
 import { getAllMaintainers, getAllOfficers, getAvailableOfficerTypes, updateOfficer, deleteOfficer, updateMaintainers, deleteMaintainer } from '../API/API';
+import { formatString } from '../utils/StringUtils';
 
 const CATEGORY_COLORS: Record<string, string> = {
     water_supply: '#8b5cf6',
@@ -46,13 +47,6 @@ type Maintainer = {
 
 interface EditOfficersFormProps {
     setShowForm: (show: boolean) => void;
-}
-
-function formatString(str: string) {
-    return str
-        .replaceAll("_", " ")
-        .toLowerCase()
-        .replaceAll(/\b\w/g, c => c.toUpperCase());
 }
 
 interface EditMaintainerDialogProps {

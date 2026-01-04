@@ -7,7 +7,12 @@ import {
   CleaningServices,
   DirectionsBus,
   Business,
-  Category as CategoryIcon
+  Category as CategoryIcon,
+  WaterDrop,
+  Lightbulb,
+  CarCrash,
+  ParkSharp,
+  SportsSoccer
 } from '@mui/icons-material';
 
 interface CategoryData {
@@ -22,17 +27,17 @@ interface CategoryBreakdownProps {
 const categoryConfig: Record<string, { label: string; icon: ReactElement; color: string }> = {
   water_supply: {
     label: 'Water Supply - Drinking Water',
-    icon: <Build />,
+    icon: <WaterDrop />,
     color: '#f57c00'
   },
   architectural_barriers: {
     label: 'Architectural Barriers',
-    icon: <Park />,
+    icon: <ParkSharp />,
     color: '#388e3c'
   },
   public_lighting: {
     label: 'Public Lighting',
-    icon: <Security />,
+    icon: <Lightbulb />,
     color: '#ef4444'
   },
   waste: {
@@ -47,12 +52,12 @@ const categoryConfig: Record<string, { label: string; icon: ReactElement; color:
   },
   roads_and_urban_furnishings: {
     label: 'Roads and Urban Furnishings',
-    icon: <Business />,
+    icon: <CarCrash />,
     color: '#955c51ff'
   },
   public_green_areas_and_playgrounds: {
     label: 'Public Green Areas and Playgrounds',
-    icon: <CategoryIcon />,
+    icon: <SportsSoccer />,
     color: '#af589bff'
   },
   other: {

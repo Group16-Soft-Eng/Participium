@@ -194,7 +194,7 @@ describe("Auth Controller Integration Tests", () => {
         "Password@123",
         [
           { role: OfficerRole.MUNICIPAL_ADMINISTRATOR, office: null },
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }
         ]
       );
 
@@ -229,7 +229,7 @@ describe("Auth Controller Integration Tests", () => {
         "Staff",
         "tech@example.com",
         "Password@123",
-        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.INFRASTRUCTURE }]
+        [{ role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ARCHITECTURAL_BARRIERS }]
       );
 
       const token = await authController.loginOfficerByMail("tech@example.com", "Password@123");
@@ -317,7 +317,7 @@ describe("Auth Controller Integration Tests", () => {
         "multirole2@example.com",
         "Password@123",
         [
-          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.ENVIRONMENT },
+          { role: OfficerRole.TECHNICAL_OFFICE_STAFF, office: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS },
           { role: OfficerRole.MUNICIPAL_PUBLIC_RELATIONS_OFFICER, office: null }
         ]
       );
@@ -429,7 +429,7 @@ describe("Auth Controller Integration Tests", () => {
         "Maintainer One",
         "maintainer1@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -445,7 +445,7 @@ describe("Auth Controller Integration Tests", () => {
         "Multi Maintainer",
         "multi@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE, OfficeType.ENVIRONMENT],
+        [OfficeType.ARCHITECTURAL_BARRIERS, OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS],
         true
       );
 
@@ -464,7 +464,7 @@ describe("Auth Controller Integration Tests", () => {
         "Maintainer Two",
         "maintainer2@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -477,7 +477,7 @@ describe("Auth Controller Integration Tests", () => {
         "Maintainer Seven",
         "maintainer7@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -495,7 +495,8 @@ describe("Auth Controller Integration Tests", () => {
         "All Categories",
         "allcat@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE, OfficeType.ENVIRONMENT, OfficeType.SAFETY, OfficeType.SANITATION, OfficeType.TRANSPORT],
+        [OfficeType.ARCHITECTURAL_BARRIERS, OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, OfficeType.PUBLIC_LIGHTING, OfficeType.WATER_SUPPLY,
+         OfficeType.WASTE, OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS, OfficeType.ROADS_AND_URBAN_FURNISHINGS, OfficeType.OTHER],
         true
       );
 
@@ -512,7 +513,7 @@ describe("Auth Controller Integration Tests", () => {
         "Maintainer Three",
         "maintainer3@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -532,7 +533,7 @@ describe("Auth Controller Integration Tests", () => {
         "Maintainer Four",
         "maintainer4@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -545,7 +546,7 @@ describe("Auth Controller Integration Tests", () => {
         "Environment Maintainer",
         "env@example.com",
         "Password@123",
-        [OfficeType.ENVIRONMENT],
+        [OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS],
         true
       );
 
@@ -559,7 +560,7 @@ describe("Auth Controller Integration Tests", () => {
         "Maintainer's Company & Co.",
         "special@example.com",
         "Password@123",
-        [OfficeType.ORGANIZATION],
+        [OfficeType.WASTE],
         true
       );
 
@@ -576,7 +577,7 @@ describe("Auth Controller Integration Tests", () => {
         "Maintainer Five",
         "maintainer5@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -590,7 +591,7 @@ describe("Auth Controller Integration Tests", () => {
         "Maintainer Six",
         "maintainer6@example.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
 
@@ -634,7 +635,7 @@ describe("Auth Controller Integration Tests", () => {
         "No Pass Maintainer",
         "nopass@maintainer.com",
         "Password@123",
-        [OfficeType.INFRASTRUCTURE],
+        [OfficeType.ARCHITECTURAL_BARRIERS],
         true
       );
       const repo = (maintainerRepo as any).repo;

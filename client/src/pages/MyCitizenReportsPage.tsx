@@ -28,6 +28,7 @@ import type { OfficerReport } from '../services/reportService';
 import { ReportDetailsSection } from '../components/report-details/ReportDetailsSection';
 import { StatusFilter } from '../components/filters';
 import type { ReportStatus, StatusOption } from '../components/filters';
+import { formatStatus, formatString } from '../utils/StringUtils';
 
 // Status options for citizens viewing their own reports
 const CITIZEN_STATUSES: StatusOption[] = [
@@ -40,13 +41,6 @@ const CITIZEN_STATUSES: StatusOption[] = [
   { value: 'SUSPENDED', label: 'Suspended', color: '#f59e0b' },
   { value: 'RESOLVED', label: 'Resolved', color: '#10b981' },
 ];
-
-  function formatString(str: string): string {
-    return str
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
 
 export default function MyCitizenReportsPage() {
   const [reports, setReports] = useState<OfficerReport[]>([]);
@@ -83,10 +77,6 @@ export default function MyCitizenReportsPage() {
   const handleChat = (reportId: number) => {
     navigate(`/reports/${reportId}/details?chatType=public`);
   };
-
-  function formatStatus(state: string): string {
-    return state.replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
-  }
 
   const getStateColor = (state?: string): 'default' | 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' => {
     switch (state) {
