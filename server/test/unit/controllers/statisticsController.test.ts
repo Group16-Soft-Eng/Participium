@@ -1,304 +1,266 @@
-import {
-  getPublicStatistics,
-  getReportCountByCategory,
-  getReportTrends
-} from "../../../src/controllers/statisticsController";
-import { ReportRepository } from "../../../src/repositories/ReportRepository";
-import { OfficeType } from "../../../src/models/enums/OfficeType";
-import { BadRequestError } from "../../../src/utils/utils";
+import { getStatistics } from '../../../src/controllers/statisticsController';
+import { ReportRepository } from '../../../src/repositories/ReportRepository';
+import { OfficeType } from '../../../src/models/enums/OfficeType';
+import { BadRequestError } from '../../../src/utils/utils';
 
-jest.mock("../../../src/repositories/ReportRepository");
+// Mock the repository
+jest.mock('../../../src/repositories/ReportRepository');
 
-describe("StatisticsController", () => {
+describe('Statistics Controller - Unit Tests', () => {
   let mockReportRepo: jest.Mocked<ReportRepository>;
 
   beforeEach(() => {
+    // Reset mocks before each test
     jest.clearAllMocks();
-    mockReportRepo = new ReportRepository() as jest.Mocked<ReportRepository>;
+    
+    // Create mock instance
+    mockReportRepo = {
+      getReportStatistics: jest.fn()
+    } as any;
+    
+    // Mock the constructor to return our mock instance
+    (ReportRepository as jest.Mock).mockImplementation(() => mockReportRepo);
   });
 
-  describe("getPublicStatistics", () => {
-    it("should return complete statistics with default period (day)", async () => {
-      const mockByCategory = [
-        { category: OfficeType.WATER_SUPPLY, count: 10 },
-        { category: OfficeType.WASTE, count: 15 }
+  describe('getStatistics - No filters', () => {
+    it('should return empty array when no reports exist', async () => {
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce([]);
+
+      const result = await getStatistics();
+
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledTimes(1);
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toEqual([]);
+    });
+
+    it('should return statistics array when reports exist', async () => {
+      const mockStats = [
+        { date: '2026-01-05', totalReports: 10, approvedReports: 8, rejectedReports: 2 },
+        { date: '2026-01-04', totalReports: 5, approvedReports: 4, rejectedReports: 1 }
       ];
-      const mockByState = [
-        { state: "PENDING", count: 5 },
-        { state: "ASSIGNED", count: 20 }
-      ];
-      const mockTrends = [
-        { period: "2026-01-05", count: 8 },
-        { period: "2026-01-04", count: 12 }
-      ];
 
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockResolvedValue(mockByCategory);
-      (ReportRepository.prototype.getReportCountByState as jest.Mock).mockResolvedValue(mockByState);
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockResolvedValue(mockTrends);
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
 
-      const result = await getPublicStatistics();
+      const result = await getStatistics();
 
-      expect(ReportRepository.prototype.getReportCountByCategory).toHaveBeenCalled();
-      expect(ReportRepository.prototype.getReportCountByState).toHaveBeenCalled();
-      expect(ReportRepository.prototype.getReportTrendsByPeriod).toHaveBeenCalledWith("day");
-      
-      expect(result).toEqual({
-        byCategory: mockByCategory,
-        byState: mockByState,
-        trends: {
-          period: "day",
-          data: mockTrends
-        }
-      });
-    });
-
-    it("should return statistics for period 'week'", async () => {
-      const mockByCategory = [{ category: OfficeType.ROADS_AND_URBAN_FURNISHINGS, count: 5 }];
-      const mockByState = [{ state: "IN_PROGRESS", count: 3 }];
-      const mockTrends = [{ period: "2026-01", count: 25 }];
-
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockResolvedValue(mockByCategory);
-      (ReportRepository.prototype.getReportCountByState as jest.Mock).mockResolvedValue(mockByState);
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockResolvedValue(mockTrends);
-
-      const result = await getPublicStatistics("week");
-
-      expect(ReportRepository.prototype.getReportTrendsByPeriod).toHaveBeenCalledWith("week");
-      expect(result.trends.period).toBe("week");
-      expect(result.trends.data).toEqual(mockTrends);
-    });
-
-    it("should return statistics for period 'month'", async () => {
-      const mockByCategory = [{ category: OfficeType.PUBLIC_LIGHTING, count: 7 }];
-      const mockByState = [{ state: "SUSPENDED", count: 2 }];
-      const mockTrends = [{ period: "2026-01", count: 30 }];
-
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockResolvedValue(mockByCategory);
-      (ReportRepository.prototype.getReportCountByState as jest.Mock).mockResolvedValue(mockByState);
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockResolvedValue(mockTrends);
-
-      const result = await getPublicStatistics("month");
-
-      expect(ReportRepository.prototype.getReportTrendsByPeriod).toHaveBeenCalledWith("month");
-      expect(result.trends.period).toBe("month");
-      expect(result.trends.data).toEqual(mockTrends);
-    });
-
-    it("should throw BadRequestError for invalid period", async () => {
-      await expect(getPublicStatistics("invalid" as any)).rejects.toThrow(BadRequestError);
-      await expect(getPublicStatistics("invalid" as any)).rejects.toThrow(
-        "Invalid period. Must be one of: day, week, month"
-      );
-    });
-
-    it("should throw BadRequestError for year period (not supported)", async () => {
-      await expect(getPublicStatistics("year" as any)).rejects.toThrow(BadRequestError);
-    });
-
-    it("should handle empty statistics", async () => {
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockResolvedValue([]);
-      (ReportRepository.prototype.getReportCountByState as jest.Mock).mockResolvedValue([]);
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockResolvedValue([]);
-
-      const result = await getPublicStatistics("day");
-
-      expect(result.byCategory).toEqual([]);
-      expect(result.byState).toEqual([]);
-      expect(result.trends.data).toEqual([]);
-    });
-
-    it("should handle repository errors for getReportCountByCategory", async () => {
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockRejectedValue(
-        new Error("Database error")
-      );
-
-      await expect(getPublicStatistics()).rejects.toThrow("Database error");
-    });
-
-    it("should handle repository errors for getReportCountByState", async () => {
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockResolvedValue([]);
-      (ReportRepository.prototype.getReportCountByState as jest.Mock).mockRejectedValue(
-        new Error("State query failed")
-      );
-
-      await expect(getPublicStatistics()).rejects.toThrow("State query failed");
-    });
-
-    it("should handle repository errors for getReportTrendsByPeriod", async () => {
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockResolvedValue([]);
-      (ReportRepository.prototype.getReportCountByState as jest.Mock).mockResolvedValue([]);
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockRejectedValue(
-        new Error("Trends query failed")
-      );
-
-      await expect(getPublicStatistics()).rejects.toThrow("Trends query failed");
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledTimes(1);
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
+      expect(result).toEqual(mockStats);
     });
   });
 
-  describe("getReportCountByCategory", () => {
-    it("should return count for existing category", async () => {
+  describe('getStatistics - Date range filters', () => {
+    it('should apply fromDate filter', async () => {
       const mockStats = [
-        { category: OfficeType.WATER_SUPPLY, count: 10 },
-        { category: OfficeType.WASTE, count: 15 },
-        { category: OfficeType.PUBLIC_LIGHTING, count: 7 }
+        { date: '2026-01-05', totalReports: 5, approvedReports: 4, rejectedReports: 1 }
       ];
 
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockResolvedValue(mockStats);
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
 
-      const count = await getReportCountByCategory(OfficeType.WASTE);
+      const result = await getStatistics('2026-01-01');
 
-      expect(ReportRepository.prototype.getReportCountByCategory).toHaveBeenCalled();
-      expect(count).toBe(15);
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith('2026-01-01', undefined, undefined, undefined);
+      expect(result).toEqual(mockStats);
     });
 
-    it("should return 0 for category with no reports", async () => {
+    it('should apply toDate filter', async () => {
       const mockStats = [
-        { category: OfficeType.WATER_SUPPLY, count: 10 },
-        { category: OfficeType.WASTE, count: 15 }
+        { date: '2026-01-03', totalReports: 3, approvedReports: 3, rejectedReports: 0 }
       ];
 
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockResolvedValue(mockStats);
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
 
-      const count = await getReportCountByCategory(OfficeType.ARCHITECTURAL_BARRIERS);
+      const result = await getStatistics(undefined, '2026-01-31');
 
-      expect(count).toBe(0);
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith(undefined, '2026-01-31', undefined, undefined);
+      expect(result).toEqual(mockStats);
     });
 
-    it("should return 0 when no statistics available", async () => {
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockResolvedValue([]);
-
-      const count = await getReportCountByCategory(OfficeType.WATER_SUPPLY);
-
-      expect(count).toBe(0);
-    });
-
-    it("should handle all OfficeType categories", async () => {
+    it('should apply both fromDate and toDate filters', async () => {
       const mockStats = [
-        { category: OfficeType.WATER_SUPPLY, count: 5 },
-        { category: OfficeType.ARCHITECTURAL_BARRIERS, count: 3 },
-        { category: OfficeType.PUBLIC_LIGHTING, count: 8 },
-        { category: OfficeType.WASTE, count: 12 },
-        { category: OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS, count: 6 },
-        { category: OfficeType.ROADS_AND_URBAN_FURNISHINGS, count: 9 },
-        { category: OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS, count: 4 },
-        { category: OfficeType.ORGANIZATION, count: 2 },
-        { category: OfficeType.OTHER, count: 7 }
+        { date: '2026-01-15', totalReports: 8, approvedReports: 6, rejectedReports: 2 }
       ];
 
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockResolvedValue(mockStats);
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
 
-      expect(await getReportCountByCategory(OfficeType.WATER_SUPPLY)).toBe(5);
-      expect(await getReportCountByCategory(OfficeType.ARCHITECTURAL_BARRIERS)).toBe(3);
-      expect(await getReportCountByCategory(OfficeType.PUBLIC_LIGHTING)).toBe(8);
-      expect(await getReportCountByCategory(OfficeType.WASTE)).toBe(12);
-      expect(await getReportCountByCategory(OfficeType.ROAD_SIGNS_AND_TRAFFIC_LIGHTS)).toBe(6);
-      expect(await getReportCountByCategory(OfficeType.ROADS_AND_URBAN_FURNISHINGS)).toBe(9);
-      expect(await getReportCountByCategory(OfficeType.PUBLIC_GREEN_AREAS_AND_PLAYGROUNDS)).toBe(4);
-      expect(await getReportCountByCategory(OfficeType.ORGANIZATION)).toBe(2);
-      expect(await getReportCountByCategory(OfficeType.OTHER)).toBe(7);
-    });
+      const result = await getStatistics('2026-01-01', '2026-01-31');
 
-    it("should handle repository errors", async () => {
-      (ReportRepository.prototype.getReportCountByCategory as jest.Mock).mockRejectedValue(
-        new Error("Database connection failed")
-      );
-
-      await expect(getReportCountByCategory(OfficeType.WATER_SUPPLY)).rejects.toThrow(
-        "Database connection failed"
-      );
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith('2026-01-01', '2026-01-31', undefined, undefined);
+      expect(result).toEqual(mockStats);
     });
   });
 
-  describe("getReportTrends", () => {
-    it("should return trends for period 'day'", async () => {
-      const mockTrends = [
-        { period: "2026-01-05", count: 8 },
-        { period: "2026-01-04", count: 12 },
-        { period: "2026-01-03", count: 6 }
+  describe('getStatistics - Period filter', () => {
+    it('should work with daily period', async () => {
+      const mockStats = [
+        { date: '2026-01-05', totalReports: 3, approvedReports: 2, rejectedReports: 1 },
+        { date: '2026-01-04', totalReports: 5, approvedReports: 4, rejectedReports: 1 }
       ];
 
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockResolvedValue(mockTrends);
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
 
-      const result = await getReportTrends("day");
+      const result = await getStatistics(undefined, undefined, 'daily');
 
-      expect(ReportRepository.prototype.getReportTrendsByPeriod).toHaveBeenCalledWith("day");
-      expect(result).toEqual({
-        period: "day",
-        data: mockTrends
-      });
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith(undefined, undefined, 'daily', undefined);
+      expect(result).toEqual(mockStats);
     });
 
-    it("should return trends for period 'week'", async () => {
-      const mockTrends = [
-        { period: "2026-01", count: 45 },
-        { period: "2025-52", count: 38 }
+    it('should work with weekly period', async () => {
+      const mockStats = [
+        { date: '2026-W01', totalReports: 15, approvedReports: 12, rejectedReports: 3 }
       ];
 
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockResolvedValue(mockTrends);
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
 
-      const result = await getReportTrends("week");
+      const result = await getStatistics(undefined, undefined, 'weekly');
 
-      expect(ReportRepository.prototype.getReportTrendsByPeriod).toHaveBeenCalledWith("week");
-      expect(result).toEqual({
-        period: "week",
-        data: mockTrends
-      });
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith(undefined, undefined, 'weekly', undefined);
+      expect(result).toEqual(mockStats);
     });
 
-    it("should return trends for period 'month'", async () => {
-      const mockTrends = [
-        { period: "2026-01", count: 180 },
-        { period: "2025-12", count: 165 }
+    it('should work with monthly period', async () => {
+      const mockStats = [
+        { date: '2026-01', totalReports: 50, approvedReports: 40, rejectedReports: 10 }
       ];
 
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockResolvedValue(mockTrends);
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
 
-      const result = await getReportTrends("month");
+      const result = await getStatistics(undefined, undefined, 'monthly');
 
-      expect(ReportRepository.prototype.getReportTrendsByPeriod).toHaveBeenCalledWith("month");
-      expect(result).toEqual({
-        period: "month",
-        data: mockTrends
-      });
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith(undefined, undefined, 'monthly', undefined);
+      expect(result).toEqual(mockStats);
     });
 
-    it("should throw BadRequestError for invalid period", async () => {
-      await expect(getReportTrends("invalid" as any)).rejects.toThrow(BadRequestError);
-      await expect(getReportTrends("invalid" as any)).rejects.toThrow(
-        "Invalid period. Must be one of: day, week, month"
-      );
+    it('should work with yearly period', async () => {
+      const mockStats = [
+        { date: '2026', totalReports: 500, approvedReports: 400, rejectedReports: 100 }
+      ];
+
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
+
+      const result = await getStatistics(undefined, undefined, 'yearly');
+
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith(undefined, undefined, 'yearly', undefined);
+      expect(result).toEqual(mockStats);
+    });
+  });
+
+  describe('getStatistics - Category filter', () => {
+    it('should filter by category', async () => {
+      const mockStats = [
+        { date: '2026-01-05', totalReports: 8, approvedReports: 7, rejectedReports: 1 }
+      ];
+
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
+
+      const result = await getStatistics(undefined, undefined, undefined, OfficeType.WASTE);
+
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith(undefined, undefined, undefined, OfficeType.WASTE);
+      expect(result).toEqual(mockStats);
     });
 
-    it("should throw BadRequestError for uppercase period", async () => {
-      await expect(getReportTrends("DAY" as any)).rejects.toThrow(BadRequestError);
+    it('should work with different category types', async () => {
+      const categories = [
+        OfficeType.WATER_SUPPLY,
+        OfficeType.PUBLIC_LIGHTING,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.OTHER
+      ];
+
+      for (const category of categories) {
+        const mockStats = [
+          { date: '2026-01-05', totalReports: 5, approvedReports: 4, rejectedReports: 1 }
+        ];
+        
+        mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
+
+        const result = await getStatistics(undefined, undefined, undefined, category);
+
+        expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith(undefined, undefined, undefined, category);
+        expect(result).toEqual(mockStats);
+      }
+    });
+  });
+
+  describe('getStatistics - Combined filters', () => {
+    it('should apply period and category together', async () => {
+      const mockStats = [
+        { date: '2026-01', totalReports: 25, approvedReports: 20, rejectedReports: 5 }
+      ];
+
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
+
+      const result = await getStatistics(undefined, undefined, 'monthly', OfficeType.WASTE);
+
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith(undefined, undefined, 'monthly', OfficeType.WASTE);
+      expect(result).toEqual(mockStats);
     });
 
-    it("should throw BadRequestError for empty string period", async () => {
-      await expect(getReportTrends("" as any)).rejects.toThrow(BadRequestError);
+    it('should apply all filters together', async () => {
+      const mockStats = [
+        { date: '2026-01-15', totalReports: 10, approvedReports: 8, rejectedReports: 2 }
+      ];
+
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
+
+      const result = await getStatistics('2026-01-01', '2026-01-31', 'daily', OfficeType.WASTE);
+
+      expect(mockReportRepo.getReportStatistics).toHaveBeenCalledWith('2026-01-01', '2026-01-31', 'daily', OfficeType.WASTE);
+      expect(result).toEqual(mockStats);
+    });
+  });
+
+  describe('getStatistics - Input validation', () => {
+    it('should throw BadRequestError for invalid period', async () => {
+      await expect(getStatistics(undefined, undefined, 'invalid' as any)).rejects.toThrow(BadRequestError);
+      await expect(getStatistics(undefined, undefined, 'invalid' as any)).rejects.toThrow('Invalid period. Must be one of: daily, weekly, monthly, yearly');
     });
 
-    it("should handle empty trends data", async () => {
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockResolvedValue([]);
-
-      const result = await getReportTrends("day");
-
-      expect(result.data).toEqual([]);
+    it('should throw BadRequestError for invalid category', async () => {
+      await expect(getStatistics(undefined, undefined, undefined, 'invalid_category' as any)).rejects.toThrow(BadRequestError);
+      await expect(getStatistics(undefined, undefined, undefined, 'invalid_category' as any)).rejects.toThrow('Invalid category');
     });
 
-    it("should handle repository errors", async () => {
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockRejectedValue(
-        new Error("Query timeout")
-      );
-
-      await expect(getReportTrends("day")).rejects.toThrow("Query timeout");
+    it('should validate period even with valid category', async () => {
+      await expect(getStatistics(undefined, undefined, 'day' as any, OfficeType.WASTE)).rejects.toThrow(BadRequestError);
     });
 
-    it("should handle network errors from repository", async () => {
-      (ReportRepository.prototype.getReportTrendsByPeriod as jest.Mock).mockRejectedValue(
-        new Error("Network error")
-      );
+    it('should validate category even with valid period', async () => {
+      await expect(getStatistics(undefined, undefined, 'monthly', 'not_a_category' as any)).rejects.toThrow(BadRequestError);
+    });
+  });
 
-      await expect(getReportTrends("week")).rejects.toThrow("Network error");
+  describe('getStatistics - Edge cases', () => {
+    it('should handle empty results gracefully', async () => {
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce([]);
+
+      const result = await getStatistics(undefined, undefined, 'monthly', OfficeType.WASTE);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle zero counts in results', async () => {
+      const mockStats = [
+        { date: '2026-01-05', totalReports: 0, approvedReports: 0, rejectedReports: 0 }
+      ];
+
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce(mockStats);
+
+      const result = await getStatistics();
+
+      expect(result).toEqual(mockStats);
+    });
+  });
+
+  describe('getStatistics - Repository instantiation', () => {
+    it('should create a new ReportRepository instance', async () => {
+      mockReportRepo.getReportStatistics.mockResolvedValueOnce([]);
+
+      await getStatistics();
+
+      expect(ReportRepository).toHaveBeenCalledTimes(1);
     });
   });
 });
+

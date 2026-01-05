@@ -2,6 +2,7 @@ import request from "supertest";
 import express from "express";
 import { reportRouter } from "../../../src/routes/ReportRoutes";
 import * as reportController from "../../../src/controllers/reportController";
+import * as statisticsController from "../../../src/controllers/statisticsController";
 import { ReportRepository } from "../../../src/repositories/ReportRepository";
 import { NotificationRepository } from "../../../src/repositories/NotificationRepository";
 import { FollowRepository } from "../../../src/repositories/FollowRepository";
@@ -9,6 +10,7 @@ import { OfficerRole } from "../../../src/models/enums/OfficerRole";
 import { OfficeType } from "../../../src/models/enums/OfficeType";
 import { ReportState } from "../../../src/models/enums/ReportState";
 import { ReviewStatus } from "../../../src/models/enums/ReviewStatus";
+import { BadRequestError } from "../../../src/utils/utils";
 
 // Create mock functions that can be configured per test
 const mockAuthenticateToken = jest.fn();
@@ -30,6 +32,7 @@ jest.mock("../../../src/middlewares/uploadMiddleware", () => ({
 
 // Mock controller
 jest.mock("../../../src/controllers/reportController");
+jest.mock("../../../src/controllers/statisticsController");
 
 // Mock repositories
 jest.mock("../../../src/repositories/ReportRepository");
@@ -44,7 +47,7 @@ app.use("/reports", reportRouter);
 
 // Error handler middleware
 app.use((err: any, req: any, res: any, next: any) => {
-  res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
+  res.status(err.statusCode || err.status || 500).json({ error: err.message || "Internal Server Error" });
 });
 
 describe("ReportRoutes", () => {
@@ -786,6 +789,227 @@ describe("ReportRoutes", () => {
 
       expect(res.status).toBe(500);
       expect(res.body).toHaveProperty("error");
+    });
+  });
+
+  // ===================== GET /reports/stats =====================
+  describe("GET /reports/stats", () => {
+    const mockGetStatistics = statisticsController.getStatistics as jest.MockedFunction<typeof statisticsController.getStatistics>;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("should return statistics without any query parameters", async () => {
+      const mockStats = [
+        { date: '2026-01-05', totalReports: 10, approvedReports: 8, rejectedReports: 2 },
+        { date: '2026-01-04', totalReports: 5, approvedReports: 4, rejectedReports: 1 }
+      ];
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get("/reports/stats");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, undefined, undefined, undefined);
+    });
+
+    it("should return statistics with fromDate parameter", async () => {
+      const mockStats = [
+        { date: '2026-01-05', totalReports: 8, approvedReports: 7, rejectedReports: 1 }
+      ];
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get("/reports/stats?fromDate=2026-01-01");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith("2026-01-01", undefined, undefined, undefined);
+    });
+
+    it("should return statistics with toDate parameter", async () => {
+      const mockStats = [
+        { date: '2026-01-03', totalReports: 5, approvedReports: 4, rejectedReports: 1 }
+      ];
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get("/reports/stats?toDate=2026-01-31");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, "2026-01-31", undefined, undefined);
+    });
+
+    it("should return statistics with period parameter - daily", async () => {
+      const mockStats = [
+        { date: '2026-01-05', totalReports: 3, approvedReports: 2, rejectedReports: 1 },
+        { date: '2026-01-04', totalReports: 5, approvedReports: 4, rejectedReports: 1 }
+      ];
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get("/reports/stats?period=daily");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, undefined, "daily", undefined);
+    });
+
+    it("should return statistics with period parameter - weekly", async () => {
+      const mockStats = [
+        { date: '2026-W01', totalReports: 15, approvedReports: 12, rejectedReports: 3 }
+      ];
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get("/reports/stats?period=weekly");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, undefined, "weekly", undefined);
+    });
+
+    it("should return statistics with period parameter - monthly", async () => {
+      const mockStats = [
+        { date: '2026-01', totalReports: 50, approvedReports: 40, rejectedReports: 10 }
+      ];
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get("/reports/stats?period=monthly");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, undefined, "monthly", undefined);
+    });
+
+    it("should return statistics with period parameter - yearly", async () => {
+      const mockStats = [
+        { date: '2026', totalReports: 500, approvedReports: 400, rejectedReports: 100 }
+      ];
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get("/reports/stats?period=yearly");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, undefined, "yearly", undefined);
+    });
+
+    it("should return statistics with category parameter", async () => {
+      const mockStats = [
+        { date: '2026-01-05', totalReports: 8, approvedReports: 7, rejectedReports: 1 }
+      ];
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get(`/reports/stats?category=${OfficeType.WASTE}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, undefined, undefined, OfficeType.WASTE);
+    });
+
+    it("should return statistics with both period and category parameters", async () => {
+      const mockStats = [
+        { date: '2026-01', totalReports: 25, approvedReports: 20, rejectedReports: 5 }
+      ];
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get(`/reports/stats?period=monthly&category=${OfficeType.WASTE}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, undefined, "monthly", OfficeType.WASTE);
+    });
+
+    it("should return statistics with all parameters", async () => {
+      const mockStats = [
+        { date: '2026-01-15', totalReports: 10, approvedReports: 8, rejectedReports: 2 }
+      ];
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get(`/reports/stats?fromDate=2026-01-01&toDate=2026-01-31&period=daily&category=${OfficeType.WASTE}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith("2026-01-01", "2026-01-31", "daily", OfficeType.WASTE);
+    });
+
+    it("should work with different category types", async () => {
+      const categories = [
+        OfficeType.WATER_SUPPLY,
+        OfficeType.PUBLIC_LIGHTING,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.OTHER
+      ];
+
+      for (const category of categories) {
+        const mockStats = [
+          { date: '2026-01-05', totalReports: 5, approvedReports: 4, rejectedReports: 1 }
+        ];
+        mockGetStatistics.mockResolvedValue(mockStats);
+
+        const res = await request(app).get(`/reports/stats?category=${category}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual(mockStats);
+        expect(mockGetStatistics).toHaveBeenCalledWith(undefined, undefined, undefined, category);
+      }
+    });
+
+    it("should handle controller validation errors for invalid period", async () => {
+      mockGetStatistics.mockRejectedValue(new BadRequestError("Invalid period. Must be one of: daily, weekly, monthly, yearly"));
+
+      const res = await request(app).get("/reports/stats?period=invalid");
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should handle controller errors for invalid category", async () => {
+      mockGetStatistics.mockRejectedValue(new BadRequestError("Invalid category"));
+
+      const res = await request(app).get("/reports/stats?category=invalid_category");
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should handle internal server errors from controller", async () => {
+      mockGetStatistics.mockRejectedValue(new Error("Database error"));
+
+      const res = await request(app).get("/reports/stats");
+
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should return empty array gracefully", async () => {
+      mockGetStatistics.mockResolvedValue([]);
+
+      const res = await request(app).get("/reports/stats");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it("should handle query parameters case-sensitively", async () => {
+      const mockStats = [
+        { date: '2026-01-05', totalReports: 5, approvedReports: 4, rejectedReports: 1 }
+      ];
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get(`/reports/stats?category=${OfficeType.WASTE}`);
+
+      expect(res.status).toBe(200);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, undefined, undefined, OfficeType.WASTE);
     });
   });
 });

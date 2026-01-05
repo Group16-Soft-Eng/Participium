@@ -5,62 +5,33 @@ import { OfficeType } from "@models/enums/OfficeType";
 import { BadRequestError } from "@utils/utils";
 
 /**
- * Get public statistics about reports
- * Returns count by category and trends by period
+ * Get statistics about reports
+ * Returns an array of statistics grouped by date with total, approved and rejected counts
+ * Supports optional filtering by date range, period, and category
+ * @param fromDate - Start date for filtering (optional)
+ * @param toDate - End date for filtering (optional)
+ * @param period - Aggregation period: 'daily' | 'weekly' | 'monthly' | 'yearly' (optional)
+ * @param category - Category filter (OfficeType) (optional)
  */
-export async function getPublicStatistics(selectedPeriod: 'day' | 'week' | 'month' = 'day') {
+export async function getStatistics(
+  fromDate?: string,
+  toDate?: string,
+  period?: 'daily' | 'weekly' | 'monthly' | 'yearly',
+  category?: OfficeType
+): Promise<Array<{ date: string; totalReports: number; approvedReports: number; rejectedReports: number }>> {
   const reportRepo = new ReportRepository();
   
-  // Validate period parameter if provided
-  const validPeriods = ['day', 'week', 'month'];
+  // Validate inputs
+  if (period && !['daily', 'weekly', 'monthly', 'yearly'].includes(period)) {
+    throw new BadRequestError("Invalid period. Must be one of: daily, weekly, monthly, yearly");
+  }
   
-  if (!validPeriods.includes(selectedPeriod)) {
-    throw new BadRequestError(`Invalid period. Must be one of: ${validPeriods.join(', ')}`);
+  if (category && !Object.values(OfficeType).includes(category)) {
+    throw new BadRequestError(`Invalid category. Must be one of: ${Object.values(OfficeType).join(', ')}`);
   }
 
-  // Get statistics
-  const [reportsByCategory, reportsByState, reportTrends] = await Promise.all([
-    reportRepo.getReportCountByCategory(),
-    reportRepo.getReportCountByState(),
-    reportRepo.getReportTrendsByPeriod(selectedPeriod)
-  ]);
-
-  return {
-    byCategory: reportsByCategory,
-    byState: reportsByState,
-    trends: {
-      period: selectedPeriod,
-      data: reportTrends
-    }
-  };
-}
-
-/**
- * Get report count by specific category
- */
-export async function getReportCountByCategory(category: OfficeType): Promise<number> {
-  const reportRepo = new ReportRepository();
-  const stats = await reportRepo.getReportCountByCategory();
+  // Get statistics from repository
+  const stats = await reportRepo.getReportStatistics(fromDate, toDate, period, category);
   
-  const categoryStats = stats.find(s => s.category === category);
-  return categoryStats ? categoryStats.count : 0;
-}
-
-/**
- * Get trend statistics for a specific period
- */
-export async function getReportTrends(period: 'day' | 'week' | 'month') {
-  const reportRepo = new ReportRepository();
-  
-  const validPeriods = ['day', 'week', 'month'];
-  if (!validPeriods.includes(period)) {
-    throw new BadRequestError(`Invalid period. Must be one of: ${validPeriods.join(', ')}`);
-  }
-
-  const trends = await reportRepo.getReportTrendsByPeriod(period);
-  
-  return {
-    period,
-    data: trends
-  };
+  return stats;
 }

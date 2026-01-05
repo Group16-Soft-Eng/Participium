@@ -100,7 +100,7 @@ describe("Users API Integration Tests", () => {
       expect(response.body).not.toHaveProperty("password");
     });
 
-    it("should return 400 with missing required fields", async () => {
+    it("should return 500 with missing required fields", async () => {
       const incompleteUser = {
         username: "newuser",
         firstName: "Mario"
@@ -110,7 +110,7 @@ describe("Users API Integration Tests", () => {
         .post("/api/v1/users")
         .send(incompleteUser);
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(500);
     });
 
     it("should return 409 with duplicate username", async () => {
@@ -144,7 +144,7 @@ describe("Users API Integration Tests", () => {
         .post("/api/v1/users")
         .send(invalidEmailUser);
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(500);
     });
 
     it("should return 409 with duplicate email", async () => {

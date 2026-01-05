@@ -1,14 +1,17 @@
 import {Router} from "express";
 import {uploadReport, getReports, getReport } from "@controllers/reportController"
+import { getStatistics } from "@controllers/statisticsController";
 
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import { uploadPhotos } from "@middlewares/uploadMiddleware";
 import { OfficerRole } from "@models/enums/OfficerRole";
+import { OfficeType } from "@models/enums/OfficeType";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { NotificationRepository } from "@repositories/NotificationRepository";
 import { ReviewStatus } from "@models/enums/ReviewStatus";
 import { FollowRepository } from "@repositories/FollowRepository";
 import { mapUserDAOToDTO } from "@services/mapperService";
+import { BadRequestError } from "@utils/utils";
 
 const router = Router({mergeParams : true});
 
@@ -78,6 +81,39 @@ router.get("/", async(req, res, next) =>{
     {
         next(error);
     }
+});
+
+/**
+ * GET /stats
+ * Get statistics about reports (no authentication required)
+ * Query params:
+ *   - fromDate: Start date for filtering (ISO 8601 format, optional)
+ *   - toDate: End date for filtering (ISO 8601 format, optional)
+ *   - period: 'daily' | 'weekly' | 'monthly' | 'yearly' (optional)
+ *   - category: Office type category (optional)
+ * 
+ * Returns: Array of { date, totalReports, approvedReports, rejectedReports }
+ * 
+ * Examples:
+ *   - /stats - Get all statistics
+ *   - /stats?period=weekly - Get statistics grouped by week
+ *   - /stats?category=WASTE - Get statistics for waste category
+ *   - /stats?fromDate=2026-01-01&toDate=2026-01-31&period=daily - Get daily stats for January
+ */
+router.get("/stats", async (req, res, next) => {
+  try {
+    const fromDate = req.query.fromDate as string | undefined;
+    const toDate = req.query.toDate as string | undefined;
+    const period = req.query.period as 'daily' | 'weekly' | 'monthly' | 'yearly' | undefined;
+    const category = req.query.category as OfficeType | undefined;
+    
+    // Validation is handled in the controller
+    const result = await getStatistics(fromDate, toDate, period, category);
+    
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
 });
 
 //? Get single report by ID (for officers and authenticated users)

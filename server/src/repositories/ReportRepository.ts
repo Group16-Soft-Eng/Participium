@@ -191,70 +191,66 @@ export class ReportRepository {
     return this.repo.save(report);
   }
 
-  // Public statistics: report count by category (only approved reports)
-  async getReportCountByCategory(): Promise<Array<{ category: OfficeType; count: number }>> {
-    const result = await this.repo
-      .createQueryBuilder("report")
-      .select("report.category", "category")
-      .addSelect("COUNT(*)", "count")
-      .where("report.state IN (:...states)", {
-        states: [ReportState.ASSIGNED, ReportState.IN_PROGRESS, ReportState.SUSPENDED]
-      })
-      .groupBy("report.category")
-      .getRawMany();
-
-    return result.map(r => ({
-      category: r.category as OfficeType,
-      count: Number.parseInt(r.count, 10)
-    }));
-  }
-
-  // Public statistics: count by state
-  async getReportCountByState(): Promise<Array<{ state: string; count: number }>> {
-    const result = await this.repo
-      .createQueryBuilder("report")
-      .select("report.state", "state")
-      .addSelect("COUNT(*)", "count")
-      .groupBy("report.state")
-      .getRawMany();
-
-    return result.map(r => ({
-      state: r.state,
-      count: Number.parseInt(r.count, 10)
-    }));
-  }
-
-  // Public statistics: trends by period (day/week/month)
-  async getReportTrendsByPeriod(period: 'day' | 'week' | 'month'): Promise<Array<{ period: string; count: number }>> {
-    let dateFormat: string;
+  /**
+   * Get report statistics grouped by date
+   * Returns array with date, totalReports, approvedReports, rejectedReports
+   * @param fromDate - Start date filter (optional)
+   * @param toDate - End date filter (optional)
+   * @param period - Aggregation period: 'daily' | 'weekly' | 'monthly' | 'yearly' (optional)
+   * @param category - Category filter (optional)
+   */
+  async getReportStatistics(
+    fromDate?: string,
+    toDate?: string,
+    period?: 'daily' | 'weekly' | 'monthly' | 'yearly',
+    category?: OfficeType
+  ): Promise<Array<{ date: string; totalReports: number; approvedReports: number; rejectedReports: number }>> {
+    const query = this.repo.createQueryBuilder("report");
     
-    switch (period) {
-      case 'day':
-        dateFormat = "%Y-%m-%d";
-        break;
-      case 'week':
-        dateFormat = "%Y-%W";
-        break;
-      case 'month':
-        dateFormat = "%Y-%m";
-        break;
+    // Determine date format based on period
+    let dateFormat = "%Y-%m-%d"; // Default: daily
+    if (period === 'weekly') {
+      dateFormat = "%Y-W%W"; // Year-Week
+    } else if (period === 'monthly') {
+      dateFormat = "%Y-%m"; // Year-Month
+    } else if (period === 'yearly') {
+      dateFormat = "%Y"; // Year only
     }
-
-    const result = await this.repo
-      .createQueryBuilder("report")
-      .select(`strftime('${dateFormat}', report.date)`, "period")
-      .addSelect("COUNT(*)", "count")
-      .where("report.state IN (:...states)", {
-        states: [ReportState.ASSIGNED, ReportState.IN_PROGRESS, ReportState.SUSPENDED]
-      })
-      .groupBy("period")
-      .orderBy("period", "DESC")
-      .limit(30) // Last 30 periods (days, weeks, or months)
-      .getRawMany();
-
+    
+    query.select(`strftime('${dateFormat}', report.date)`, "date");
+    query.addSelect("COUNT(*)", "totalReports");
+    query.addSelect(
+      `SUM(CASE WHEN report.state IN ('${ReportState.ASSIGNED}', '${ReportState.IN_PROGRESS}', '${ReportState.SUSPENDED}', '${ReportState.RESOLVED}') THEN 1 ELSE 0 END)`,
+      "approvedReports"
+    );
+    query.addSelect(
+      `SUM(CASE WHEN report.state = '${ReportState.DECLINED}' THEN 1 ELSE 0 END)`,
+      "rejectedReports"
+    );
+    
+    // Apply filters
+    if (fromDate) {
+      query.andWhere("report.date >= :fromDate", { fromDate: new Date(fromDate) });
+    }
+    
+    if (toDate) {
+      query.andWhere("report.date <= :toDate", { toDate: new Date(toDate) });
+    }
+    
+    if (category) {
+      query.andWhere("report.category = :category", { category });
+    }
+    
+    query.groupBy(`strftime('${dateFormat}', report.date)`);
+    query.orderBy("date", "DESC");
+    
+    const result = await query.getRawMany();
+    
     return result.map(r => ({
-      period: r.period,
-      count: Number.parseInt(r.count, 10)
+      date: r.date,
+      totalReports: Number.parseInt(r.totalReports, 10),
+      approvedReports: Number.parseInt(r.approvedReports, 10),
+      rejectedReports: Number.parseInt(r.rejectedReports, 10)
     }));
   }
 
