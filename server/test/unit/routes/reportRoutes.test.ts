@@ -2,6 +2,7 @@ import request from "supertest";
 import express from "express";
 import { reportRouter } from "../../../src/routes/ReportRoutes";
 import * as reportController from "../../../src/controllers/reportController";
+import * as statisticsController from "../../../src/controllers/statisticsController";
 import { ReportRepository } from "../../../src/repositories/ReportRepository";
 import { NotificationRepository } from "../../../src/repositories/NotificationRepository";
 import { FollowRepository } from "../../../src/repositories/FollowRepository";
@@ -9,6 +10,7 @@ import { OfficerRole } from "../../../src/models/enums/OfficerRole";
 import { OfficeType } from "../../../src/models/enums/OfficeType";
 import { ReportState } from "../../../src/models/enums/ReportState";
 import { ReviewStatus } from "../../../src/models/enums/ReviewStatus";
+import { BadRequestError } from "../../../src/utils/utils";
 
 // Create mock functions that can be configured per test
 const mockAuthenticateToken = jest.fn();
@@ -30,6 +32,7 @@ jest.mock("../../../src/middlewares/uploadMiddleware", () => ({
 
 // Mock controller
 jest.mock("../../../src/controllers/reportController");
+jest.mock("../../../src/controllers/statisticsController");
 
 // Mock repositories
 jest.mock("../../../src/repositories/ReportRepository");
@@ -44,7 +47,7 @@ app.use("/reports", reportRouter);
 
 // Error handler middleware
 app.use((err: any, req: any, res: any, next: any) => {
-  res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
+  res.status(err.statusCode || err.status || 500).json({ error: err.message || "Internal Server Error" });
 });
 
 describe("ReportRoutes", () => {
@@ -786,6 +789,196 @@ describe("ReportRoutes", () => {
 
       expect(res.status).toBe(500);
       expect(res.body).toHaveProperty("error");
+    });
+  });
+
+  // ===================== GET /reports/stats =====================
+  describe("GET /reports/stats", () => {
+    const mockGetStatistics = statisticsController.getStatistics as jest.MockedFunction<typeof statisticsController.getStatistics>;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("should return statistics without any query parameters", async () => {
+      const mockStats = {
+        byCategory: [
+          { category: OfficeType.WASTE, count: 10 },
+          { category: OfficeType.PUBLIC_LIGHTING, count: 5 }
+        ],
+        byState: [
+          { state: "PENDING", count: 3 },
+          { state: "ASSIGNED", count: 7 }
+        ]
+      };
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get("/reports/stats");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, undefined);
+    });
+
+    it("should return statistics with period parameter", async () => {
+      const mockStats = {
+        byCategory: [{ category: OfficeType.WASTE, count: 10 }],
+        trends: {
+          period: "week",
+          data: [
+            { period: "2026-01", count: 5 },
+            { period: "2025-52", count: 5 }
+          ]
+        }
+      };
+
+      mockGetStatistics.mockResolvedValue(mockStats as any);
+
+      const res = await request(app).get("/reports/stats?period=week");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith("week", undefined);
+    });
+
+    it("should return statistics with category parameter", async () => {
+      const mockStats = {
+        category: OfficeType.WASTE,
+        count: 25
+      };
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get(`/reports/stats?category=${OfficeType.WASTE}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, OfficeType.WASTE);
+    });
+
+    it("should return statistics with both period and category parameters", async () => {
+      const mockStats = {
+        category: OfficeType.WASTE,
+        count: 15,
+        trends: {
+          period: "month",
+          data: [{ period: "2026-01", count: 10 }]
+        }
+      };
+
+      mockGetStatistics.mockResolvedValue(mockStats as any);
+
+      const res = await request(app).get(`/reports/stats?period=month&category=${OfficeType.WASTE}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+      expect(mockGetStatistics).toHaveBeenCalledWith("month", OfficeType.WASTE);
+    });
+
+    it("should work with day period", async () => {
+      const mockStats = {
+        byCategory: [{ category: OfficeType.WASTE, count: 5 }],
+        trends: {
+          period: "day",
+          data: [{ period: "2026-01-05", count: 5 }]
+        }
+      };
+
+      mockGetStatistics.mockResolvedValue(mockStats as any);
+
+      const res = await request(app).get("/reports/stats?period=day");
+
+      expect(res.status).toBe(200);
+      expect(mockGetStatistics).toHaveBeenCalledWith("day", undefined);
+    });
+
+    it("should work with month period", async () => {
+      const mockStats = {
+        byCategory: [{ category: OfficeType.WASTE, count: 15 }],
+        trends: {
+          period: "month",
+          data: [{ period: "2026-01", count: 15 }]
+        }
+      };
+
+      mockGetStatistics.mockResolvedValue(mockStats as any);
+
+      const res = await request(app).get("/reports/stats?period=month");
+
+      expect(res.status).toBe(200);
+      expect(mockGetStatistics).toHaveBeenCalledWith("month", undefined);
+    });
+
+    it("should work with different category types", async () => {
+      const categories = [
+        OfficeType.WATER_SUPPLY,
+        OfficeType.PUBLIC_LIGHTING,
+        OfficeType.ROADS_AND_URBAN_FURNISHINGS,
+        OfficeType.OTHER
+      ];
+
+      for (const category of categories) {
+        const mockStats = { category, count: 10 };
+        mockGetStatistics.mockResolvedValue(mockStats);
+
+        const res = await request(app).get(`/reports/stats?category=${category}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual(mockStats);
+        expect(mockGetStatistics).toHaveBeenCalledWith(undefined, category);
+      }
+    });
+
+    it("should handle controller validation errors", async () => {
+      mockGetStatistics.mockRejectedValue(new BadRequestError("Invalid period. Must be one of: day, week, month"));
+
+      const res = await request(app).get("/reports/stats?period=invalid");
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should handle controller errors for invalid category", async () => {
+      mockGetStatistics.mockRejectedValue(new BadRequestError("Invalid category"));
+
+      const res = await request(app).get("/reports/stats?category=invalid_category");
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should handle internal server errors from controller", async () => {
+      mockGetStatistics.mockRejectedValue(new Error("Database error"));
+
+      const res = await request(app).get("/reports/stats");
+
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty("error");
+    });
+
+    it("should return empty data gracefully", async () => {
+      const mockStats = {
+        byCategory: [],
+        byState: []
+      };
+
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get("/reports/stats");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(mockStats);
+    });
+
+    it("should handle query parameters case-sensitively", async () => {
+      const mockStats = { category: OfficeType.WASTE, count: 10 };
+      mockGetStatistics.mockResolvedValue(mockStats);
+
+      const res = await request(app).get(`/reports/stats?category=${OfficeType.WASTE}`);
+
+      expect(res.status).toBe(200);
+      expect(mockGetStatistics).toHaveBeenCalledWith(undefined, OfficeType.WASTE);
     });
   });
 });

@@ -1,14 +1,17 @@
 import {Router} from "express";
 import {uploadReport, getReports, getReport } from "@controllers/reportController"
+import { getStatistics } from "@controllers/statisticsController";
 
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import { uploadPhotos } from "@middlewares/uploadMiddleware";
 import { OfficerRole } from "@models/enums/OfficerRole";
+import { OfficeType } from "@models/enums/OfficeType";
 import { ReportRepository } from "@repositories/ReportRepository";
 import { NotificationRepository } from "@repositories/NotificationRepository";
 import { ReviewStatus } from "@models/enums/ReviewStatus";
 import { FollowRepository } from "@repositories/FollowRepository";
 import { mapUserDAOToDTO } from "@services/mapperService";
+import { BadRequestError } from "@utils/utils";
 
 const router = Router({mergeParams : true});
 
@@ -78,6 +81,33 @@ router.get("/", async(req, res, next) =>{
     {
         next(error);
     }
+});
+
+/**
+ * GET /stats
+ * Get statistics about reports (no authentication required)
+ * Query params:
+ *   - period: 'day' | 'week' | 'month' (optional)
+ *   - category: Office type category (optional)
+ * 
+ * Examples:
+ *   - /stats - Get all statistics
+ *   - /stats?period=week - Get statistics with weekly trends
+ *   - /stats?category=WASTE - Get count for waste category
+ *   - /stats?period=month&category=PUBLIC_LIGHTING - Get monthly trends for public lighting
+ */
+router.get("/stats", async (req, res, next) => {
+  try {
+    const period = req.query.period as 'day' | 'week' | 'month' | undefined;
+    const category = req.query.category as OfficeType | undefined;
+    
+    // Validation is handled in the controller
+    const result = await getStatistics(period, category);
+    
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
 });
 
 //? Get single report by ID (for officers and authenticated users)

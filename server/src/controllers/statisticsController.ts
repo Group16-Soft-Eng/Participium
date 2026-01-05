@@ -5,62 +5,54 @@ import { OfficeType } from "@models/enums/OfficeType";
 import { BadRequestError } from "@utils/utils";
 
 /**
- * Get public statistics about reports
- * Returns count by category and trends by period
+ * Get comprehensive statistics about reports
+ * Supports optional filtering by period and/or category
+ * @param period - Optional time period for trends ('day' | 'week' | 'month')
+ * @param category - Optional category filter (OfficeType)
  */
-export async function getPublicStatistics(selectedPeriod: 'day' | 'week' | 'month' = 'day') {
+export async function getStatistics(
+  period?: 'day' | 'week' | 'month',
+  category?: OfficeType
+) {
   const reportRepo = new ReportRepository();
   
-  // Validate period parameter if provided
-  const validPeriods = ['day', 'week', 'month'];
+  // Validate inputs
+  if (period && !['day', 'week', 'month'].includes(period)) {
+    throw new BadRequestError("Invalid period. Must be one of: day, week, month");
+  }
   
-  if (!validPeriods.includes(selectedPeriod)) {
-    throw new BadRequestError(`Invalid period. Must be one of: ${validPeriods.join(', ')}`);
+  if (category && !Object.values(OfficeType).includes(category)) {
+    throw new BadRequestError(`Invalid category. Must be one of: ${Object.values(OfficeType).join(', ')}`);
   }
 
-  // Get statistics
-  const [reportsByCategory, reportsByState, reportTrends] = await Promise.all([
-    reportRepo.getReportCountByCategory(),
-    reportRepo.getReportCountByState(),
-    reportRepo.getReportTrendsByPeriod(selectedPeriod)
-  ]);
-
-  return {
-    byCategory: reportsByCategory,
-    byState: reportsByState,
-    trends: {
-      period: selectedPeriod,
-      data: reportTrends
-    }
-  };
-}
-
-/**
- * Get report count by specific category
- */
-export async function getReportCountByCategory(category: OfficeType): Promise<number> {
-  const reportRepo = new ReportRepository();
-  const stats = await reportRepo.getReportCountByCategory();
+  // Build queries in parallel using unified method
+  const queries: Promise<any>[] = [
+    reportRepo.getReportStatistics('category', undefined, category)
+  ];
   
-  const categoryStats = stats.find(s => s.category === category);
-  return categoryStats ? categoryStats.count : 0;
-}
-
-/**
- * Get trend statistics for a specific period
- */
-export async function getReportTrends(period: 'day' | 'week' | 'month') {
-  const reportRepo = new ReportRepository();
+  if (period) {
+    queries.push(reportRepo.getReportStatistics('period', period, category));
+  }
   
-  const validPeriods = ['day', 'week', 'month'];
-  if (!validPeriods.includes(period)) {
-    throw new BadRequestError(`Invalid period. Must be one of: ${validPeriods.join(', ')}`);
+  if (!period && !category) {
+    queries.push(reportRepo.getReportStatistics('state'));
   }
 
-  const trends = await reportRepo.getReportTrendsByPeriod(period);
+  const [categoryStats, ...rest] = await Promise.all(queries);
   
+  // Build result based on what we have
   return {
-    period,
-    data: trends
+    ...(category 
+      ? { category, count: categoryStats[0]?.count || 0 }
+      : { byCategory: categoryStats }
+    ),
+    ...(period && rest[0] 
+      ? { trends: { period, data: rest[0] } }
+      : {}
+    ),
+    ...(!period && !category && rest[0]
+      ? { byState: rest[0] }
+      : {}
+    )
   };
 }
