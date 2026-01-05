@@ -192,61 +192,65 @@ export class ReportRepository {
   }
 
   /**
-   * Unified statistics method for reports
-   * @param groupBy - What to group by: 'category', 'state', or 'period'
-   * @param period - Time period for trends (required if groupBy === 'period')
-   * @param category - Optional category filter
+   * Get report statistics grouped by date
+   * Returns array with date, totalReports, approvedReports, rejectedReports
+   * @param fromDate - Start date filter (optional)
+   * @param toDate - End date filter (optional)
+   * @param period - Aggregation period: 'daily' | 'weekly' | 'monthly' | 'yearly' (optional)
+   * @param category - Category filter (optional)
    */
   async getReportStatistics(
-    groupBy: 'category' | 'state' | 'period',
-    period?: 'day' | 'week' | 'month',
+    fromDate?: string,
+    toDate?: string,
+    period?: 'daily' | 'weekly' | 'monthly' | 'yearly',
     category?: OfficeType
-  ): Promise<Array<{ [key: string]: any; count: number }>> {
+  ): Promise<Array<{ date: string; totalReports: number; approvedReports: number; rejectedReports: number }>> {
     const query = this.repo.createQueryBuilder("report");
     
-    // Determine SELECT and GROUP BY based on groupBy parameter
-    if (groupBy === 'category') {
-      query.select("report.category", "category");
-      query.groupBy("report.category");
-    } else if (groupBy === 'state') {
-      query.select("report.state", "state");
-      query.groupBy("report.state");
-    } else if (groupBy === 'period' && period) {
-      const dateFormat = {
-        'day': "%Y-%m-%d",
-        'week': "%Y-%W",
-        'month': "%Y-%m"
-      }[period];
-      query.select(`strftime('${dateFormat}', report.date)`, "period");
-      query.groupBy("period");
-      query.orderBy("period", "DESC");
-      query.limit(30); // Last 30 periods
+    // Determine date format based on period
+    let dateFormat = "%Y-%m-%d"; // Default: daily
+    if (period === 'weekly') {
+      dateFormat = "%Y-W%W"; // Year-Week
+    } else if (period === 'monthly') {
+      dateFormat = "%Y-%m"; // Year-Month
+    } else if (period === 'yearly') {
+      dateFormat = "%Y"; // Year only
     }
     
-    query.addSelect("COUNT(*)", "count");
+    query.select(`strftime('${dateFormat}', report.date)`, "date");
+    query.addSelect("COUNT(*)", "totalReports");
+    query.addSelect(
+      `SUM(CASE WHEN report.state IN ('${ReportState.ASSIGNED}', '${ReportState.IN_PROGRESS}', '${ReportState.SUSPENDED}', '${ReportState.RESOLVED}') THEN 1 ELSE 0 END)`,
+      "approvedReports"
+    );
+    query.addSelect(
+      `SUM(CASE WHEN report.state = '${ReportState.DECLINED}' THEN 1 ELSE 0 END)`,
+      "rejectedReports"
+    );
     
-    // Apply WHERE filters
-    if (groupBy !== 'state') {
-      // For category and period stats, only include approved reports
-      query.where("report.state IN (:...states)", {
-        states: [ReportState.ASSIGNED, ReportState.IN_PROGRESS, ReportState.SUSPENDED]
-      });
+    // Apply filters
+    if (fromDate) {
+      query.andWhere("report.date >= :fromDate", { fromDate: new Date(fromDate) });
     }
     
-    // Apply category filter if specified
+    if (toDate) {
+      query.andWhere("report.date <= :toDate", { toDate: new Date(toDate) });
+    }
+    
     if (category) {
-      if (groupBy === 'state') {
-        query.where("report.category = :category", { category });
-      } else {
-        query.andWhere("report.category = :category", { category });
-      }
+      query.andWhere("report.category = :category", { category });
     }
+    
+    query.groupBy("date");
+    query.orderBy("date", "DESC");
     
     const result = await query.getRawMany();
     
     return result.map(r => ({
-      ...r,
-      count: Number.parseInt(r.count, 10)
+      date: r.date,
+      totalReports: Number.parseInt(r.totalReports, 10),
+      approvedReports: Number.parseInt(r.approvedReports, 10),
+      rejectedReports: Number.parseInt(r.rejectedReports, 10)
     }));
   }
 

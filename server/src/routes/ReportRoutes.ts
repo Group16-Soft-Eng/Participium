@@ -87,22 +87,28 @@ router.get("/", async(req, res, next) =>{
  * GET /stats
  * Get statistics about reports (no authentication required)
  * Query params:
- *   - period: 'day' | 'week' | 'month' (optional)
+ *   - fromDate: Start date for filtering (ISO 8601 format, optional)
+ *   - toDate: End date for filtering (ISO 8601 format, optional)
+ *   - period: 'daily' | 'weekly' | 'monthly' | 'yearly' (optional)
  *   - category: Office type category (optional)
+ * 
+ * Returns: Array of { date, totalReports, approvedReports, rejectedReports }
  * 
  * Examples:
  *   - /stats - Get all statistics
- *   - /stats?period=week - Get statistics with weekly trends
- *   - /stats?category=WASTE - Get count for waste category
- *   - /stats?period=month&category=PUBLIC_LIGHTING - Get monthly trends for public lighting
+ *   - /stats?period=weekly - Get statistics grouped by week
+ *   - /stats?category=WASTE - Get statistics for waste category
+ *   - /stats?fromDate=2026-01-01&toDate=2026-01-31&period=daily - Get daily stats for January
  */
 router.get("/stats", async (req, res, next) => {
   try {
-    const period = req.query.period as 'day' | 'week' | 'month' | undefined;
+    const fromDate = req.query.fromDate as string | undefined;
+    const toDate = req.query.toDate as string | undefined;
+    const period = req.query.period as 'daily' | 'weekly' | 'monthly' | 'yearly' | undefined;
     const category = req.query.category as OfficeType | undefined;
     
     // Validation is handled in the controller
-    const result = await getStatistics(period, category);
+    const result = await getStatistics(fromDate, toDate, period, category);
     
     res.status(200).json(result);
   } catch (error) {
