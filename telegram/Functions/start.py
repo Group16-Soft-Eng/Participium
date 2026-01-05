@@ -57,7 +57,7 @@ def _normalize_server_url(raw: str) -> str:
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Welcome to the Participium Bot! Use /login to authenticate.")
+    await update.message.reply_text("Welcome to the Participium Bot! Use /login to authenticate. \n For help, use /help.")
     script_dir = os.path.dirname(os.path.abspath(__file__))
     image_path = os.path.join(script_dir, "ParticipiumLogo.webp")
     if os.path.exists(image_path):

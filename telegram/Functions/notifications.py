@@ -22,6 +22,9 @@ from urllib.parse import urlparse
 WAITING_ID_TO_FOLLOW = 10
 WAITING_ID_TO_UNFOLLOW = 11
 
+STR_NEXT = "What would you like to do next?"
+STR_LOGIN_ALERT = "You must first log in with /login."
+STR_EXPIRED_SESSION = "❌ Unauthorized. Your session has expired. Please /login again."
 
 #keyboard
 
@@ -40,9 +43,34 @@ async def handle_back_to_main_menu(update: Update, context: ContextTypes.DEFAULT
     query = update.callback_query
     await query.answer()
     await query.edit_message_text(
-        "What would you like to do next?",
+        str_next,
         reply_markup=build_main_menu()
     )
+def build_rep_msg(rpt: Dict) -> str:
+    
+    report_id = rpt.get('id')
+    title = rpt.get('title')
+    state = rpt.get('state')
+
+    # Start building the message text
+    text_parts = []
+    if report_id:
+        text_parts.append(f"📝 *Report ID:* {report_id}")
+    if title:
+        text_parts.append(f"📄 *Title:* {title}")
+
+    # Safely get description
+    description = rpt.get("document", {}).get("description")
+    if description:
+        if len(description) > 100:
+            description = description[:100] + "..."
+        text_parts.append(f"ℹ️ *Description:* {description}")
+
+    if state:
+        text_parts.append(f"📢 *State:* `{state}`")
+    
+    rpt_text = "\n".join(text_parts)
+    return rpt_text
 
 async def handle_view_reports(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
@@ -50,7 +78,7 @@ async def handle_view_reports(update: Update, context: ContextTypes.DEFAULT_TYPE
     chat_id = update.effective_chat.id
     token = sessions.get(chat_id)
     if not token:
-        await query.edit_message_text("You must first log in with /login.")
+        await query.edit_message_text(STR_LOGIN_ALERT)
         return
     try:
         response = await _httpx_with_retry(
@@ -75,31 +103,10 @@ async def handle_view_reports(update: Update, context: ContextTypes.DEFAULT_TYPE
 
             # Send each report as a new message
             for rpt in reports:
-                report_id = rpt.get('id')
-                title = rpt.get('title')
-                state = rpt.get('state')
-
-                # Start building the message text
-                text_parts = []
-                if report_id:
-                    text_parts.append(f"📝 *Report ID:* {report_id}")
-                if title:
-                    text_parts.append(f"📄 *Title:* {title}")
-
-                # Safely get description
-                description = rpt.get("document", {}).get("description")
-                if description:
-                    if len(description) > 100:
-                        description = description[:100] + "..."
-                    text_parts.append(f"ℹ️ *Description:* {description}")
-
-                if state:
-                    text_parts.append(f"📢 *State:* `{state}`")
-                
-                rpt_text = "\n".join(text_parts)
+                rpt_text = build_rep_msg(rpt)
                 
                 # Build keyboard for each report
-                keyboard = build_receive_notification_keyboard(report_id)
+                keyboard = build_receive_notification_keyboard(rpt.get('id'))
                 
                 # Use reply_text to send a new message for each report
                 await query.message.reply_text(
@@ -110,13 +117,13 @@ async def handle_view_reports(update: Update, context: ContextTypes.DEFAULT_TYPE
             
             # After sending all reports, send the main menu
             await query.message.reply_text(
-                "What would you like to do next?",
+                STR_NEXT,
                 reply_markup=build_main_menu()
             )
 
         elif response.status_code == 401:
             sessions.pop(chat_id, None)
-            await query.edit_message_text("❌ Unauthorized. Your session has expired. Please /login again.")
+            await query.edit_message_text(STR_EXPIRED_SESSION)
         else:
             await query.edit_message_text(f"❌ Error retrieving reports: {response.text}")
     except Exception as e:
@@ -130,7 +137,7 @@ async def handle_follow_report(update: Update, context: ContextTypes.DEFAULT_TYP
     chat_id = update.effective_chat.id
     token = sessions.get(chat_id)
     if not token:
-        await query.message.reply_text("You must first log in with /login.")
+        await query.message.reply_text(STR_LOGIN_ALERT)
         return
 
     try:
@@ -143,13 +150,13 @@ async def handle_follow_report(update: Update, context: ContextTypes.DEFAULT_TYP
 
         if response.status_code in (200, 201):
             await query.message.reply_text("✅ You are now following this report. You will receive status updates.")
-            await query.message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
+            await query.message.reply_text(STR_NEXT, reply_markup=build_main_menu())
         elif response.status_code == 409:  # Conflict
             await query.message.reply_text("ℹ️ You are already following this report.")
-            await query.message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
+            await query.message.reply_text(STR_NEXT, reply_markup=build_main_menu())
         elif response.status_code == 401:
             sessions.pop(chat_id, None)
-            await query.message.reply_text("❌ Unauthorized. Your session has expired. Please /login again.")
+            await query.message.reply_text(STR_EXPIRED_SESSION)
         else:
             await query.message.reply_text(f"❌ Error: {response.text}")
     except Exception as e:
@@ -164,7 +171,7 @@ async def handle_unfollow_report(update: Update, context: ContextTypes.DEFAULT_T
     token = sessions.get(chat_id)
 
     if not token:
-        await query.message.reply_text("You must first log in with /login.")
+        await query.message.reply_text(STR_LOGIN_ALERT)
         return
 
     try:
@@ -177,13 +184,13 @@ async def handle_unfollow_report(update: Update, context: ContextTypes.DEFAULT_T
 
         if response.status_code in (200, 204):
             await query.message.reply_text("✅ You have stopped following this report.")
-            await query.message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
+            await query.message.reply_text(STR_NEXT, reply_markup=build_main_menu())
         elif response.status_code == 404: 
             await query.message.reply_text("ℹ️ You were not following this report.")
-            await query.message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
+            await query.message.reply_text(STR_NEXT, reply_markup=build_main_menu())
         elif response.status_code == 401:
             sessions.pop(chat_id, None)
-            await query.message.reply_text("❌ Unauthorized. Your session has expired. Please /login again.")
+            await query.message.reply_text(STR_EXPIRED_SESSION)
         else:
             await query.message.reply_text(f"❌ Error: {response.text}")
     except Exception as e:
@@ -200,7 +207,7 @@ async def handle_follow_all_personal_reports(update: Update, context: ContextTyp
     token = sessions.get(chat_id)
 
     if not token:
-        await query.message.reply_text("You must first log in with /login.")
+        await query.message.reply_text(STR_LOGIN_ALERT)
         return
 
     try:
@@ -212,13 +219,13 @@ async def handle_follow_all_personal_reports(update: Update, context: ContextTyp
 
         if response.status_code in (200, 201):
             await query.message.reply_text("✅ You are now following all your personal reports.")
-            await query.message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
+            await query.message.reply_text(STR_NEXT, reply_markup=build_main_menu())
         elif response.status_code == 409:  # Conflict
             await query.message.reply_text("ℹ️ You are already following all your personal reports.")
-            await query.message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
+            await query.message.reply_text(STR_NEXT, reply_markup=build_main_menu())
         elif response.status_code == 401:
             sessions.pop(chat_id, None)
-            await query.message.reply_text("❌ Unauthorized. Your session has expired. Please /login again.")
+            await query.message.reply_text(STR_EXPIRED_SESSION)
         else:
             await query.message.reply_text(f"❌ Error: {response.text}")
     except Exception as e:
@@ -232,7 +239,7 @@ async def handle_unfollow_all_personal_reports(update: Update, context: ContextT
     token = sessions.get(chat_id)
 
     if not token:
-        await query.message.reply_text("You must first log in with /login.")
+        await query.message.reply_text(STR_LOGIN_ALERT)
         return
     print("Unfollow all personal reports callback triggered.")
     print("URL: {}".format(f"{TELEGRAM_REPORT_URL}"))
@@ -245,13 +252,13 @@ async def handle_unfollow_all_personal_reports(update: Update, context: ContextT
 
         if response.status_code in (200, 204):
             await query.message.reply_text("✅ You have stopped following all your personal reports.")
-            await query.message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
+            await query.message.reply_text(STR_NEXT, reply_markup=build_main_menu())
         elif response.status_code == 404: 
             await query.message.reply_text("ℹ️ You were not following any personal reports.")
-            await query.message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
+            await query.message.reply_text(STR_NEXT, reply_markup=build_main_menu())
         elif response.status_code == 401:
             sessions.pop(chat_id, None)
-            await query.message.reply_text("❌ Unauthorized. Your session has expired. Please /login again.")
+            await query.message.reply_text(STR_EXPIRED_SESSION)
         else:
             await query.message.reply_text(f"❌ Error: {response.text}")
         
@@ -265,7 +272,7 @@ async def handle_manage_notifications(update: Update, context: ContextTypes.DEFA
     chat_id = update.effective_chat.id
     token = sessions.get(chat_id)
     if not token:
-        await query.edit_message_text("You must first log in with /login.")
+        await query.edit_message_text(STR_LOGIN_ALERT)
         return
     keyboard = [
         [
@@ -308,7 +315,7 @@ async def receive_id_to_follow(update: Update, context: ContextTypes.DEFAULT_TYP
         chat_id = update.effective_chat.id
         token = sessions.get(chat_id)
         if not token:
-            await message.reply_text("You must first log in with /login.")
+            await message.reply_text(STR_LOGIN_ALERT)
             return ConversationHandler.END
 
         response = await _httpx_with_retry(
@@ -321,13 +328,13 @@ async def receive_id_to_follow(update: Update, context: ContextTypes.DEFAULT_TYP
         elif response.status_code == 409:
             await message.reply_text(f"ℹ️ You are already following report {report_id}.")
         else:
-            await message.reply_text(f"❌ Error")
+            await message.reply_text("❌ Error")
     else:
         await message.reply_text("Invalid ID. Please send a numeric ID.")
         return WAITING_ID_TO_FOLLOW # Stay in the same state to allow user to retry
 
     # On success, show the main menu again
-    await message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
+    await message.reply_text(STR_NEXT, reply_markup=build_main_menu())
     return ConversationHandler.END
 
 
@@ -353,7 +360,7 @@ async def receive_id_to_unfollow(update: Update, context: ContextTypes.DEFAULT_T
         chat_id = update.effective_chat.id
         token = sessions.get(chat_id)
         if not token:
-            await message.reply_text("You must first log in with /login.")
+            await message.reply_text(STR_LOGIN_ALERT)
             return ConversationHandler.END
 
         response = await _httpx_with_retry(
@@ -371,5 +378,5 @@ async def receive_id_to_unfollow(update: Update, context: ContextTypes.DEFAULT_T
         await message.reply_text("Invalid ID. Please send a numeric ID.")
         return WAITING_ID_TO_UNFOLLOW # Stay in the same state
 
-    await message.reply_text("What would you like to do next?", reply_markup=build_main_menu())
+    await message.reply_text(STR_NEXT, reply_markup=build_main_menu())
     return ConversationHandler.END

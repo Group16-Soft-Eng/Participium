@@ -92,7 +92,7 @@ def in_turin(latitude: float, longitude: float) -> bool:
 # Handlers
 # ------------------------------------------------------------------ #
 
-async def sendReport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def send_report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_chat.id
     if chat_id not in sessions:
         await update.message.reply_text("You must first log in with /login.")
@@ -105,7 +105,7 @@ async def sendReport(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return WAITING_TITLE
 
-async def receiveTitle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def receive_title(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["title"] = update.message.text.strip()
     # build_back_cancel_keyboard returns InlineKeyboardMarkup; pass it directly
     await update.message.reply_text(
@@ -114,7 +114,7 @@ async def receiveTitle(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     )
     return WAITING_DESCRIPTION
 
-async def receiveDescription(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def receive_description(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     description = (update.message.text or "").strip()
     if not description:
         await update.message.reply_text("Description cannot be empty. Please send a valid description.")
@@ -126,7 +126,7 @@ async def receiveDescription(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await update.message.reply_text(str_ch_category, reply_markup=build_category_keyboard())
     return WAITING_CATEGORY
 
-async def receiveCategory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def receive_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     index = int(query.data.replace("category_", ""))
@@ -143,7 +143,7 @@ async def receiveCategory(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     )
     return WAITING_PHOTO
 
-async def receivePhoto(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def receive_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     photos = context.user_data.setdefault("photos", [])
     if len(photos) >= 3:
         await update.message.reply_text("Already 3 photos. Processing...")
@@ -216,7 +216,7 @@ async def skip_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text("You must send at least 1 photo or /cancel.")
     return WAITING_PHOTO
 
-async def receiveLocation(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def receive_location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     lat = update.message.location.latitude
     lng = update.message.location.longitude
     if not in_turin(lat, lng):
@@ -299,7 +299,7 @@ async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     await query.edit_message_text("Unknown back target.")
     return ConversationHandler.END
 
-async def receiveAnonymous(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def receive_anonymous(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     anonymous = query.data.endswith("_yes")

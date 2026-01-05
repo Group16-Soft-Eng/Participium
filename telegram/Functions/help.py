@@ -63,16 +63,15 @@ async def handle_basic_commands(update: Update, context: ContextTypes.DEFAULT_TY
         "🤖 *Basic Commands:*\n"
         "/start - Start the bot and login\n"
         "/login - Authenticate your Telegram account\n"
+        "/help - Show this help message\n"
     )
     await query.edit_message_text(help_text, parse_mode='Markdown', reply_markup=build_help_menu()) 
 
 async def handle_faq(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
-    chat_id = update.effective_chat.id
-    username = update.effective_user.username
     try:
-        response = await _httpx_with_retry("GET", TELEGRAM_FAQ_URL, headers={"Authorization": f"Bearer {sessions.get(chat_id, '')}"})
+        response = await _httpx_with_retry("GET", TELEGRAM_FAQ_URL)
     except Exception as e:
         await query.edit_message_text(f"Error connecting to server: {e}")
         return
