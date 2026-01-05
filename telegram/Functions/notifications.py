@@ -64,7 +64,10 @@ async def handle_view_reports(update: Update, context: ContextTypes.DEFAULT_TYPE
                 reports = reports.get("reports", [])
 
             if not reports:
-                await query.edit_message_text("No reports found.")
+                await query.edit_message_text(
+                    "No reports found. Choose an option:",
+                    reply_markup=build_main_menu()
+                )
                 return
 
             # Edit the original message to indicate reports are being sent
@@ -318,7 +321,7 @@ async def receive_id_to_follow(update: Update, context: ContextTypes.DEFAULT_TYP
         elif response.status_code == 409:
             await message.reply_text(f"ℹ️ You are already following report {report_id}.")
         else:
-            await message.reply_text(f"❌ Error: {response.text}")
+            await message.reply_text(f"❌ Error")
     else:
         await message.reply_text("Invalid ID. Please send a numeric ID.")
         return WAITING_ID_TO_FOLLOW # Stay in the same state to allow user to retry

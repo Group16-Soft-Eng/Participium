@@ -1,21 +1,16 @@
 FROM python:3.11-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Copia i file necessari
 COPY requirements.txt .
-COPY bot_config.py .
-COPY Functions/endpoint.py .
-COPY Functions/help.py .
-COPY Functions/start.py .
-COPY Functions/login.py .
-COPY Functions/logo_tele.jpg .7
-COPY Functions/notifications.py .
-COPY Functions/ParticipiumLogo.webp .
-COPY Functions/start.py .
-
-# Installa le dipendenze
 RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copia il codice e le risorse mantenendo la struttura
+COPY bot_config.py .
+COPY Functions/ ./Functions/
 
 # Avvia il bot
 CMD ["python3", "bot_config.py"]
