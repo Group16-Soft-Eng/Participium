@@ -91,8 +91,8 @@ export class FollowRepository {
   async unfollow(userId: number, reportId: number, notifyVia: string = "web"): Promise<void> {
     // uso direttamente il query builder per eliminare il follow, così mi evito dei find sulla repo
     await this.repo.delete({ 
-        user: { id: userId },
-        report: { id: reportId },
+user: userId as any, 
+      report: reportId as any,
         notifyVia: notifyVia
     });
   }

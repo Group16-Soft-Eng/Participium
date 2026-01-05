@@ -7,6 +7,7 @@ import { getAllReports } from '../Map/mapApi/mapApi';
 import { getRole, getToken, getUserFromToken } from '../services/auth';
 import SearchBar from '../components/SearchBar';
 import { followReport, getFollowedReports, unfollowReport } from '../API/API';
+import './MapPage.css';
 
 const getCategoryColor = (cat: string): string => {
   switch (cat) {
@@ -82,8 +83,10 @@ const MapPage: React.FC = () => {
       try {
         setLoading(true);
         const data = await getAllReports();
-        if (getRole() == 'citizen') {
-           await getFollowedReports();
+        const roles = getRole();
+        if (roles?.includes('citizen')) {
+           const followedData = await getFollowedReports();
+           setFollowedReports(followedData);
         }
 
         let visibleReports = data.filter(report => {
@@ -177,8 +180,8 @@ const MapPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', gap: 0, alignItems: 'stretch', flexDirection: { xs: 'column', md: 'row' }, width: '100%', height: 'calc(100vh - 64px)' }}>
-      <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 66.666%' }, minWidth: 0 }}>
+    <Box sx={{ display: 'flex', gap: 0, alignItems: 'stretch', flexDirection: { xs: 'column', md: 'row' }, width: '100%', height: 'calc(100vh - 64px)' }} className="map-page-container">
+      <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 66.666%' }, minWidth: 0 }} className="map-box">
         <MapClusterView
           reports={filteredReports}
           selectedId={selectedId}
@@ -195,7 +198,7 @@ const MapPage: React.FC = () => {
         overflow: 'auto',
         p: 2,
         bgcolor: '#f8f9fa'
-      }} elevation={2}>
+      }} className="report-list" elevation={2}>
           <>
             <Typography variant="h6" gutterBottom>
               {searchCoords ? `Reports near location (${filteredReports.length})` : `Reports on map (${reports.length})`}
@@ -255,7 +258,7 @@ const MapPage: React.FC = () => {
                           {authorName}
                           {` • ${new Date(r.createdAt).toLocaleDateString()}`}
                         </Typography>
-                        {(logged && r.author?.username != username && (
+                        {(logged && r.author?.username != username && getRole()?.includes('citizen') && (
                           <>
                             {!followedReports.some(report => report.id == r.id) && <Button variant='contained' sx={{ marginLeft: 2 }} onClick={() => follow(r.id)}>Follow</Button>}
                             {followedReports.some(report => report.id == r.id) && <Button variant='outlined' sx={{ marginLeft: 2 }} onClick={() => unfollow(r.id)}>Unfollow</Button>}

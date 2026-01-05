@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { getRole, getToken } from '../../services/auth';
 // @ts-ignore
 import turinData from '../../data/turin_boundaries.json';
+import '../../pages/MapPage.css';
 
 const TURIN_COORDINATES: [number, number] = [45.0703, 7.66];
 
@@ -460,6 +461,7 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
   return (
     <div style={{ height: 'calc(100vh - 64px)', width: '100%' }}>
       <MapContainer
+      className='map-container-box'
         center={center}
         zoom={zoom}
         maxBounds={TURIN_BOUNDS}
