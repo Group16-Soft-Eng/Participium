@@ -965,7 +965,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /Reports:
+  /reports:
     post:
       tags:
         - Reports
@@ -1015,6 +1015,58 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Report"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /reports/stats:
+    get:
+      tags:
+        - Reports
+      summary: Get reports statistics
+      description: Retrieve various statistics about reports in the system. The filters can be applied using query parameters.
+        Available filters include date range (`fromDate`, `toDate`), predefined periods (`period`), and report categories (`category`).
+        For multiple categories use multiple `category` parameters, e.g., `category=sanification&category=infrastructure`.
+      parameters:
+        - in: query
+          name: fromDate
+          schema:
+            type: string
+            format: date-time
+          required: false
+          description: Start date for filtering reports (inclusive)
+        - in: query
+          name: toDate
+          schema:
+            type: string
+            format: date-time
+          required: false
+          description: End date for filtering reports (inclusive)
+        - in: query
+          name: period
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, yearly]
+          required: false
+          description: Predefined period for filtering reports
+        - in: query
+          name: category
+          schema:
+              $ref: "#/components/schemas/OfficeType"
+          required: false
+          description: Filter reports by their state
+          
+      operationId: getReportStats
+      
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Statistics"
         default:
           description: Unexpected error
           content:
@@ -1803,6 +1855,19 @@ components:
         createdAt:
           type: string
           format: date-time
+    Statistics:
+      type: array
+      items:
+        type: object
+        properties:
+          date:
+            type: string
+          totalReports:
+            type: integer
+          approvedReports:
+            type: integer
+          rejectedReports:
+            type: integer
 
     ApiResponse:
       type: object
