@@ -51,7 +51,7 @@ async def handle_login(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await query.edit_message_text("❌ Error during login. Make sure you have registered your Telegram username.")
         
 
-async def retrieveAccount(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def retrieve_account(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     username = update.effective_user.username
     try:
