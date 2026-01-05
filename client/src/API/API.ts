@@ -754,5 +754,88 @@ async function getFollowedReports() {
     }
 }
 
-export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById, followReport, unfollowReport, getFollowedReports, getPublicStatistics };
+// FAQ API functions
+async function getAllFaqs() {
+    const response = await fetch(URI + `/faqs`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to fetch FAQs');
+    }
+}
+
+async function createFaq(question: string, answer: string) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/faqs`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ question, answer }),
+    });
+    
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to create FAQ');
+    }
+}
+
+async function updateFaq(faqId: number, question: string, answer: string) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/faqs/${faqId}`, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify({ question, answer }),
+    });
+    
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to update FAQ');
+    }
+}
+
+async function deleteFaq(faqId: number) {
+    const token = getToken();
+
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(URI + `/faqs/${faqId}`, {
+        method: 'DELETE',
+        headers: headers,
+    });
+    
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const err = await response.text();
+        throw new Error(err || 'Failed to delete FAQ');
+    }
+}
+
+export { static_ip_address, userLogin, userRegister, officerLogin, maintainerLogin, officerRegister, getAssignedReports, getAvailableOfficerTypes, getUserProfile, updateUserProfile, getOfficersByOffice, assignOfficer, getNotifications, markNotificationAsRead, generateOtp, verifyOtp, maintainerRegister, getAllOfficers, getAllMaintainers, updateMaintainers, updateOfficer, deleteOfficer, deleteMaintainer, getReportById, followReport, unfollowReport, getFollowedReports, getPublicStatistics, getAllFaqs, createFaq, updateFaq, deleteFaq };
 export type { Notification, PublicStatistics };

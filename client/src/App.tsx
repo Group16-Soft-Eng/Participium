@@ -23,6 +23,7 @@ import { ReportDetailsPage } from './pages/ReportDetailsPage';
 import MaintainerDashboardPage from './pages/MaintainerDashboardPage';
 import StatisticsPage from './pages/StatisticsPage';
 import MyCitizenReportsPage from './pages/MyCitizenReportsPage';
+import { FaqManagementPage } from './pages/FaqManagementPage';
 
 
 type OfficerProps = {
@@ -248,6 +249,7 @@ function App() {
             <Route path="/my-reports" element={<RequireCitizen><MyCitizenReportsPage /></RequireCitizen>} />
             <Route path="/technical" element={<RequireTechnical><TechnicalOfficerPage /></RequireTechnical>} />
             <Route path="/maintainer" element={<RequireMaintainer><MaintainerDashboardPage /></RequireMaintainer>} />
+            <Route path="/faq-management" element={<RequireAdmin><FaqManagementPage /></RequireAdmin>} />
             <Route path="/reports/:reportId/details" element={<RequireLogin><ReportDetailsPage /></RequireLogin>} />
           </Routes>
         </Box>
