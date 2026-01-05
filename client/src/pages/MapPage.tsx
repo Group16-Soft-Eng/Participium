@@ -82,8 +82,10 @@ const MapPage: React.FC = () => {
       try {
         setLoading(true);
         const data = await getAllReports();
-        if (getRole() == 'citizen') {
-           await getFollowedReports();
+        const roles = getRole();
+        if (roles?.includes('citizen')) {
+           const followedData = await getFollowedReports();
+           setFollowedReports(followedData);
         }
 
         let visibleReports = data.filter(report => {
@@ -255,7 +257,7 @@ const MapPage: React.FC = () => {
                           {authorName}
                           {` • ${new Date(r.createdAt).toLocaleDateString()}`}
                         </Typography>
-                        {(logged && r.author?.username != username && (
+                        {(logged && r.author?.username != username && getRole()?.includes('citizen') && (
                           <>
                             {!followedReports.some(report => report.id == r.id) && <Button variant='contained' sx={{ marginLeft: 2 }} onClick={() => follow(r.id)}>Follow</Button>}
                             {followedReports.some(report => report.id == r.id) && <Button variant='outlined' sx={{ marginLeft: 2 }} onClick={() => unfollow(r.id)}>Unfollow</Button>}
