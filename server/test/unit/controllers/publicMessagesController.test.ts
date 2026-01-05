@@ -1,15 +1,21 @@
 import { listConversation, sendPublicMessage } from "../../../src/controllers/publicMessageController";
 import { PublicMessageRepository } from "../../../src/repositories/PublicMessageRepository";
+import { UserRepository } from "../../../src/repositories/UserRepository";
+import { OfficerRepository } from "../../../src/repositories/OfficerRepository";
 import { getIO } from "../../../src/services/ioService";
 import { PublicMessageDAO } from "../../../src/models/dao/PublicMessageDAO";
 import { UserDAO } from "../../../src/models/dao/UserDAO";
 
 // Mock dependencies
 jest.mock("../../../src/repositories/PublicMessageRepository");
+jest.mock("../../../src/repositories/UserRepository");
+jest.mock("../../../src/repositories/OfficerRepository");
 jest.mock("../../../src/services/ioService");
 
 describe("PublicMessageController - Unit Tests", () => {
   let mockPublicMessageRepository: jest.Mocked<PublicMessageRepository>;
+  let mockUserRepository: jest.Mocked<UserRepository>;
+  let mockOfficerRepository: jest.Mocked<OfficerRepository>;
   let mockIO: any;
 
   beforeEach(() => {
@@ -22,8 +28,18 @@ describe("PublicMessageController - Unit Tests", () => {
       markAsRead: jest.fn(),
     } as any;
 
-    // Mock the repository constructor
+    mockUserRepository = {
+      getUserById: jest.fn(),
+    } as any;
+
+    mockOfficerRepository = {
+      getOfficerById: jest.fn(),
+    } as any;
+
+    // Mock the repository constructors
     (PublicMessageRepository as jest.Mock).mockImplementation(() => mockPublicMessageRepository);
+    (UserRepository as jest.Mock).mockImplementation(() => mockUserRepository);
+    (OfficerRepository as jest.Mock).mockImplementation(() => mockOfficerRepository);
 
     // Mock socket.io
     mockIO = {
@@ -72,17 +88,19 @@ describe("PublicMessageController - Unit Tests", () => {
           message: "Second message",
           senderType: "officer",
           senderId: 20,
-          sender: {
-            id: 20,
-            username: "officer1",
-            email: "officer@example.com",
-            firstName: "Jane",
-            lastName: "Smith",
-          } as UserDAO,
+          sender: undefined,
           createdAt: new Date("2024-01-01T11:00:00Z"),
           read: true,
         } as PublicMessageDAO,
       ];
+
+      mockOfficerRepository.getOfficerById.mockResolvedValue({
+        id: 20,
+        username: "officer1",
+        email: "officer@example.com",
+        name: "Jane",
+        surname: "Smith",
+      } as any);
 
       mockPublicMessageRepository.listByReport.mockResolvedValue(mockMessages);
 
@@ -190,17 +208,19 @@ describe("PublicMessageController - Unit Tests", () => {
           message: "Test message",
           senderType: "officer",
           senderId: 25,
-          sender: {
-            id: 25,
-            username: "officer2",
-            email: "officer2@example.com",
-            firstName: "Alice",
-            lastName: "",
-          } as UserDAO,
+          sender: undefined,
           createdAt: new Date(),
           read: false,
         } as PublicMessageDAO,
       ];
+
+      mockOfficerRepository.getOfficerById.mockResolvedValue({
+        id: 25,
+        username: "officer2",
+        email: "officer2@example.com",
+        name: "Alice",
+        surname: "",
+      } as any);
 
       mockPublicMessageRepository.listByReport.mockResolvedValue(mockMessages);
 
@@ -212,6 +232,14 @@ describe("PublicMessageController - Unit Tests", () => {
 
   describe("sendPublicMessage", () => {
     it("should save and return a new public message from citizen", async () => {
+      const mockUser = {
+        id: 30,
+        username: "citizen1",
+        email: "citizen1@example.com",
+        firstName: "Bob",
+        lastName: "Brown",
+      } as UserDAO;
+
       const savedMessage: PublicMessageDAO = {
         id: 100,
         reportId: 7,
@@ -224,26 +252,23 @@ describe("PublicMessageController - Unit Tests", () => {
 
       const fullMessage: PublicMessageDAO = {
         ...savedMessage,
-        sender: {
-          id: 30,
-          username: "citizen1",
-          email: "citizen1@example.com",
-          firstName: "Bob",
-          lastName: "Brown",
-        } as UserDAO,
+        sender: mockUser,
       } as PublicMessageDAO;
 
+      mockUserRepository.getUserById.mockResolvedValue(mockUser);
       mockPublicMessageRepository.save.mockResolvedValue(savedMessage);
       mockPublicMessageRepository.listByReport.mockResolvedValue([fullMessage]);
       (getIO as jest.Mock).mockReturnValue(mockIO);
 
       const result = await sendPublicMessage(7, "citizen", 30, "Hello from citizen");
 
+      expect(mockUserRepository.getUserById).toHaveBeenCalledWith(30);
       expect(mockPublicMessageRepository.save).toHaveBeenCalledWith({
         reportId: 7,
         message: "Hello from citizen",
         senderType: "citizen",
         senderId: 30,
+        sender: mockUser,
         read: false,
       });
 
@@ -283,14 +308,16 @@ describe("PublicMessageController - Unit Tests", () => {
 
       const fullMessage: PublicMessageDAO = {
         ...savedMessage,
-        sender: {
-          id: 40,
-          username: "officer3",
-          email: "officer3@example.com",
-          firstName: "Carol",
-          lastName: "White",
-        } as UserDAO,
+        sender: undefined,
       } as PublicMessageDAO;
+
+      mockOfficerRepository.getOfficerById.mockResolvedValue({
+        id: 40,
+        username: "officer3",
+        email: "officer3@example.com",
+        name: "Carol",
+        surname: "White",
+      } as any);
 
       mockPublicMessageRepository.save.mockResolvedValue(savedMessage);
       mockPublicMessageRepository.listByReport.mockResolvedValue([fullMessage]);
@@ -326,6 +353,12 @@ describe("PublicMessageController - Unit Tests", () => {
     });
 
     it("should emit socket event when IO instance is available", async () => {
+      const mockUser = {
+        id: 50,
+        firstName: "Dave",
+        lastName: "Green",
+      } as UserDAO;
+
       const savedMessage: PublicMessageDAO = {
         id: 102,
         reportId: 9,
@@ -338,13 +371,10 @@ describe("PublicMessageController - Unit Tests", () => {
 
       const fullMessage: PublicMessageDAO = {
         ...savedMessage,
-        sender: {
-          id: 50,
-          firstName: "Dave",
-          lastName: "Green",
-        } as UserDAO,
+        sender: mockUser,
       } as PublicMessageDAO;
 
+      mockUserRepository.getUserById.mockResolvedValue(mockUser);
       mockPublicMessageRepository.save.mockResolvedValue(savedMessage);
       mockPublicMessageRepository.listByReport.mockResolvedValue([fullMessage]);
       (getIO as jest.Mock).mockReturnValue(mockIO);
@@ -364,6 +394,12 @@ describe("PublicMessageController - Unit Tests", () => {
     });
 
     it("should log error when IO instance is not available", async () => {
+      const mockUser = {
+        id: 60,
+        firstName: "Eve",
+        lastName: "Black",
+      } as UserDAO;
+
       const savedMessage: PublicMessageDAO = {
         id: 103,
         reportId: 10,
@@ -376,13 +412,10 @@ describe("PublicMessageController - Unit Tests", () => {
 
       const fullMessage: PublicMessageDAO = {
         ...savedMessage,
-        sender: {
-          id: 60,
-          firstName: "Eve",
-          lastName: "Black",
-        } as UserDAO,
+        sender: mockUser,
       } as PublicMessageDAO;
 
+      mockUserRepository.getUserById.mockResolvedValue(mockUser);
       mockPublicMessageRepository.save.mockResolvedValue(savedMessage);
       mockPublicMessageRepository.listByReport.mockResolvedValue([fullMessage]);
       (getIO as jest.Mock).mockReturnValue(null);
@@ -455,13 +488,15 @@ describe("PublicMessageController - Unit Tests", () => {
 
       const fullMessage: PublicMessageDAO = {
         ...savedMessage,
-        sender: {
-          id: 90,
-          username: "partial_user",
-          firstName: "",
-          lastName: "",
-        } as UserDAO,
+        sender: undefined,
       } as PublicMessageDAO;
+
+      mockOfficerRepository.getOfficerById.mockResolvedValue({
+        id: 90,
+        username: "partial_user",
+        name: "",
+        surname: "",
+      } as any);
 
       mockPublicMessageRepository.save.mockResolvedValue(savedMessage);
       mockPublicMessageRepository.listByReport.mockResolvedValue([fullMessage]);
@@ -474,6 +509,14 @@ describe("PublicMessageController - Unit Tests", () => {
 
     it("should correctly map all DTO fields from saved message", async () => {
       const testDate = new Date("2024-06-15T14:30:00Z");
+      const mockUser = {
+        id: 95,
+        firstName: "Frank",
+        lastName: "Gray",
+        username: "fgray",
+        email: "frank@example.com",
+      } as UserDAO;
+
       const savedMessage: PublicMessageDAO = {
         id: 107,
         reportId: 14,
@@ -486,15 +529,10 @@ describe("PublicMessageController - Unit Tests", () => {
 
       const fullMessage: PublicMessageDAO = {
         ...savedMessage,
-        sender: {
-          id: 95,
-          firstName: "Frank",
-          lastName: "Gray",
-          username: "fgray",
-          email: "frank@example.com",
-        } as UserDAO,
+        sender: mockUser,
       } as PublicMessageDAO;
 
+      mockUserRepository.getUserById.mockResolvedValue(mockUser);
       mockPublicMessageRepository.save.mockResolvedValue(savedMessage);
       mockPublicMessageRepository.listByReport.mockResolvedValue([fullMessage]);
       (getIO as jest.Mock).mockReturnValue(mockIO);

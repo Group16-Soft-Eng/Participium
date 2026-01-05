@@ -15,7 +15,6 @@ import { telegramRouter } from "@routes/TelegramRoutes";
 import { internalMessageRouter } from "@routes/InternalMessageRoutes";
 import { publicMessageRouter } from "@routes/PublicMessageRoutes";
 import { faqRouter } from "@routes/FaqRoutes";
-import { statisticsRouter } from "@routes/StatisticsRoutes";
 import { errorHandler } from "@middlewares/errorMiddleware";
 
 export const app = express();
@@ -52,7 +51,6 @@ app.use(routes.V1_PUBLICS, PublicRelationRoutes);
 app.use(routes.V1_INTERNAL_MESSAGES, internalMessageRouter);
 app.use(routes.V1_TELEGRAM, telegramRouter);
 app.use(routes.V1_FAQ, faqRouter);
-app.use(routes.V1_STATISTICS, statisticsRouter);
 // static files
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
