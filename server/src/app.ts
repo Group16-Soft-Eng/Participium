@@ -16,6 +16,7 @@ import { internalMessageRouter } from "@routes/InternalMessageRoutes";
 import { publicMessageRouter } from "@routes/PublicMessageRoutes";
 import { faqRouter } from "@routes/FaqRoutes";
 import { statisticsRouter } from "@routes/StatisticsRoutes";
+import { errorHandler } from "@middlewares/errorMiddleware";
 
 export const app = express();
 let routes = CONFIG.ROUTES;
@@ -54,5 +55,8 @@ app.use(routes.V1_FAQ, faqRouter);
 app.use(routes.V1_STATISTICS, statisticsRouter);
 // static files
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
+// Error handler middleware
+app.use(errorHandler);
 
 export default app;
