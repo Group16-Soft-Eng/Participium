@@ -40,6 +40,21 @@ export class ForbiddenError extends Error {
   }
 }
 
+export class InactiveUserError extends Error {
+  readonly statusCode = 423;
+  readonly publicMessage = "User account is not active";
+
+  constructor(
+    message: string, 
+    public readonly details?: { email?: string }
+  ) {
+    super(message);
+    this.name = "InactiveUserError";
+    
+    // Necessario se il target del compilatore è ES5 o precedente
+    Object.setPrototypeOf(this, InactiveUserError.prototype);
+  }
+}
 
 export function findOrThrowNotFound<T>(
   elements: T[],
@@ -53,7 +68,6 @@ export function findOrThrowNotFound<T>(
   return found;
 }
 
-
 export function throwConflictIfFound<T>(
   elements: T[],
   predicate: (element: T) => boolean,
@@ -64,3 +78,5 @@ export function throwConflictIfFound<T>(
     throw new ConflictError(errorMessage);
   }
 }
+
+

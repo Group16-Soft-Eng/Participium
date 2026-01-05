@@ -6,7 +6,8 @@ import {
   ConflictError,
   UnauthorizedError,
   BadRequestError,
-  ForbiddenError
+  ForbiddenError,
+  InactiveUserError
 } from "@utils/utils";
 
 
@@ -51,6 +52,14 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
         res.status(403).json({
         code: "FORBIDDEN",
         message: err.message
+        });
+        return;
+    }
+    if (err instanceof InactiveUserError) {
+        res.status(err.statusCode).json({
+        code: "INACTIVE_USER",
+        message: err.publicMessage,
+        details: err.details
         });
         return;
     }

@@ -3,7 +3,7 @@ import { UserRepository } from "@repositories/UserRepository";
 import { OfficerRepository } from "@repositories/OfficerRepository";
 import { MaintainerRepository } from "@repositories/MaintainerRepository";
 import { verifyPassword, generateToken, saveSession } from "@services/authService";
-import { UnauthorizedError } from "@utils/utils";
+import { UnauthorizedError,  InactiveUserError} from "@utils/utils";
 import { OfficerRole } from "@models/enums/OfficerRole";
 
 export async function loginUserByUsername(username: string, password: string): Promise<string> {
@@ -13,12 +13,14 @@ export async function loginUserByUsername(username: string, password: string): P
   if (!user.password) {
     throw new UnauthorizedError("Invalid username or password");
   }
-  if(!user.isActive) {
-    throw new UnauthorizedError("User account is not active");
-  }
   const isValid = await verifyPassword(password, user.password);
   if (!isValid) {
     throw new UnauthorizedError("Invalid username or password");
+  }
+
+  if(!user.isActive) {
+    //if not active, the frontend should prompt for OTP verification with code 301 and as body the email
+    throw new InactiveUserError("User account is not active", {email: user.email});
   }
 
   // utenti: isStaff=false, type="user"
@@ -40,12 +42,13 @@ export async function loginUserByMail(email: string, password: string): Promise<
   if (!user.password) {
     throw new UnauthorizedError("Invalid email or password");
   }
-  if(!user.isActive) {
-    throw new UnauthorizedError("User account is not active");
-  }
   const isValid = await verifyPassword(password, user.password);
   if (!isValid) {
     throw new UnauthorizedError("Invalid email or password");
+  }
+  if(!user.isActive) {
+    //if not active, the frontend should prompt for OTP verification with code 301 and as body the email
+    throw new InactiveUserError("User account is not active", {email: user.email});
   }
 
   const token = generateToken({
