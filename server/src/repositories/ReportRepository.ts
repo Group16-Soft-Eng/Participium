@@ -241,7 +241,7 @@ export class ReportRepository {
       query.andWhere("report.category = :category", { category });
     }
     
-    query.groupBy("date");
+    query.groupBy(`strftime('${dateFormat}', report.date)`);
     query.orderBy("date", "DESC");
     
     const result = await query.getRawMany();

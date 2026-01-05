@@ -38,99 +38,74 @@ describe("StatisticsController - Integration Tests", () => {
 
   // ===================== getStatistics - No filters =====================
   describe("getStatistics - No filters", () => {
-    it("should return empty statistics when no reports exist", async () => {
+    it("should return empty array when no reports exist", async () => {
       const result = await getStatistics();
 
-      expect('byCategory' in result).toBe(true);
-      expect('byState' in result).toBe(true);
-      expect((result as any).byCategory).toEqual([]);
-      expect((result as any).byState).toEqual([]);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toEqual([]);
     });
 
-    it("should return statistics with all categories and states when reports exist", async () => {
-      // Create reports in different categories and states
+    it("should return statistics grouped by date when reports exist", async () => {
       const user = await userRepo.getUserById(userId);
 
-      // WASTE - ASSIGNED
+      // Create reports in different states with unique IDs
       const report1 = await reportRepo.createReport(
-        "Waste Report",
-        { name: "Location 1", Coordinates: { longitude: 10.5, latitude: 45.5 } },
+        "Waste Report 1",
+        { name: "Location A", Coordinates: { longitude: 10.51, latitude: 45.51 } },
         user,
         false,
         OfficeType.WASTE,
-        { Description: "Waste issue" }
+        { Description: "Waste issue 1" }
       );
       report1.state = ReportState.ASSIGNED;
       await reportRepo.updateReport(report1);
 
-      // PUBLIC_LIGHTING - IN_PROGRESS
       const report2 = await reportRepo.createReport(
-        "Lighting Report",
-        { name: "Location 2", Coordinates: { longitude: 10.6, latitude: 45.6 } },
+        "Lighting Report 2",
+        { name: "Location B", Coordinates: { longitude: 10.62, latitude: 45.62 } },
         user,
         false,
         OfficeType.PUBLIC_LIGHTING,
-        { Description: "Lighting issue" }
+        { Description: "Lighting issue 2" }
       );
-      report2.state = ReportState.IN_PROGRESS;
+      report2.state = ReportState.RESOLVED;
       await reportRepo.updateReport(report2);
 
-      // WASTE - SUSPENDED
       const report3 = await reportRepo.createReport(
-        "Another Waste Report",
-        { name: "Location 3", Coordinates: { longitude: 10.7, latitude: 45.7 } },
+        "Declined Report 3",
+        { name: "Location C", Coordinates: { longitude: 10.73, latitude: 45.73 } },
         user,
         false,
         OfficeType.WASTE,
-        { Description: "Another waste issue" }
+        { Description: "Declined issue 3" }
       );
-      report3.state = ReportState.SUSPENDED;
+      report3.state = ReportState.DECLINED;
       await reportRepo.updateReport(report3);
-
-      // PENDING report - should not be included in category stats
-      await reportRepo.createReport(
-        "Pending Report",
-        { name: "Location 4", Coordinates: { longitude: 10.8, latitude: 45.8 } },
-        user,
-        false,
-        OfficeType.WATER_SUPPLY,
-        { Description: "Pending issue" }
-      );
 
       const result = await getStatistics();
 
-      expect('byCategory' in result).toBe(true);
-      expect('byState' in result).toBe(true);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      
+      // Check structure of first result
+      expect(result[0]).toHaveProperty('date');
+      expect(result[0]).toHaveProperty('totalReports');
+      expect(result[0]).toHaveProperty('approvedReports');
+      expect(result[0]).toHaveProperty('rejectedReports');
 
-      const byCategory = (result as any).byCategory;
-      const byState = (result as any).byState;
-
-      // Check category stats (only ASSIGNED, IN_PROGRESS, SUSPENDED)
-      expect(byCategory).toHaveLength(2);
-      expect(byCategory).toContainEqual({ category: OfficeType.WASTE, count: 2 });
-      expect(byCategory).toContainEqual({ category: OfficeType.PUBLIC_LIGHTING, count: 1 });
-
-      // Check state stats (all states)
-      expect(byState.length).toBeGreaterThan(0);
-      const assignedState = byState.find((s: any) => s.state === ReportState.ASSIGNED);
-      const inProgressState = byState.find((s: any) => s.state === ReportState.IN_PROGRESS);
-      const suspendedState = byState.find((s: any) => s.state === ReportState.SUSPENDED);
-      const pendingState = byState.find((s: any) => s.state === ReportState.PENDING);
-
-      expect(assignedState?.count).toBe(1);
-      expect(inProgressState?.count).toBe(1);
-      expect(suspendedState?.count).toBe(1);
-      expect(pendingState?.count).toBe(1);
+      // Since all reports are created today, we should have one entry
+      expect(result[0].totalReports).toBe(3);
+      expect(result[0].approvedReports).toBe(2); // ASSIGNED + RESOLVED
+      expect(result[0].rejectedReports).toBe(1); // DECLINED
     });
   });
 
-  // ===================== getStatistics - Period filter only =====================
-  describe("getStatistics - Period filter only", () => {
-    it("should return category stats and trends for day period", async () => {
+  // ===================== getStatistics - Period filters =====================
+  describe("getStatistics - Period filters", () => {
+    it("should return daily statistics", async () => {
       const user = await userRepo.getUserById(userId);
 
-      // Create reports
-      const report1 = await reportRepo.createReport(
+      const report = await reportRepo.createReport(
         "Report 1",
         { name: "Location 1", Coordinates: { longitude: 10.5, latitude: 45.5 } },
         user,
@@ -138,19 +113,19 @@ describe("StatisticsController - Integration Tests", () => {
         OfficeType.WASTE,
         { Description: "Issue 1" }
       );
-      report1.state = ReportState.ASSIGNED;
-      await reportRepo.updateReport(report1);
+      report.state = ReportState.ASSIGNED;
+      await reportRepo.updateReport(report);
 
-      const result = await getStatistics('day');
+      const result = await getStatistics(undefined, undefined, 'daily');
 
-      expect('byCategory' in result).toBe(true);
-      expect('trends' in result).toBe(true);
-      expect((result as any).trends.period).toBe('day');
-      expect((result as any).trends.data).toBeDefined();
-      expect(Array.isArray((result as any).trends.data)).toBe(true);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      
+      // Date format should be YYYY-MM-DD
+      expect(result[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 
-    it("should return category stats and trends for week period", async () => {
+    it("should return weekly statistics", async () => {
       const user = await userRepo.getUserById(userId);
 
       const report = await reportRepo.createReport(
@@ -164,13 +139,16 @@ describe("StatisticsController - Integration Tests", () => {
       report.state = ReportState.IN_PROGRESS;
       await reportRepo.updateReport(report);
 
-      const result = await getStatistics('week');
+      const result = await getStatistics(undefined, undefined, 'weekly');
 
-      expect('trends' in result).toBe(true);
-      expect((result as any).trends.period).toBe('week');
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      
+      // Date format should be YYYY-WWW (e.g., 2026-W01)
+      expect(result[0].date).toMatch(/^\d{4}-W\d{2}$/);
     });
 
-    it("should return category stats and trends for month period", async () => {
+    it("should return monthly statistics", async () => {
       const user = await userRepo.getUserById(userId);
 
       const report = await reportRepo.createReport(
@@ -184,16 +162,36 @@ describe("StatisticsController - Integration Tests", () => {
       report.state = ReportState.SUSPENDED;
       await reportRepo.updateReport(report);
 
-      const result = await getStatistics('month');
+      const result = await getStatistics(undefined, undefined, 'monthly');
 
-      expect('trends' in result).toBe(true);
-      expect((result as any).trends.period).toBe('month');
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      
+      // Date format should be YYYY-MM
+      expect(result[0].date).toMatch(/^\d{4}-\d{2}$/);
     });
 
-    it("should not include byState when period is specified", async () => {
-      const result = await getStatistics('day');
+    it("should return yearly statistics", async () => {
+      const user = await userRepo.getUserById(userId);
 
-      expect('byState' in result).toBe(false);
+      const report = await reportRepo.createReport(
+        "Report",
+        { name: "Location", Coordinates: { longitude: 10.5, latitude: 45.5 } },
+        user,
+        false,
+        OfficeType.WASTE,
+        { Description: "Issue" }
+      );
+      report.state = ReportState.ASSIGNED;
+      await reportRepo.updateReport(report);
+
+      const result = await getStatistics(undefined, undefined, 'yearly');
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      
+      // Date format should be YYYY
+      expect(result[0].date).toMatch(/^\d{4}$/);
     });
   });
 
@@ -202,19 +200,39 @@ describe("StatisticsController - Integration Tests", () => {
     it("should return count for specific category when reports exist", async () => {
       const user = await userRepo.getUserById(userId);
 
-      // Create 3 WASTE reports
-      for (let i = 0; i < 3; i++) {
-        const report = await reportRepo.createReport(
-          `Waste Report ${i + 1}`,
-          { name: `Location ${i + 1}`, Coordinates: { longitude: 10.5 + i, latitude: 45.5 + i } },
-          user,
-          false,
-          OfficeType.WASTE,
-          { Description: `Waste issue ${i + 1}` }
-        );
-        report.state = ReportState.ASSIGNED;
-        await reportRepo.updateReport(report);
-      }
+      // Create 3 WASTE reports explicitly
+      const report1 = await reportRepo.createReport(
+        "Waste Report 1",
+        { name: "Location 1", Coordinates: { longitude: 10.5, latitude: 45.5 } },
+        user,
+        false,
+        OfficeType.WASTE,
+        { Description: "Waste issue 1" }
+      );
+      report1.state = ReportState.ASSIGNED;
+      await reportRepo.updateReport(report1);
+
+      const report2 = await reportRepo.createReport(
+        "Waste Report 2",
+        { name: "Location 2", Coordinates: { longitude: 11.5, latitude: 46.5 } },
+        user,
+        false,
+        OfficeType.WASTE,
+        { Description: "Waste issue 2" }
+      );
+      report2.state = ReportState.ASSIGNED;
+      await reportRepo.updateReport(report2);
+
+      const report3 = await reportRepo.createReport(
+        "Waste Report 3",
+        { name: "Location 3", Coordinates: { longitude: 12.5, latitude: 47.5 } },
+        user,
+        false,
+        OfficeType.WASTE,
+        { Description: "Waste issue 3" }
+      );
+      report3.state = ReportState.ASSIGNED;
+      await reportRepo.updateReport(report3);
 
       // Create 1 PUBLIC_LIGHTING report (should not be counted)
       const otherReport = await reportRepo.createReport(
@@ -228,25 +246,24 @@ describe("StatisticsController - Integration Tests", () => {
       otherReport.state = ReportState.IN_PROGRESS;
       await reportRepo.updateReport(otherReport);
 
-      const result = await getStatistics(undefined, OfficeType.WASTE);
+      const result = await getStatistics(undefined, undefined, undefined, OfficeType.WASTE);
 
-      expect('category' in result).toBe(true);
-      expect('count' in result).toBe(true);
-      expect((result as any).category).toBe(OfficeType.WASTE);
-      expect((result as any).count).toBe(3);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].totalReports).toBe(3);
     });
 
-    it("should return 0 when category has no reports", async () => {
-      const result = await getStatistics(undefined, OfficeType.WATER_SUPPLY);
+    it("should return empty array when category has no reports", async () => {
+      const result = await getStatistics(undefined, undefined, undefined, OfficeType.WATER_SUPPLY);
 
-      expect((result as any).category).toBe(OfficeType.WATER_SUPPLY);
-      expect((result as any).count).toBe(0);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toEqual([]);
     });
 
-    it("should not include byState when category is specified", async () => {
-      const result = await getStatistics(undefined, OfficeType.WASTE);
+    it("should return array structure when category is specified", async () => {
+      const result = await getStatistics(undefined, undefined, undefined, OfficeType.WASTE);
 
-      expect('byState' in result).toBe(false);
+      expect(Array.isArray(result)).toBe(true);
     });
 
     it("should work with all category types", async () => {
@@ -283,10 +300,11 @@ describe("StatisticsController - Integration Tests", () => {
         report.state = ReportState.ASSIGNED;
         await reportRepo.updateReport(report);
 
-        const result = await getStatistics(undefined, category);
+        const result = await getStatistics(undefined, undefined, undefined, category);
 
-        expect((result as any).category).toBe(category);
-        expect((result as any).count).toBe(1);
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBeGreaterThan(0);
+        expect(result[0].totalReports).toBe(1);
       }
     });
   });
@@ -296,18 +314,20 @@ describe("StatisticsController - Integration Tests", () => {
     it("should return filtered count and trends when both parameters provided", async () => {
       const user = await userRepo.getUserById(userId);
 
-      // Create WASTE reports
+      // Create 5 WASTE reports explicitly
+      const reports = [];
       for (let i = 0; i < 5; i++) {
         const report = await reportRepo.createReport(
-          `Waste Report ${i + 1}`,
-          { name: `Location ${i + 1}`, Coordinates: { longitude: 10.5 + i, latitude: 45.5 + i } },
+          `Waste Report Number ${i + 1}`,
+          { name: `Waste Location ${i + 1}`, Coordinates: { longitude: 10.5 + i * 0.5, latitude: 45.5 + i * 0.5 } },
           user,
           false,
           OfficeType.WASTE,
-          { Description: `Waste issue ${i + 1}` }
+          { Description: `Waste specific issue ${i + 1}` }
         );
         report.state = ReportState.ASSIGNED;
-        await reportRepo.updateReport(report);
+        const saved = await reportRepo.updateReport(report);
+        reports.push(saved);
       }
 
       // Create PUBLIC_LIGHTING reports (should not be counted)
@@ -322,20 +342,16 @@ describe("StatisticsController - Integration Tests", () => {
       otherReport.state = ReportState.IN_PROGRESS;
       await reportRepo.updateReport(otherReport);
 
-      const result = await getStatistics('month', OfficeType.WASTE);
+      const result = await getStatistics(undefined, undefined, 'monthly', OfficeType.WASTE);
 
-      expect('category' in result).toBe(true);
-      expect('count' in result).toBe(true);
-      expect('trends' in result).toBe(true);
-      
-      expect((result as any).category).toBe(OfficeType.WASTE);
-      expect((result as any).count).toBe(5);
-      expect((result as any).trends.period).toBe('month');
-      expect((result as any).trends.data).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].totalReports).toBe(5);
+      expect(result[0].date).toMatch(/^\d{4}-\d{2}$/);
     });
 
     it("should handle all period types with category filter", async () => {
-      const periods: ('day' | 'week' | 'month')[] = ['day', 'week', 'month'];
+      const periods: ('daily' | 'weekly' | 'monthly')[] = ['daily', 'weekly', 'monthly'];
 
       for (const period of periods) {
         const user = await userRepo.getUserById(userId);
@@ -351,10 +367,13 @@ describe("StatisticsController - Integration Tests", () => {
         report.state = ReportState.ASSIGNED;
         await reportRepo.updateReport(report);
 
-        const result = await getStatistics(period, OfficeType.WASTE);
+        const result = await getStatistics(undefined, undefined, period, OfficeType.WASTE);
 
-        expect((result as any).category).toBe(OfficeType.WASTE);
-        expect((result as any).trends.period).toBe(period);
+        expect(Array.isArray(result)).toBe(true);
+        if (result.length > 0) {
+          expect(result[0]).toHaveProperty('date');
+          expect(result[0]).toHaveProperty('totalReports');
+        }
 
         // Clean up for next iteration
         await clearDatabase();
@@ -373,57 +392,54 @@ describe("StatisticsController - Integration Tests", () => {
   // ===================== getStatistics - Input validation =====================
   describe("getStatistics - Input validation", () => {
     it("should throw BadRequestError for invalid period", async () => {
-      await expect(getStatistics('invalid' as any)).rejects.toThrow(BadRequestError);
-      await expect(getStatistics('invalid' as any)).rejects.toThrow('Invalid period. Must be one of: day, week, month');
+      await expect(getStatistics(undefined, undefined, 'invalid' as any)).rejects.toThrow(BadRequestError);
+      await expect(getStatistics(undefined, undefined, 'invalid' as any)).rejects.toThrow('Invalid period. Must be one of: daily, weekly, monthly, yearly');
     });
 
     it("should throw BadRequestError for invalid category", async () => {
-      await expect(getStatistics(undefined, 'invalid_category' as any)).rejects.toThrow(BadRequestError);
-      await expect(getStatistics(undefined, 'invalid_category' as any)).rejects.toThrow('Invalid category');
+      await expect(getStatistics(undefined, undefined, undefined, 'invalid_category' as any)).rejects.toThrow(BadRequestError);
+      await expect(getStatistics(undefined, undefined, undefined, 'invalid_category' as any)).rejects.toThrow('Invalid category');
     });
 
     it("should validate period even with valid category", async () => {
-      await expect(getStatistics('year' as any, OfficeType.WASTE)).rejects.toThrow(BadRequestError);
+      await expect(getStatistics(undefined, undefined, 'day' as any, OfficeType.WASTE)).rejects.toThrow(BadRequestError);
     });
 
     it("should validate category even with valid period", async () => {
-      await expect(getStatistics('month', 'not_a_category' as any)).rejects.toThrow(BadRequestError);
+      await expect(getStatistics(undefined, undefined, 'monthly', 'not_a_category' as any)).rejects.toThrow(BadRequestError);
     });
   });
 
   // ===================== getStatistics - Edge cases =====================
   describe("getStatistics - Edge cases", () => {
-    it("should handle reports with only PENDING state correctly", async () => {
+    it("should return zero counts when applicable", async () => {
       const user = await userRepo.getUserById(userId);
 
       // Create only PENDING reports
-      await reportRepo.createReport(
-        "Pending Report 1",
-        { name: "Location 1", Coordinates: { longitude: 10.5, latitude: 45.5 } },
+      const report = await reportRepo.createReport(
+        "Pending Report",
+        { name: "Location", Coordinates: { longitude: 10.5, latitude: 45.5 } },
         user,
         false,
         OfficeType.WASTE,
         { Description: "Pending issue" }
       );
+      // PENDING is the default state
 
       const result = await getStatistics();
 
-      // Category stats should be empty (PENDING not included)
-      expect((result as any).byCategory).toEqual([]);
-      
-      // State stats should include PENDING
-      const byState = (result as any).byState;
-      const pendingState = byState.find((s: any) => s.state === ReportState.PENDING);
-      expect(pendingState?.count).toBe(1);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].totalReports).toBe(1);
+      expect(result[0].approvedReports).toBe(0);
+      expect(result[0].rejectedReports).toBe(0);
     });
 
-    it("should handle anonymous reports correctly", async () => {
-      const user = await userRepo.getUserById(userId);
-
+    it("should handle anonymous reports correctly", async () => {      
       const report = await reportRepo.createReport(
         "Anonymous Report",
         { name: "Location", Coordinates: { longitude: 10.5, latitude: 45.5 } },
-        null, // Anonymous
+        null,
         true,
         OfficeType.WASTE,
         { Description: "Anonymous issue" }
@@ -431,63 +447,46 @@ describe("StatisticsController - Integration Tests", () => {
       report.state = ReportState.ASSIGNED;
       await reportRepo.updateReport(report);
 
-      const result = await getStatistics(undefined, OfficeType.WASTE);
+      const result = await getStatistics(undefined, undefined, undefined, OfficeType.WASTE);
 
-      expect((result as any).count).toBe(1);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].totalReports).toBe(1);
     });
 
-    it("should handle multiple reports on same day for trends", async () => {
+    it("should handle multiple reports on same day", async () => {
       const user = await userRepo.getUserById(userId);
 
       // Create multiple reports on the same day
+      const reports = [];
       for (let i = 0; i < 5; i++) {
         const report = await reportRepo.createReport(
-          `Report ${i + 1}`,
-          { name: `Location ${i + 1}`, Coordinates: { longitude: 10.5 + i, latitude: 45.5 + i } },
+          `Multiple Daily Report ${i + 1}`,
+          { name: `Daily Location ${i + 1}`, Coordinates: { longitude: 10.5 + i * 0.3, latitude: 45.5 + i * 0.3 } },
           user,
           false,
           OfficeType.WASTE,
-          { Description: `Issue ${i + 1}` }
+          { Description: `Daily issue number ${i + 1}` }
         );
         report.state = ReportState.ASSIGNED;
-        await reportRepo.updateReport(report);
+        const saved = await reportRepo.updateReport(report);
+        reports.push(saved);
       }
 
-      const result = await getStatistics('day');
+      const result = await getStatistics(undefined, undefined, 'daily');
 
-      expect((result as any).trends.data.length).toBeGreaterThan(0);
-      // All reports should be counted in today's trend
-      const todayCount = (result as any).trends.data[0]?.count;
-      expect(todayCount).toBe(5);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].totalReports).toBe(5);
     });
 
-    it("should limit trends to 30 periods", async () => {
-      const user = await userRepo.getUserById(userId);
-
-      // Create a report
-      const report = await reportRepo.createReport(
-        "Report",
-        { name: "Location", Coordinates: { longitude: 10.5, latitude: 45.5 } },
-        user,
-        false,
-        OfficeType.WASTE,
-        { Description: "Issue" }
-      );
-      report.state = ReportState.ASSIGNED;
-      await reportRepo.updateReport(report);
-
-      const result = await getStatistics('day');
-
-      expect((result as any).trends.data.length).toBeLessThanOrEqual(30);
-    });
   });
 
   // ===================== getStatistics - Real data scenarios =====================
   describe("getStatistics - Real data scenarios", () => {
-    it("should correctly aggregate mixed state reports", async () => {
+    it("should count all report states in totalReports", async () => {
       const user = await userRepo.getUserById(userId);
 
-      // Create reports in all states
       const states = [
         ReportState.PENDING,
         ReportState.ASSIGNED,
@@ -497,27 +496,30 @@ describe("StatisticsController - Integration Tests", () => {
         ReportState.DECLINED
       ];
 
-      for (const state of states) {
+      // Create reports sequentially with very unique identifiers
+      const reports = [];
+      for (let i = 0; i < states.length; i++) {
+        const state = states[i];
         const report = await reportRepo.createReport(
-          `Report ${state}`,
-          { name: "Location", Coordinates: { longitude: 10.5, latitude: 45.5 } },
+          `State Test Report ${state} Number ${i}`,
+          { name: `State Location ${state} ${i}`, Coordinates: { longitude: 10.5 + i * 0.25, latitude: 45.5 + i * 0.25 } },
           user,
           false,
           OfficeType.WASTE,
-          { Description: "Issue" }
+          { Description: `Specific issue for state ${state} number ${i}` }
         );
         report.state = state;
-        await reportRepo.updateReport(report);
+        const saved = await reportRepo.updateReport(report);
+        reports.push(saved);
       }
 
       const result = await getStatistics();
 
-      // Only ASSIGNED, IN_PROGRESS, SUSPENDED should be in category stats
-      expect((result as any).byCategory).toHaveLength(1);
-      expect((result as any).byCategory[0].count).toBe(3);
-
-      // All states should be in state stats
-      expect((result as any).byState.length).toBe(6);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0].totalReports).toBe(6);
+      expect(result[0].approvedReports).toBe(4); // ASSIGNED, IN_PROGRESS, SUSPENDED, RESOLVED
+      expect(result[0].rejectedReports).toBe(1); // DECLINED
     });
 
   });
