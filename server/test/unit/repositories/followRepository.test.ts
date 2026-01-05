@@ -347,8 +347,8 @@ describe("FollowRepository", () => {
       await followRepo.unfollow(1, 1);
 
       expect(mockRepo.delete).toHaveBeenCalledWith({
-        user: { id: 1 },
-        report: { id: 1 },
+         user: 1,
+        report: 1,
         notifyVia: "web",
       });
     });
@@ -359,8 +359,8 @@ describe("FollowRepository", () => {
       await followRepo.unfollow(1, 1, "telegram");
 
       expect(mockRepo.delete).toHaveBeenCalledWith({
-        user: { id: 1 },
-        report: { id: 1 },
+        user: 1,
+        report: 1,
         notifyVia: "telegram",
       });
     });
