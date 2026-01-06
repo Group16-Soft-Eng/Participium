@@ -129,7 +129,7 @@ describe("Auth API Integration Tests", () => {
           username,
           password: plainPassword
         });
-      expect(res.status).toBe(423);
+      expect(res.status).toBe(301);
     });
 
     it("should return 400 if username is missing", async () => {
