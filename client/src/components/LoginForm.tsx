@@ -45,7 +45,6 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
 
             const detected = getRoleFromToken(token);
             setRole(detected ?? []);
-            console.log(detected);
             globalThis.dispatchEvent(new Event('authChange'));
             setLoading(false);
 
