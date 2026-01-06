@@ -14,7 +14,7 @@ import { UserRepository } from '../../../src/repositories/UserRepository';
 import { OfficerRepository } from '../../../src/repositories/OfficerRepository';
 import { MaintainerRepository } from '../../../src/repositories/MaintainerRepository';
 import * as authService from '../../../src/services/authService';
-import { UnauthorizedError } from '../../../src/utils/utils';
+import { UnauthorizedError, InactiveUserError } from '../../../src/utils/utils';
 import { OfficerRole } from '../../../src/models/enums/OfficerRole';
 import { UserDAO } from '../../../src/models/dao/UserDAO';
 import { OfficerDAO } from '../../../src/models/dao/OfficerDAO';
@@ -117,7 +117,7 @@ describe('authController', () => {
             mockUserRepo.getUserByUsername.mockResolvedValue(mockUser);
 
             await expect(loginUserByUsername('testuser', 'password123'))
-                .rejects.toThrow(UnauthorizedError);
+                .rejects.toThrow(InactiveUserError);
             await expect(loginUserByUsername('testuser', 'password123'))
                 .rejects.toThrow('User account is not active');
         });
@@ -221,7 +221,7 @@ describe('authController', () => {
             mockUserRepo.getUserByEmail.mockResolvedValue(mockUser);
 
             await expect(loginUserByMail('test2@example.com', 'password123'))
-                .rejects.toThrow(UnauthorizedError);
+                .rejects.toThrow(InactiveUserError);
             await expect(loginUserByMail('test2@example.com', 'password123'))
                 .rejects.toThrow('User account is not active');
         });
