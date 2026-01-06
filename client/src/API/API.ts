@@ -22,7 +22,7 @@ async function userLogin(credentials: UserCredentials) {
         username: credentials.username,
         password: credentials.password
     }
-
+    
     try {
         const response = await fetch(URI + `/auth/users`, {
             method: 'POST',
@@ -30,13 +30,18 @@ async function userLogin(credentials: UserCredentials) {
             credentials: 'include',
             body: JSON.stringify(bodyObject)
         })
-
+        
         if (response.ok) {
             const token = await response.json();
             return token;
         } else {
             const err = await response.text()
-            throw new Error(err || 'Login failed');
+
+            const match = /<pre>(.*?)<\/pre>/i.exec(err);
+
+            const errorType = match ? match[1] : response.statusText;
+
+            throw new Error(`${response.status} ${errorType}`);
         }
     } catch (error) {
         console.error('userLogin - Network or parse error:', error);
@@ -116,10 +121,10 @@ type Officer = {
     surname: string;
     password: string;
     roles:
-        {
-            office: string;
-            role: string;
-        }[];
+    {
+        office: string;
+        role: string;
+    }[];
 }
 
 
@@ -146,7 +151,12 @@ async function userRegister(user: User) {
 }
 
 async function generateOtp(email: string) {
-
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        throw new Error('If your account has not been activated yet, please provide a valid email address to receive the OTP code.');
+    }
+    
     const response = await fetch(URI + `/users/generateotp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -160,7 +170,6 @@ async function generateOtp(email: string) {
         const err = await response.text()
 
         const match = /<pre>(.*?)<\/pre>/i.exec(err);
-
 
         const errorType = match ? match[1] : response.statusText;
 
@@ -224,7 +233,7 @@ type Maintainer = {
     email: string;
     password: string;
     categories:
-        string[];
+    string[];
     active: boolean
 }
 
@@ -625,7 +634,7 @@ async function getReportById(reportId: string) {
         method: 'GET',
         headers: headers,
     });
-    
+
     if (response.ok) {
         return await response.json();
     } else {
@@ -668,7 +677,7 @@ async function getPublicStatistics() {
                 weeklyResponse.json(),
                 monthlyResponse.json()
             ]);
-            
+
             // Transform the response from backend to match frontend expectations
             return {
                 totalReports: dailyData.byCategory.reduce((sum: number, cat: any) => sum + cat.count, 0),
@@ -701,7 +710,7 @@ async function followReport(reportId: string) {
         method: 'POST',
         headers: headers,
     });
-    
+
     if (response.ok) {
         return await response.json();
     } else {
@@ -723,7 +732,7 @@ async function unfollowReport(reportId: string) {
         method: 'DELETE',
         headers: headers,
     });
-    
+
     if (response.ok) {
         return response;
     } else {
@@ -745,7 +754,7 @@ async function getFollowedReports() {
         method: 'GET',
         headers: headers,
     });
-    
+
     if (response.ok) {
         return await response.json();
     } else {
@@ -760,7 +769,7 @@ async function getAllFaqs() {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
     });
-    
+
     if (response.ok) {
         return await response.json();
     } else {
@@ -783,7 +792,7 @@ async function createFaq(question: string, answer: string) {
         headers: headers,
         body: JSON.stringify({ question, answer }),
     });
-    
+
     if (response.ok) {
         return await response.json();
     } else {
@@ -806,7 +815,7 @@ async function updateFaq(faqId: number, question: string, answer: string) {
         headers: headers,
         body: JSON.stringify({ question, answer }),
     });
-    
+
     if (response.ok) {
         return await response.json();
     } else {
@@ -828,7 +837,7 @@ async function deleteFaq(faqId: number) {
         method: 'DELETE',
         headers: headers,
     });
-    
+
     if (response.ok) {
         return await response.json();
     } else {
