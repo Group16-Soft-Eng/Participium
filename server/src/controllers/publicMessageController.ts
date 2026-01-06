@@ -112,7 +112,7 @@ export async function sendPublicMessage(
   // Emit socket event
   const io = getIO();
   if (io) {
-    console.log(`Emitting public-message:new to report:${reportId}`, dto);
+    // console.log(`Emitting public-message:new to report:${reportId}`, dto);
     io.to(`report:${reportId}`).emit("public-message:new", {
       id: dto.id,
       reportId: dto.reportId,

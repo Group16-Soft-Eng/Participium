@@ -55,13 +55,13 @@ function ensureAuthorized(report: any, sender: Participant, receiver: Participan
   const assignedOfficerId = report.assignedOfficerId;
   const assignedMaintainerId = report.assignedMaintainerId;
 
-  console.log('Authorization check:', {
-    reportId: report.id,
-    assignedOfficerId,
-    assignedMaintainerId,
-    sender,
-    receiver
-  });
+  // console.log('Authorization check:', {
+  //   reportId: report.id,
+  //   assignedOfficerId,
+  //   assignedMaintainerId,
+  //   sender,
+  //   receiver
+  // });
 
   if (sender.type === OfficerRole.TECHNICAL_OFFICE_STAFF) {
     if (assignedOfficerId !== sender.id) throw new ForbiddenError("Not assigned to this report");

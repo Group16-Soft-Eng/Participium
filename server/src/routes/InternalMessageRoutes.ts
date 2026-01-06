@@ -30,7 +30,7 @@ router.post("/:reportId/internal-messages", authenticateToken, requireUserType([
     const user = (req as any).user;
     const { message } = req.body;
 
-    console.log('User from token:', user);
+    // console.log('User from token:', user);
 
     if (!message) {
       return res.status(400).json({ error: "Missing required field: message" });
