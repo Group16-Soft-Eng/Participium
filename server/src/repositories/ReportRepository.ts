@@ -263,4 +263,68 @@ export class ReportRepository {
       }
     });
   }
+
+    // Public statistics: report count by category (only approved reports)
+  async getReportCountByCategory(): Promise<Array<{ category: OfficeType; count: number }>> {
+    const result = await this.repo
+      .createQueryBuilder("report")
+      .select("report.category", "category")
+      .addSelect("COUNT(*)", "count")
+      .where("report.state IN (:...states)", {
+        states: [ReportState.ASSIGNED, ReportState.IN_PROGRESS, ReportState.SUSPENDED]
+      })
+      .groupBy("report.category")
+      .getRawMany();
+
+    return result.map(r => ({
+      category: r.category as OfficeType,
+      count: Number.parseInt(r.count, 10)
+    }));
+  }
+
+  // Public statistics: count by state
+  async getReportCountByState(): Promise<Array<{ state: string; count: number }>> {
+    const result = await this.repo
+      .createQueryBuilder("report")
+      .select("report.state", "state")
+      .addSelect("COUNT(*)", "count")
+      .groupBy("report.state")
+      .getRawMany();
+
+    return result.map(r => ({
+      state: r.state,
+      count: Number.parseInt(r.count, 10)
+    }));
+  }
+
+  // Public statistics: trends by period (day/week/month)
+  async getReportTrendsByPeriod(period: 'daily' | 'weekly' | 'monthly'): Promise<Array<{ period: string; count: number }>> {
+    let dateFormat: string;
+    
+    switch (period) {
+      case 'daily':
+        dateFormat = "%Y-%m-%d";
+        break;
+      case 'weekly':
+        dateFormat = "%Y-%W";
+        break;
+      case 'monthly':
+        dateFormat = "%Y-%m";
+        break;
+    }
+
+    const result = await this.repo
+      .createQueryBuilder("report")
+      .select(`strftime('${dateFormat}', report.date)`, "period")
+      .addSelect("COUNT(*)", "count")
+      .groupBy("period")
+      .orderBy("period", "DESC")
+      .limit(30) // Last 30 periods (days, weeks, or months)
+      .getRawMany();
+
+    return result.map(r => ({
+      period: r.period,
+      count: Number.parseInt(r.count, 10)
+    }));
+  }
 }

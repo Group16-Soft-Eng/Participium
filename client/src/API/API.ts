@@ -657,15 +657,15 @@ async function getPublicStatistics() {
     try {
         // Fetch all three periods in parallel
         const [dailyResponse, weeklyResponse, monthlyResponse] = await Promise.all([
-            fetch(URI + `/statistics/public?period=day`, {
+            fetch(URI + `/reports/macrostats?period=daily`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             }),
-            fetch(URI + `/statistics/public?period=week`, {
+            fetch(URI + `/reports/macrostats?period=weekly`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             }),
-            fetch(URI + `/statistics/public?period=month`, {
+            fetch(URI + `/reports/macrostats?period=monthly`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             })
@@ -680,7 +680,7 @@ async function getPublicStatistics() {
 
             // Transform the response from backend to match frontend expectations
             return {
-                totalReports: dailyData.byCategory.reduce((sum: number, cat: any) => sum + cat.count, 0),
+                totalReports: dailyData.byState.reduce((sum: number, cat: any) => sum + cat.count, 0),
                 byCategory: dailyData.byCategory,
                 byState: dailyData.byState || [],
                 dailyTrend: dailyData.trends?.data.map((d: any) => ({ date: d.period, count: d.count })) || [],

@@ -70,7 +70,7 @@ export function CategoryBreakdown({ data }: Readonly<CategoryBreakdownProps>) {
     <Card>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6">Reports by Category</Typography>
+          <Typography variant="h6">Active reports by category</Typography>
           <Chip
             label={`${totalReports} total`}
             color="primary"

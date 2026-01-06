@@ -35,3 +35,31 @@ export async function getStatistics(
   
   return stats;
 }
+
+export async function getMacroStatistics(selectedPeriod: 'daily' | 'weekly' | 'monthly' = 'daily') {
+  const reportRepo = new ReportRepository();
+  
+  // Validate period parameter if provided
+  const validPeriods = ['daily', 'weekly', 'monthly'];
+  
+  if (!validPeriods.includes(selectedPeriod)) {
+    throw new BadRequestError(`Invalid period. Must be one of: ${validPeriods.join(', ')}`);
+  }
+
+  // Get statistics
+  const [reportsByCategory, reportsByState, reportTrends] = await Promise.all([
+    reportRepo.getReportCountByCategory(),
+    reportRepo.getReportCountByState(),
+    reportRepo.getReportTrendsByPeriod(selectedPeriod)
+  ]);
+
+  return {
+    byCategory: reportsByCategory,
+    byState: reportsByState,
+    trends: {
+      period: selectedPeriod,
+      data: reportTrends
+    }
+  };
+}
+

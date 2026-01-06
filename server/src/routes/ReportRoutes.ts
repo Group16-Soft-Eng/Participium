@@ -1,6 +1,6 @@
 import {Router} from "express";
 import {uploadReport, getReports, getReport } from "@controllers/reportController"
-import { getStatistics } from "@controllers/statisticsController";
+import { getMacroStatistics, getStatistics } from "@controllers/statisticsController";
 
 import { authenticateToken, requireUserType } from "@middlewares/authMiddleware"
 import { uploadPhotos } from "@middlewares/uploadMiddleware";
@@ -111,6 +111,16 @@ router.get("/stats", async (req, res, next) => {
     const result = await getStatistics(fromDate, toDate, period, category);
     
     res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/macrostats", async (req, res, next) => {
+  try {
+    const period = req.query.period as 'daily' | 'weekly' | 'monthly' | undefined;
+    const statistics = await getMacroStatistics(period);
+    res.status(200).json(statistics);
   } catch (error) {
     next(error);
   }
