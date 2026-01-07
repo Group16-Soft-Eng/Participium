@@ -8,6 +8,7 @@ import { io, Socket } from 'socket.io-client';
 
 interface PublicChatSectionProps {
   reportId: number;
+  anonReport: boolean;
 }
 
 interface Message {
@@ -18,7 +19,7 @@ interface Message {
   createdAt: string;
 }
 
-export function PublicChatSection({ reportId }: Readonly<PublicChatSectionProps>) {
+export function PublicChatSection({ reportId, anonReport }: Readonly<PublicChatSectionProps>) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -215,6 +216,7 @@ export function PublicChatSection({ reportId }: Readonly<PublicChatSectionProps>
                 formatTime={formatTime}
                 currentUserIsOfficer={isOfficer || false}
                 currentUserName={authorName}
+                anonReport={anonReport}
               />
             ))}
             <div ref={messagesEndRef} />
@@ -276,9 +278,10 @@ interface MessageBubbleProps {
   formatTime: (date: string) => string;
   currentUserIsOfficer: boolean;
   currentUserName: string;
+  anonReport: boolean;
 }
 
-function MessageBubble({ message, formatTime, currentUserIsOfficer, currentUserName }: Readonly<MessageBubbleProps>) {
+function MessageBubble({ message, formatTime, currentUserIsOfficer, currentUserName, anonReport }: Readonly<MessageBubbleProps>) {
   const getInitials = (name?: string) => {
     if (!name || typeof name !== "string") return "";
 
@@ -300,7 +303,7 @@ function MessageBubble({ message, formatTime, currentUserIsOfficer, currentUserN
     (currentUserIsOfficer && message.senderType === 'officer') ||
     (!currentUserIsOfficer && message.senderType === 'citizen');
 
-  const displayName = isSentByMe ? currentUserName : message.senderName;
+  const displayName = isSentByMe ? currentUserName : (anonReport && currentUserIsOfficer ? 'Anonymous User' : message.senderName);
   const roleLabel = message.senderType === 'officer' ? 'Officer' : 'Citizen';
 
   return (

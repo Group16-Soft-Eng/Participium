@@ -140,7 +140,7 @@ export function ReportDetailsPage() {
           {showInternalChat ? (
             <InternalChatSection reportId={Number.parseInt(reportId!)} />
           ) : (
-            <PublicChatSection reportId={Number.parseInt(reportId!)} />
+            <PublicChatSection reportId={Number.parseInt(reportId!)} anonReport={report.anonymity} />
           )}
         </Box>
       </Box>
