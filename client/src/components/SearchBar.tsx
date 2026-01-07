@@ -66,7 +66,7 @@ export default function SearchBar({ setSearch }: Readonly<SearchBarProps>) {
         e.preventDefault();
         handleFinalSearch(inputValue);
       }}
-      sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', margin: '0 4rem 0 4rem', border: '1px solid #ddd' }}
+      sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', margin: '0 1rem 0 1rem', border: '1px solid #ddd' }}
     >
       <Autocomplete
         sx={{ flex: 1 }}
