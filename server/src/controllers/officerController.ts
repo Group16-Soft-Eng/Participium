@@ -217,11 +217,15 @@ export async function reviewDoc(officerId: number, idDoc: number, state: ReportS
   }
   await notificationRepo.createStatusChangeNotification(updatedReport);
 
- const followRepo = new FollowRepository();
+  const followRepo = new FollowRepository();
   const followers = await followRepo.getFollowersOfReport(updatedReport.id, "telegram");
+  const s_title = updatedReport.title;
+  let s_state = updatedReport.state.toString();
+  if (s_state === ReportState.IN_PROGRESS.toString())
+    s_state = "IN PROGRESS";
   for (const follower of followers ?? []) {
-    await sendTelegramMessage(follower.id, `The report (ID: ${updatedReport.id}), title "${updatedReport.title}" you are following has been updated to '${updatedReport.state}'.`);
-  } 
+    await sendTelegramMessage(follower.id, `The report (ID: ${updatedReport.id}), title "${s_title}" you are following has been updated to '${s_state}'.`);
+  }
 
   return mapReportDAOToDTO(updatedReport);
 }
