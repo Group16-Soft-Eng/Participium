@@ -42,9 +42,6 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
     const lat = report.location?.Coordinates?.latitude;
     const lng = report.location?.Coordinates?.longitude;
     
-    console.log('Report location:', report.location);
-    console.log('Coordinates:', lat, lng);
-    
     if (lat && lng) {
       const fetchAddress = async () => {
         try {
@@ -52,7 +49,6 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
           );
           const data = await response.json();
-          console.log('Reverse geocoding result:', data);
           if (data?.display_name) {
             setAddressText(data.display_name);
           } else {

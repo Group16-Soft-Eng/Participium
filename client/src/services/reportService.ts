@@ -176,7 +176,6 @@ export async function assignReportToMaintainer(reportId: number, maintainerId: n
 
 export async function getMaintainerAssignedReports(): Promise<OfficerReport[]> {
   try {
-    console.log(getToken());
     const res = await api.get<OfficerReport[]>('/maintainers/assigned');
     return res.data;
   } catch (e) {

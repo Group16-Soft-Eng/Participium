@@ -44,7 +44,6 @@ const MapPage: React.FC = () => {
   const logged = getToken() !== null;
 
   const username = getUserFromToken(getToken())?.username;
-  console.log("Username:", username);
 
   async function follow(id: string) {
     await followReport(id)
