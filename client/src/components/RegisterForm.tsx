@@ -70,7 +70,7 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
     const location = useLocation();
     const fromPath = (location as any).state?.from?.pathname || null;
 
-    const [, formAction] = useActionState(register, { success: false, error: '' } as RegisterState);
+    const [, formAction, isPending] = useActionState(register, { success: false, error: '' } as RegisterState);
 
     const [snackOpen, setSnackOpen] = useState(false);
     const [snackMessage, setSnackMessage] = useState('');
@@ -167,7 +167,7 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
                             <Button variant="outlined" onClick={() => setShowRegister(false)} fullWidth>Go Back</Button>
                         </Grid>
                         <Grid size={6}>
-                            <Button variant="contained" fullWidth type="submit">Register</Button>
+                            <Button variant="contained" fullWidth type="submit" disabled={isPending}>Register</Button>
                         </Grid>
                     </Grid>
                 </form>
