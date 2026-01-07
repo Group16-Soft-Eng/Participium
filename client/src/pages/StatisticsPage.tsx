@@ -154,7 +154,7 @@ export default function StatisticsPage() {
                 value={statistics.totalReports}
                 icon={<Assessment sx={{ fontSize: 32 }} />}
                 color="#667eea"
-                subtitle="All submissions"
+                subtitle="All time submissions"
               />
               <StatCard
                 title="Resolved"

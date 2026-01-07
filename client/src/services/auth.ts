@@ -121,6 +121,13 @@ export function getUserFromToken(token: string | null): DecodedUser | null {
   return user;
 }
 
+export function getOfficerIdFromToken(token: string | null): string | null {
+  const data = decodeJwt(token);
+  if (!data) return null;
+  if (data.id) return data.id;
+  return null;
+}
+
 export function getUserIdFromToken(token: string | null): number | null {
   const data = decodeJwt(token);
   if (!data) return null;

@@ -1,9 +1,10 @@
 import { Alert, Box, Button, Container, Snackbar, Stack, TextField } from "@mui/material";
 import './Forms.css';
 import { useState } from "react";
-import { userLogin, officerLogin, maintainerLogin, getUserProfile } from "../API/API";
+import { userLogin, officerLogin, maintainerLogin, getUserProfile, generateOtp } from "../API/API";
 import { setToken, setRole, getRoleFromToken, setPicture } from '../services/auth';
 import { useNavigate } from 'react-router-dom';
+import { OtpForm } from "./RegisterForm";
 
 interface LoginFormProps {
     readonly setShowLogin: (show: boolean) => void;
@@ -17,7 +18,10 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
     const [snackOpen, setSnackOpen] = useState(false);
     const [snackMessage, setSnackMessage] = useState('');
     const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
-
+    const [otp, setOtp] = useState(false);
+    const [username, setUsername] = useState('');
+    const [fromPath] = useState('');
+    const [password, setPassword] = useState('');
 
     async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -41,7 +45,6 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
 
             const detected = getRoleFromToken(token);
             setRole(detected ?? []);
-            console.log(detected);
             globalThis.dispatchEvent(new Event('authChange'));
             setLoading(false);
 
@@ -78,11 +81,26 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
                     setLoading(false);
                     navigate('/map');
                 } catch (err) {
-                    console.error('User login failed:', err);
-                    setSnackMessage('Login failed. Please check your credentials.');
-                    setSnackSeverity('error');
-                    setSnackOpen(true);
-                    setLoading(false);
+                    if (err instanceof Error && err.message.includes('301')) {
+                        try {
+                            await generateOtp(username);
+                            setOtp(true);
+                            setLoading(false);
+                            return;
+                        } catch (otpError) {
+                            if (otpError instanceof Error && otpError.message.includes('email')) {
+                                setSnackMessage(otpError.message);
+                                setSnackSeverity('error');
+                                setSnackOpen(true);
+                                setLoading(false);
+                            }
+                        }
+                    } else {
+                        setSnackMessage('Login failed. Please check your credentials.');
+                        setSnackSeverity('error');
+                        setSnackOpen(true);
+                        setLoading(false);
+                    }
                 }
             }
         }
@@ -90,25 +108,29 @@ export function LoginForm({ setShowLogin }: LoginFormProps) {
 
     return (
         <Container id="login-form">
-            <form onSubmit={handleLogin}>
-                <Stack spacing={2}>
-                    <TextField fullWidth id="username" name="username" label="Username" variant="outlined" required />
-                    <TextField fullWidth id="password" name="password" label="Password" variant="outlined" type="password" required />
+            {otp ? (
+                <OtpForm username={username} email={username} password={password} setSnackMessage={setSnackMessage} setSnackSeverity={setSnackSeverity} setSnackOpen={setSnackOpen} setOtp={setOtp} fromPath={fromPath} />
+            ) : (
+                <>
+                    <form onSubmit={handleLogin}>
+                        <Stack spacing={2}>
+                            <TextField fullWidth id="username" name="username" label="Username" variant="outlined" required onChange={(e) => setUsername(e.target.value)} />
+                            <TextField fullWidth id="password" name="password" label="Password" variant="outlined" type="password" required onChange={(e) => setPassword(e.target.value)}/>
 
-                    {/* role auto-detection: officer login attempted first, then citizen */}
-
-                    <Button variant="contained" type="submit" disabled={loading}>
-                        {loading ? 'Logging in...' : 'Login'}
-                    </Button>
-                    <Button variant="outlined" onClick={() => setShowLogin(false)}>Go Back</Button>
-                    {error && <Box className="error">{error}</Box>}
-                </Stack>
-            </form>
-            <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-                <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
-                    {snackMessage}
-                </Alert>
-            </Snackbar>
+                            <Button variant="contained" type="submit" disabled={loading}>
+                                {loading ? 'Logging in...' : 'Login'}
+                            </Button>
+                            <Button variant="outlined" onClick={() => setShowLogin(false)}>Go Back</Button>
+                            {error && <Box className="error">{error}</Box>}
+                        </Stack>
+                    </form>
+                    <Snackbar open={snackOpen} autoHideDuration={4000} onClose={() => setSnackOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                        <Alert onClose={() => setSnackOpen(false)} severity={snackSeverity} sx={{ width: '100%' }}>
+                            {snackMessage}
+                        </Alert>
+                    </Snackbar>
+                </>
+            )}
         </Container>
     );
 }

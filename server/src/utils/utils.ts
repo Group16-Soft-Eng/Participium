@@ -41,7 +41,7 @@ export class ForbiddenError extends Error {
 }
 
 export class InactiveUserError extends Error {
-  readonly statusCode = 423;
+  readonly statusCode = 301;
   readonly publicMessage = "User account is not active";
 
   constructor(

@@ -1,6 +1,6 @@
 import { Alert, Button, Container, Grid, Snackbar, TextField } from "@mui/material";
 import './Forms.css';
-import {  useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import React, { useActionState, useState } from "react";
 import { userLogin, userRegister, generateOtp, verifyOtp } from "../API/API";
 import { clearPicture, setRole, setToken } from "../services/auth";
@@ -77,7 +77,7 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
     const [snackSeverity, setSnackSeverity] = useState<'success' | 'error' | 'info'>('success');
     const [otp, setOtp] = useState(false);
     const [user, setUser] = useState<{ username: string, email: string, password: string } | null>(null);
-    
+
     async function register(_prevData: RegisterState, formData: FormData) {
         const user = {
             firstName: formData.get('name') as string,
@@ -110,10 +110,21 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
         }
         catch (error) {
             if (error instanceof Error && error.message.includes('409')) {
-                setSnackMessage('Username or email already in use');
-                setSnackSeverity('error');
-                setSnackOpen(true);
-                return { error: 'Username or email already in use' };
+                try {
+                    await generateOtp(user.email);
+                } catch (e) {
+                    console.log('OTP regenerated');
+                    if (e instanceof Error && e.message.includes('403')) {
+                        console.log(e.message);
+                        setOtp(true);
+                    } else {
+                        setSnackMessage('Username or email already in use');
+                        setSnackSeverity('error');
+                        setSnackOpen(true);
+                        return { error: 'Username or email already in use' };
+                    }
+                }
+                return { success: true };
             }
             if (error instanceof Error && error.message.includes('400')) {
                 setSnackMessage('Invalid email. Please use a valid email address.');

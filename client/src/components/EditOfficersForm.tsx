@@ -6,6 +6,7 @@ import { CategoryFilter } from './filters';
 import type { ReportCategory } from './filters';
 import { getAllMaintainers, getAllOfficers, getAvailableOfficerTypes, updateOfficer, deleteOfficer, updateMaintainers, deleteMaintainer } from '../API/API';
 import { formatString } from '../utils/StringUtils';
+import { getOfficerIdFromToken, getRole, getToken, getUserFromToken, setRole, type Role } from '../services/auth';
 
 const CATEGORY_COLORS: Record<string, string> = {
     water_supply: '#8b5cf6',
@@ -172,6 +173,9 @@ const EditMaintainerDialog: React.FC<EditMaintainerDialogProps> = ({ open, onClo
 type ViewMode = 'officers' | 'maintainers';
 
 const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
+
+    const ownId = getOfficerIdFromToken(getToken()) || '';
+
     const [viewMode, setViewMode] = useState<ViewMode>('officers');
 
     const [officers, setOfficers] = useState<Officer[]>([]);
@@ -309,7 +313,10 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
         try {
             await updateOfficer(updatedOfficer);
             fetchData();
-
+            if (updatedOfficer.id === Number.parseInt(ownId)) {
+                setRole([...new Set(updatedOfficer.roles.map(r => r.role))] as Role[]);
+                location.reload();
+            }
             setSnackMessage('Officer roles updated successfully!');
             setSnackSeverity('success');
             setSnackOpen(true);
@@ -473,6 +480,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                                                     onClick={() => handleRemoveRole(currentRoles.indexOf(assignment))}
                                                     size="small"
                                                     color="error"
+                                                    disabled={selectedOfficer.id === Number.parseInt(ownId) && assignment.role.includes('administrator')}
                                                 >
                                                     <RemoveCircleOutlineIcon fontSize="small" />
                                                 </IconButton>
@@ -659,7 +667,7 @@ const EditOfficersForm: React.FC<EditOfficersFormProps> = ({ setShowForm }) => {
                                                 </TableCell>
                                                 <TableCell align="right">
                                                     <Button variant="contained" color="primary" size="small" sx={{ mr: 1 }} onClick={() => openEditOfficer(officer)}>Edit Roles</Button>
-                                                    <Button variant="outlined" color="error" size="small" onClick={() => openDeleteOfficer(officer)}>Delete</Button>
+                                                    <Button variant="outlined" color="error" size="small" disabled={officer.id === Number.parseInt(ownId)} onClick={() => openDeleteOfficer(officer)}>Delete</Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
