@@ -253,9 +253,13 @@ const MapPage: React.FC = () => {
                     >
                       <Box>
                         <Typography variant="subtitle1" sx={{ lineHeight: 1.2, mb: 0.5 }}>{r.title}</Typography>
+
+                        <Typography variant="caption" color="text.secondary">
+                        </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {authorName}
                           {` • ${new Date(r.createdAt).toLocaleDateString()}`}
+                          {` • ID: #${r.id}`}
                         </Typography>
                         {(logged && r.author?.username != username && getRole()?.includes('citizen') && (
                           <>
