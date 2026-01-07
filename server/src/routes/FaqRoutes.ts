@@ -11,7 +11,7 @@ router.get("/" , async (req, res) => {
         const faqs = await faqRepo.getAllFaqs();
         
         res.status(200).json(faqs);
-    } catch (error) {
+    } catch {
         res.status(500).json({ error: "Internal server error" });
     }
 });
@@ -23,7 +23,7 @@ router.post("/" , authenticateToken, requireUserType([OfficerRole.MUNICIPAL_ADMI
         
         const newFaq = await faqRepo.createFaq(question, answer);
         res.status(201).json(newFaq);
-    } catch (error) {
+    } catch {
         res.status(500).json({ error: "Internal server error" });
     }
 });
@@ -36,7 +36,7 @@ router.patch("/:faqId" , authenticateToken, requireUserType([OfficerRole.MUNICIP
         
         const updatedFaq = await faqRepo.updateFaq(faqId, question, answer);
         res.status(200).json(updatedFaq);
-    } catch (error) {
+    } catch {
         res.status(500).json({ error: "Internal server error" });
     }
 });
@@ -48,7 +48,7 @@ router.delete("/:faqId" , authenticateToken, requireUserType([OfficerRole.MUNICI
         
         await faqRepo.deleteFaq(faqId);
         res.status(200).json({ message: "FAQ deleted successfully." });
-    } catch (error) {
+    } catch {
         res.status(500).json({ error: "Internal server error" });
     }
 });

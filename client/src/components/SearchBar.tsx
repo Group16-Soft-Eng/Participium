@@ -54,7 +54,6 @@ export default function SearchBar({ setSearch }: Readonly<SearchBarProps>) {
   const handleFinalSearch = (value: string | null) => {
     if (value) {
       setSearch(value);
-      console.log("Searching for:", value);
     } else {
       setSearch(null);
     }

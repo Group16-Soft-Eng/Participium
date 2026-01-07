@@ -2,7 +2,6 @@ import { PublicMessageRepository } from "@repositories/PublicMessageRepository";
 import { UserRepository } from "@repositories/UserRepository";
 import { OfficerRepository } from "@repositories/OfficerRepository";
 import { PublicMessage } from "@models/dto/PublicMessage";
-import { PublicMessageDAO } from "@models/dao/PublicMessageDAO";
 import { getIO } from "@services/ioService";
 
 export async function listConversation(reportId: number): Promise<PublicMessage[]> {

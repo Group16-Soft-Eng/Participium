@@ -6,7 +6,7 @@ import { CategoryFilter } from './filters';
 import type { ReportCategory } from './filters';
 import { getAllMaintainers, getAllOfficers, getAvailableOfficerTypes, updateOfficer, deleteOfficer, updateMaintainers, deleteMaintainer } from '../API/API';
 import { formatString } from '../utils/StringUtils';
-import { getOfficerIdFromToken, getRole, getToken, getUserFromToken, setRole, type Role } from '../services/auth';
+import { getOfficerIdFromToken, getToken, setRole, type Role } from '../services/auth';
 
 const CATEGORY_COLORS: Record<string, string> = {
     water_supply: '#8b5cf6',
