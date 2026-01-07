@@ -113,9 +113,7 @@ export function RegisterForm({ setShowRegister }: RegisterFormProps) {
                 try {
                     await generateOtp(user.email);
                 } catch (e) {
-                    console.log('OTP regenerated');
                     if (e instanceof Error && e.message.includes('403')) {
-                        console.log(e.message);
                         setOtp(true);
                     } else {
                         setSnackMessage('Username or email already in use');

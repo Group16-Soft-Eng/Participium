@@ -214,9 +214,6 @@ function App() {
                 </>
               )}
 
-              {!isLoggedIn && (<UserButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
-              )}
-
               {isAdmin && (
                 <AdminButton isLoggedIn={isLoggedIn} setShowLoginDialog={setShowLoginDialog} />
               )}

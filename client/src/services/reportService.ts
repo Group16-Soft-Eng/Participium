@@ -1,5 +1,4 @@
 import api from './api';
-import { getToken } from './auth';
 
 export type ReportState = 'PENDING' | 'APPROVED' | 'ASSIGNED' | 'DECLINED' | 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED';
 
@@ -176,7 +175,6 @@ export async function assignReportToMaintainer(reportId: number, maintainerId: n
 
 export async function getMaintainerAssignedReports(): Promise<OfficerReport[]> {
   try {
-    console.log(getToken());
     const res = await api.get<OfficerReport[]>('/maintainers/assigned');
     return res.data;
   } catch (e) {

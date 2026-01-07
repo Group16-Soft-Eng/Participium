@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Select, Stack, MenuItem, FormControl, InputLabel, Grid } from '@mui/material';
 import type { OfficerReport } from '../services/reportService';
 import { getOfficersByOffice, assignOfficer } from "../API/API";
+import { formatString } from '../utils/StringUtils';
 
 interface Props {
     open: boolean;
@@ -56,7 +57,7 @@ const AssignOfficerDialog: React.FC<Props> = ({ open, report, onClose, office, s
                         <Stack spacing={2}>
                             <Box>
                                 {officers.length > 0 &&
-                                    `Available Officers for ${office} office:`}
+                                    `Available Officers for ${formatString(office)} office:`}
                             </Box>
                             <FormControl fullWidth>
                                 <Grid size={12}>

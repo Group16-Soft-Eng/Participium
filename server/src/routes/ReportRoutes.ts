@@ -11,7 +11,6 @@ import { NotificationRepository } from "@repositories/NotificationRepository";
 import { ReviewStatus } from "@models/enums/ReviewStatus";
 import { FollowRepository } from "@repositories/FollowRepository";
 import { mapUserDAOToDTO } from "@services/mapperService";
-import { BadRequestError } from "@utils/utils";
 
 const router = Router({mergeParams : true});
 
@@ -48,32 +47,7 @@ router.get("/", async(req, res, next) =>{
         // Check if user is authenticated
         // const authHeader = req.headers.authorization; //No Auht needed for PT-28
         let result;
-        /*
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            // User is authenticated - check if it's an officer
-            try {
-                const token = authHeader.substring(7);
-                const jwt = require('jsonwebtoken');
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-                
-                // Check if user type is an officer role
-                if (decoded.type && decoded.type !== 'user') {
-                    // It's an officer - get their office and filter reports
-                    const officerRepo = new OfficerRepository();
-                    const officer = await officerRepo.getOfficerById(decoded.id);
-                    result = await getReportsByOffice(officer.office);
-                } else {
-                    // Regular user - show all approved reports
-                    result = await getReports();
-                }
-            } catch (e) {
-                // Invalid token - show all approved reports (public)
-                result = await getReports();
-            }
-        } else {
-            // No authentication - show all approved reports (public)
-            result = await getReports();
-        }*/
+
         result = await getReports();
         res.status(200).json(result);
     }
@@ -174,8 +148,6 @@ router.patch("/:id/approve", authenticateToken, requireUserType([OfficerRole.MUN
 
         await reportRepo.updateReport(report);
 
-        // TODO: Create notification for user
-
         res.status(200).json({ message: "Report approved successfully", report });
     } catch (error) {
         next(error);
@@ -203,8 +175,6 @@ router.patch("/:id/decline", authenticateToken, requireUserType([OfficerRole.MUN
         report.explanation = explanation.trim();
 
         await reportRepo.updateReport(report);
-
-        // TODO: Create notification for user
 
         res.status(200).json({ message: "Report declined successfully", report });
     } catch (error) {
