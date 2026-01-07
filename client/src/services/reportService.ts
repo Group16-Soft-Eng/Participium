@@ -1,5 +1,4 @@
 import api from './api';
-import { getToken } from './auth';
 
 export type ReportState = 'PENDING' | 'APPROVED' | 'ASSIGNED' | 'DECLINED' | 'IN_PROGRESS' | 'SUSPENDED' | 'RESOLVED';
 
