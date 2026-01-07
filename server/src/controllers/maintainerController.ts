@@ -6,6 +6,8 @@ import { ReportState } from "@models/enums/ReportState";
 import { NotificationRepository } from "@repositories/NotificationRepository";
 import { mapReportDAOToDTO } from "@services/mapperService";
 import { Report } from "@models/dto/Report";
+import { FollowRepository } from "@repositories/FollowRepository";
+import { sendTelegramMessage } from "@services/telegramService";
 export async function createMaintainer(name: string, email: string, password: string,  categories: OfficeType[], active: boolean = true) {
   const repo = new MaintainerRepository();
   const maintainer = await repo.createMaintainer(name, email, password, categories, active);
@@ -113,6 +115,15 @@ export async function updateReportStatusByMaintainer(
 
   // Notifica cambio stato al cittadino (e agli attori interessati) come per officer
   const notification = await notificationRepo.createStatusChangeNotification(updatedReport);
+    const followRepo = new FollowRepository();
+    const followers = await followRepo.getFollowersOfReport(updatedReport.id, "telegram");
+    const s_title = updatedReport.title;
+    let s_state = updatedReport.state.toString();
+    if (s_state === ReportState.IN_PROGRESS.toString())
+      s_state = "IN PROGRESS";
+    for (const follower of followers ?? []) {
+      await sendTelegramMessage(follower.id, `The report (ID: ${updatedReport.id}), title "${s_title}" you are following has been updated to '${s_state}'.`);
+    }
 
   if(!notification) {
     throw new Error("Failed to create notification for report status change");

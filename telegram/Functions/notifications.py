@@ -92,14 +92,14 @@ async def handle_view_reports(update: Update, context: ContextTypes.DEFAULT_TYPE
                 reports = reports.get("reports", [])
 
             if not reports:
-                await query.edit_message_text(
+                await query.message.reply_text(
                     "No reports found. Choose an option:",
                     reply_markup=build_main_menu()
                 )
                 return
 
             # Edit the original message to indicate reports are being sent
-            await query.edit_message_text("Here are the reports found:")
+            await query.message.reply_text("Here are the reports found:")
 
             # Send each report as a new message
             for rpt in reports:
