@@ -20,14 +20,14 @@ The application also supports report submissions via a Telegram bot: https://t.m
 Ensure that Docker is running in background, then open the project folder and run:
 
 ```powershell
-docker-compose up --build
+docker compose pull
 ```
 
 ### Running the Application
 
 To start the application, run:
 ```powershell
-docker-compose up -d
+docker compose up -d
 ```
 
 Client, server, redis and the Telegram Bot will start automatically:
@@ -38,7 +38,7 @@ Client, server, redis and the Telegram Bot will start automatically:
 To stop the application, run:
 
 ```powershell
-docker-compose down
+docker compose down
 ```
 
 ### Admin setup
@@ -60,11 +60,16 @@ The database is preloaded with an admin account, with credentials:
 - **Report Visualization**
   - Interactive map showing all approved civic reports
   - Reports grouped in clusters, showing more details when zooming
+  - Search reports by address
 - **Report Submission**
   - Select location directly on the map
   - Submit new reports with photos (up to 3 images)
   - Categorize reports (infrastructure, environment, safety, sanitation, transport, other)
   - Submissions available also via Telegram bot: https://t.me/participium_g16_bot
+- **Report Notifications**
+  - Follow other users' reports
+  - Receive optional notifications for report status updates on Telegram
+  - Receive optional emails for report status updates
 
 ### For Public Relations Officers
 - **Report Review**
@@ -102,12 +107,13 @@ The database is preloaded with an admin account, with credentials:
 ## Implemented Office Types
 The offices included in the application are the following:
 
-- Infrastructure
-- Environment
-- Safety
-- Sanitation
-- Transport
-- Organization
+- Water Supply - Drinking Water
+- Architectural Barriers
+- Public Lighting
+- Waste Management
+- Road Signs and Traffic Lights
+- Roads and Urban Furnishings
+- Public Green Areas and Playgrounds
 - Other
 
 ## Implemented User Stories
@@ -122,11 +128,20 @@ The offices included in the application are the following:
 - PT09: Account Configuration
 - PT10: Modify municipality users role
 - PT11: Update Report Status
-- PT12: Create Report via Telegram
+- PT12: Create Report via Telegram- PT13
+- PT14: Telegram assistance
+- PT15: Anonymous reports
+- PT16: Follow reports by other citizens
+- PT17: Telegram Notifications
+- PT18: Reply to operators
+- PT19: Email alerts
+- PT20: Report statistics
 - PT24: Assign report to external maintainers
 - PT25: Update report status (external maintainer)
 - PT26: Exchange information between staff members and external maintainers
 - PT27: Confirmation code for registration
+- PT28: Report visualization (unregistered user)
+- PT30: Search report by address
 
 ## Technologies
 
