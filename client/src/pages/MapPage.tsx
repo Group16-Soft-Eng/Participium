@@ -147,7 +147,7 @@ const MapPage: React.FC = () => {
 
     if (!searchCoords) return reports;
 
-    const RADIUS_KM = 0.2;
+    const RADIUS_KM = 0.5;
 
     return reports.filter((r) => {
       const dx = (r.longitude - searchCoords[1]) * 111.32 * Math.cos(searchCoords[0] * (Math.PI / 180));
