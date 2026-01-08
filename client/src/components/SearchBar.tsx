@@ -52,6 +52,10 @@ export default function SearchBar({ setSearch }: Readonly<SearchBarProps>) {
   }, [inputValue, fetchAddresses]);
 
   const handleFinalSearch = (value: string | null) => {
+    if (value && value.trim() === '') {
+      setSearch(null);
+      return;
+    }
     if (value) {
       setSearch(value);
     } else {
