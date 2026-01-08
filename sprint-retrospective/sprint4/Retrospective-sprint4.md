@@ -1,4 +1,4 @@
-RETROSPECTIVE FOR SPRINT 3 (Team 16)
+RETROSPECTIVE FOR SPRINT 4 (Team 16)
 =====================================
 
 The retrospective should include _at least_ the following
@@ -12,7 +12,7 @@ sections:
 
 ### Macro statistics
 
-- Number of stories committed vs done : 9 / 9
+- Number of stories committed vs done : 10 / 10
 - Total points committed vs done : 39 / 39
 - Nr of hours planned vs spent (as a team) : 2s 2d / 2s 2d 2h 20m
 
