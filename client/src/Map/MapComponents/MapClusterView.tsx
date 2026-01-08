@@ -209,7 +209,8 @@ function ClusteringLayer({ reports, selectedId }: { readonly reports: readonly R
     if (!selectedId) return;
     const found = reports.find((r) => r.id === selectedId);
     if (found) {
-      map.flyTo([found.latitude, found.longitude], 17);
+      map.flyTo([found.latitude, found.longitude], 18);
+      setZoom(17);
     }
   }, [selectedId, reports, map]);
 
