@@ -120,6 +120,10 @@ export class NotificationRepository {
         if (report.state === "DECLINED") {
             return `Your report ${report.title} has been DECLINED. Reason: ${report.reason || "N/A"}`;
         }
+
+        if (report.state === "ASSIGNED") {
+            return `Your report ${report.title} has been ACCEPTED and assigned to an operator.`;
+        }
         // stato diverso da declined -> segno nuovo stato
         return `Your report ${report.title} is now ${formatString(report.state)}`;
     }

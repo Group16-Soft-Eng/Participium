@@ -90,7 +90,7 @@ const MapPage: React.FC = () => {
 
         let visibleReports = data.filter(report => {
           const status = report.status?.toLowerCase();
-          return status === 'approved' || status === 'in_progress' || status === 'suspended';
+          return status === 'assigned' || status === 'in_progress' || status === 'suspended';
         });
 
         const reportIdParam = searchParams.get('id');
@@ -209,6 +209,7 @@ const MapPage: React.FC = () => {
             {filteredReports.map((r) => {
               const status = r.status?.toLowerCase();
               const isInProgress = status === 'in_progress' || status === 'in-progress';
+              const isAssigned = status === 'assigned';
               const isSuspended = status === 'suspended';
               let cardBgColor = 'white';
               let cardBorder = 'none';
@@ -219,6 +220,9 @@ const MapPage: React.FC = () => {
               } else if (isSuspended) {
                 cardBgColor = '#fff3e0';
                 cardBorder = '4px solid #f57c00';
+              } else if (isAssigned) {
+                cardBgColor = '#ffe4e0';
+                cardBorder = '4px solid #ff6363';
               }
 
               let authorName = 'Unknown';
@@ -256,12 +260,11 @@ const MapPage: React.FC = () => {
                       <Typography variant="subtitle1" sx={{ lineHeight: 1.2, mb: 0.5 }}>{r.title}</Typography>
 
                       <Typography variant="caption" color="text.secondary">
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
                         {authorName}
                         {` • ${new Date(r.createdAt).toLocaleDateString()}`}
                         {` • ID: #${r.id}`}
                       </Typography>
+                      
                       {(logged && r.author?.username != username && getRole()?.includes('citizen') && (
                         <>
                           {!followedReports.some(report => report.id == r.id) && <Button variant='contained' sx={{ marginLeft: 2 }} onClick={() => follow(r.id)}>Follow</Button>}

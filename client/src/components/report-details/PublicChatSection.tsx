@@ -303,7 +303,7 @@ function MessageBubble({ message, formatTime, currentUserIsOfficer, currentUserN
     (currentUserIsOfficer && message.senderType === 'officer') ||
     (!currentUserIsOfficer && message.senderType === 'citizen');
 
-  const displayName = isSentByMe ? currentUserName : (anonReport && currentUserIsOfficer ? 'Anonymous User' : message.senderName);
+  const displayName = isSentByMe ? currentUserName : message.senderName;
   const roleLabel = message.senderType === 'officer' ? 'Officer' : 'Citizen';
 
   return (

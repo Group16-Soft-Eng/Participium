@@ -9,6 +9,7 @@ import { getRole, getToken } from '../../services/auth';
 // @ts-ignore
 import turinData from '../../data/turin_boundaries.json';
 import '../../pages/MapPage.css';
+import { formatString } from '../../utils/StringUtils';
 
 const TURIN_COORDINATES: [number, number] = [45.0703, 7.66];
 
@@ -290,7 +291,11 @@ function ClusteringLayer({ reports, selectedId, searchCoords }: { readonly repor
                 <div style={{ minWidth: 200 }}>
                   <strong>{props.title}</strong>
                   <div style={{ fontSize: '0.85em', color: '#666', marginTop: 4 }}>
-                    Reported by: {reporterName}
+                    <p>
+                    Status: {formatString(props.status)}<br/>
+                    Reported by: {reporterName}<br/>
+                    ID: #{props.reportId}
+                    </p>
                   </div>
                 </div>
               </Popup>

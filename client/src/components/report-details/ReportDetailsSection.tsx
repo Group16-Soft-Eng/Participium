@@ -9,6 +9,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { static_ip_address } from '../../API/API';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { formatString } from '../../utils/StringUtils';
 
 interface ReportDetailsSectionProps {
   readonly report: any;
@@ -155,12 +156,12 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
         <InfoField 
           icon={<CategoryIcon />}
           label="Category"
-          value={report.category || 'Not specified'}
+          value={formatString(report.category) || 'Not specified'}
         />
         <InfoField 
           icon={<PersonIcon />}
           label="Reporter"
-          value={report.author?.username || report.anonymity ? 'Anonymous' : 'Unknown'}
+          value={report.author?.username || 'Unknown'}
         />
       </Box>
 
