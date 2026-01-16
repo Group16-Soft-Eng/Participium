@@ -177,9 +177,7 @@ const OfficerReview: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell sx={{ width: 160 }}>
-                      {r.anonymity
-                        ? 'Anonymous'
-                        : (() => {
+                      {(() => {
                           if (r.author) {
                             return `${r.author.firstName || ''} ${r.author.lastName || ''}`.trim();
                           } else {

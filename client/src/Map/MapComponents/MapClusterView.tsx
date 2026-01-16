@@ -9,6 +9,7 @@ import { getRole, getToken } from '../../services/auth';
 // @ts-ignore
 import turinData from '../../data/turin_boundaries.json';
 import '../../pages/MapPage.css';
+import { formatString } from '../../utils/StringUtils';
 
 const TURIN_COORDINATES: [number, number] = [45.0703, 7.66];
 
@@ -114,7 +115,7 @@ const createHighlightPinIcon = () => {
 };
 
 // Check if a point is within Turin's boundaries
-const isPointInTurin = (lat: number, lng: number): boolean => {
+export const isPointInTurin = (lat: number, lng: number): boolean => {
   const cityBoundary = turinData?.find((item: any) => item.addresstype === 'city');
   if (!cityBoundary?.geojson) return false;
 
@@ -154,7 +155,7 @@ const isPointInPolygon = (point: number[], polygon: number[][][]): boolean => {
   return inside;
 };
 
-function ClusteringLayer({ reports, selectedId }: { readonly reports: readonly Report[]; readonly selectedId?: string | null }) {
+function ClusteringLayer({ reports, selectedId, searchCoords }: { readonly reports: readonly Report[]; readonly selectedId?: string | null ; readonly searchCoords?: [number, number] | null}) {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
   const navigate = useNavigate();
@@ -213,6 +214,15 @@ function ClusteringLayer({ reports, selectedId }: { readonly reports: readonly R
       setZoom(17);
     }
   }, [selectedId, reports, map]);
+
+  useEffect(() => {
+    if (searchCoords) {
+
+    console.log(searchCoords);
+      map.flyTo([searchCoords[0], searchCoords[1]], 18);
+      setZoom(17);
+    }
+  }, [searchCoords]);
 
   const [scIndex, setScIndex] = useState<any>(null);
 
@@ -281,7 +291,11 @@ function ClusteringLayer({ reports, selectedId }: { readonly reports: readonly R
                 <div style={{ minWidth: 200 }}>
                   <strong>{props.title}</strong>
                   <div style={{ fontSize: '0.85em', color: '#666', marginTop: 4 }}>
-                    Reported by: {reporterName}
+                    <p>
+                    Status: {formatString(props.status)}<br/>
+                    Reported by: {reporterName}<br/>
+                    ID: #{props.reportId}
+                    </p>
                   </div>
                 </div>
               </Popup>
@@ -426,6 +440,7 @@ interface MapClusterViewProps {
   initialCenter?: [number, number] | null;
   initialZoom?: number | null;
   highlightLocation?: [number, number] | null;
+  searchCoords?: [number, number] | null;
 }
 
 function MapController({ center, zoom }: { center: [number, number]; zoom: number }) {
@@ -436,7 +451,7 @@ function MapController({ center, zoom }: { center: [number, number]; zoom: numbe
   return null;
 }
 
-const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, initialCenter, initialZoom, highlightLocation }) => {
+const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, initialCenter, initialZoom, highlightLocation, searchCoords }) => {
   const center = initialCenter || TURIN_COORDINATES;
   const zoom = initialZoom || 13;
 
@@ -489,7 +504,7 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
           />
         )}
         {initialCenter && initialZoom && <MapController center={initialCenter} zoom={initialZoom} />}
-        <ClusteringLayer reports={reports} selectedId={selectedId} />
+        <ClusteringLayer reports={reports} selectedId={selectedId} searchCoords={searchCoords}/>
         {highlightLocation && (
           <Marker position={highlightLocation} icon={createHighlightPinIcon()}>
             <Popup>

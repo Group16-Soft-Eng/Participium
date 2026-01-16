@@ -155,6 +155,7 @@ export async function removeRoleFromOfficer(
 export async function assignReportToOfficer(reportId: number, officerId: number): Promise<void> {
   const reportRepo = new ReportRepository();
   const officerRepo = new OfficerRepository();
+  const notificationRepo = new NotificationRepository();
 
   const report = await reportRepo.getReportById(reportId);
   if (report.state !== ReportState.PENDING) {
@@ -167,6 +168,10 @@ export async function assignReportToOfficer(reportId: number, officerId: number)
   }
 
   await reportRepo.assignReportToOfficer(reportId, officerId);
+
+  const assignedReport = await reportRepo.getReportById(reportId)
+
+  await notificationRepo.createStatusChangeNotification(assignedReport);
 }
 
 export async function retrieveDocs(officerId: number): Promise<Report[]> {

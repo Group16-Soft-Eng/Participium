@@ -97,14 +97,16 @@ sections:
 ## ASSESSMENT
 
 - What caused your errors in estimation (if any)?
-  - 
+  - There were no significant errors in the estimation
 - What lessons did you learn (both positive and negative) in this sprint?
-  - We can handle changes and issues quickly and efficiently, so if unforeseen problems show up the team is not slowed down and can maintain momentum.
+  - With a good planning, after having clear what each one of us can do better, we are able to do a large amount of work in a clean and efficient way.
+  - E2E testing should be done immediately after a feature is completed, to identify bugs as soon as possible.
 - Which improvement goals set in the previous retrospective were you able to achieve? 
-  - We managed to split better work and tasks avoiding conflits merge. 
+  - We managed to split work and tasks better, avoiding conflits and improving the workflow.
+  - We were more careful during the usage of YouTrack, avoiding errors in the total hours count.
 - Which ones you were not able to achieve? Why?
-  - 
+  - All the goals set from previous sprint have been satisfied.
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
-  - 
+  - Documentation Updates are what can stop the frontend development, so trying to complete them earlier could allow frontend development to start earlier.
 - One thing you are proud of as a Team!!
-  - 
+  - During this sprint we have been able to work very efficiently without conflicts and with better communication, implementing a great number of features and reducing Technical Debt almost to zero. We believe we finally found the right pace!
