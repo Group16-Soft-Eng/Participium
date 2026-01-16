@@ -42,25 +42,30 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
   useEffect(() => {
     const lat = report.location?.Coordinates?.latitude;
     const lng = report.location?.Coordinates?.longitude;
-    
+
     if (lat && lng) {
-      const fetchAddress = async () => {
+      const fetchAddress = async (lat: number, lng: number) => {
         try {
+          setAddressText('Loading address...');
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
           );
           const data = await response.json();
-          if (data?.display_name) {
-            setAddressText(data.display_name);
+
+          if (data.address) {
+            const street = data.address.road || '';
+            const houseNumber = data.address.house_number || '';
+            const addressLine = houseNumber && street ? `${street}, ${houseNumber}` : street || data.display_name;
+            setAddressText(addressLine);
           } else {
-            setAddressText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+            setAddressText(data.display_name || 'Address not found');
           }
         } catch (error) {
-          console.error('Reverse geocoding error:', error);
-          setAddressText(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          console.error('Error fetching address:', error);
+          setAddressText('Unable to fetch address');
         }
       };
-      fetchAddress();
+      fetchAddress(lat, lng);
     } else if (typeof report.location === 'string') {
       setAddressText(report.location);
     } else {
@@ -106,8 +111,8 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="start" mb={1}>
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Report #{report.id}</Typography>
-          <Chip 
-            label={report.state || 'PENDING'} 
+          <Chip
+            label={report.state || 'PENDING'}
             color={getStatusColor(report.state || 'PENDING')}
             size="medium"
           />
@@ -138,7 +143,7 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
                 navigate('/map');
               }
             }}
-            sx={{ 
+            sx={{
               textAlign: 'left',
               cursor: 'pointer',
               textDecoration: 'none',
@@ -148,17 +153,17 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
             {addressText || 'Loading...'}
           </Link>
         </Box>
-        <InfoField 
+        <InfoField
           icon={<CalendarTodayIcon />}
           label="Reported"
           value={formatDate(report.date || '')}
         />
-        <InfoField 
+        <InfoField
           icon={<CategoryIcon />}
           label="Category"
           value={formatString(report.category) || 'Not specified'}
         />
-        <InfoField 
+        <InfoField
           icon={<PersonIcon />}
           label="Reporter"
           value={report.author?.username || 'Unknown'}
@@ -294,10 +299,10 @@ export function ReportDetailsSection({ report }: ReportDetailsSectionProps) {
       {report.location?.coordinates?.latitude && report.location?.coordinates?.longitude && (
         <Box>
           <Typography variant="subtitle2" mb={1.5} fontWeight={600}>Location Map</Typography>
-          <Box 
-            sx={{ 
-              height: 250, 
-              borderRadius: 2, 
+          <Box
+            sx={{
+              height: 250,
+              borderRadius: 2,
               overflow: 'hidden',
               bgcolor: 'grey.200',
               display: 'flex',

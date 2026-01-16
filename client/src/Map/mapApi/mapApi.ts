@@ -5,13 +5,13 @@ const URI = 'http://localhost:5000/api/v1';
 // CREATE NEW REPORT
 async function createReport(reportData: ReportData): Promise<Report> {
     const formData = new FormData();
-    
+
     // Add text fields
     formData.append('title', reportData.title);
     formData.append('description', reportData.description);
     formData.append('category', reportData.category);
     formData.append('anonymity', reportData.anonymity ? 'true' : 'false');
-    
+
     if (reportData.latitude !== null) {
         formData.append('latitude', reportData.latitude.toString());
     }
@@ -48,16 +48,16 @@ async function createReport(reportData: ReportData): Promise<Report> {
 async function getAllReports(): Promise<Report[]> {
     // Get token from localStorage
     const token = localStorage.getItem('token');
-    
+
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
     };
-    
+
     // Add Authorization header if token exists
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     const response = await fetch(URI + `/reports`, {
         method: 'GET',
         headers,
@@ -66,16 +66,24 @@ async function getAllReports(): Promise<Report[]> {
 
     if (response.ok) {
         const backendReports = await response.json();
-        
+
         // Map backend format to frontend format
         return backendReports.map((br: any) => ({
             id: br.id?.toString() || '',
             title: br.title || 'Untitled Report',
             description: br.document?.description || br.document?.Description || '',
             category: br.category || 'other',
-            photos: [], // Photos are URLs in backend, convert if needed
+            document: br.document ? {
+                photos: br.document?.photos || []
+            } : undefined,
             latitude: br.location?.Coordinates?.latitude || 0,
             longitude: br.location?.Coordinates?.longitude || 0,
+            location: br.location ? {
+                Coordinates: br.location.Coordinates ? {
+                    latitude: br.location?.Coordinates?.latitude || 0,
+                    longitude: br.location?.Coordinates?.longitude || 0,
+                } : undefined
+            } : undefined,
             createdAt: br.date ? new Date(br.date) : new Date(),
             status: (br.state?.toLowerCase() || 'approved') as 'pending' | 'approved' | 'in_progress' | 'resolved',
             anonymity: br.anonymity,
