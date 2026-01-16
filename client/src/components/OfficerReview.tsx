@@ -243,7 +243,7 @@ const OfficerReview: React.FC = () => {
         </Alert>
       </Snackbar>
       {!loading && view && (
-        <ReportDetailDialog open={selected !== null} report={selected} onClose={() => closeView()} />
+        <ReportDetailDialog open={selected !== null} report={selected} onClose={() => closeView()} viewButton={true} />
       )}
       {!loading && showingAssign && (
         <AssignOfficerDialog open={showingAssign} successfulAssign={(id) => successfulAssign(id)} failedAssign={(id) => failedAssign(id)} onClose={() => closeAssign()} office={selected?.category || ''} report={selected} />

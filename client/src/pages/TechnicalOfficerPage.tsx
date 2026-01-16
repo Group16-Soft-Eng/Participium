@@ -429,7 +429,7 @@ const TechnicalOfficerPage: React.FC = () => {
         )}
       </Paper>
 
-      <ReportDetailDialog open={selected !== null} report={selected} onClose={() => setSelected(null)} />
+      <ReportDetailDialog open={selected !== null} report={selected} onClose={() => setSelected(null)} viewButton={true} />
 
       <Dialog open={assignDialogOpen} onClose={handleCloseAssignDialog} maxWidth="sm" fullWidth>
         <DialogTitle>

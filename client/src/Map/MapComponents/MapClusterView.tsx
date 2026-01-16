@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, GeoJSON } from 'react-leaflet';
 import L, { LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -10,6 +10,7 @@ import { getRole, getToken } from '../../services/auth';
 import turinData from '../../data/turin_boundaries.json';
 import '../../pages/MapPage.css';
 import { formatString } from '../../utils/StringUtils';
+import { Button } from '@mui/material';
 
 const TURIN_COORDINATES: [number, number] = [45.0703, 7.66];
 
@@ -74,14 +75,14 @@ const createClusterIcon = (count: number) => {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-    water_supply: '#8b5cf6',
-    architectural_barriers: '#10b981',
-    public_lighting: '#ef4444',
-    waste: '#f59e0b',
-    road_signs_and_traffic_lights: '#3b82f6',
-    roads_and_urban_furnishings: '#955c51ff',
-    public_green_areas_and_playgrounds: '#af589bff',
-    other: '#6b7280',
+  water_supply: '#8b5cf6',
+  architectural_barriers: '#10b981',
+  public_lighting: '#ef4444',
+  waste: '#f59e0b',
+  road_signs_and_traffic_lights: '#3b82f6',
+  roads_and_urban_furnishings: '#955c51ff',
+  public_green_areas_and_playgrounds: '#af589bff',
+  other: '#6b7280',
 };
 
 const createSimpleIcon = (category?: string) => {
@@ -155,7 +156,7 @@ const isPointInPolygon = (point: number[], polygon: number[][][]): boolean => {
   return inside;
 };
 
-function ClusteringLayer({ reports, selectedId, searchCoords }: { readonly reports: readonly Report[]; readonly selectedId?: string | null ; readonly searchCoords?: [number, number] | null}) {
+function ClusteringLayer({ reports, selectedId, searchCoords, setReport }: { readonly reports: readonly Report[]; readonly selectedId?: string | null; readonly searchCoords?: [number, number] | null; setReport: (any | null) }) {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
   const navigate = useNavigate();
@@ -218,7 +219,7 @@ function ClusteringLayer({ reports, selectedId, searchCoords }: { readonly repor
   useEffect(() => {
     if (searchCoords) {
 
-    console.log(searchCoords);
+      console.log(searchCoords);
       map.flyTo([searchCoords[0], searchCoords[1]], 18);
       setZoom(17);
     }
@@ -287,15 +288,19 @@ function ClusteringLayer({ reports, selectedId, searchCoords }: { readonly repor
 
           return (
             <Marker key={`rep-${props.reportId || i}`} position={[lat, lng]} icon={createSimpleIcon(props.category)}>
+
               <Popup>
                 <div style={{ minWidth: 200 }}>
                   <strong>{props.title}</strong>
                   <div style={{ fontSize: '0.85em', color: '#666', marginTop: 4 }}>
                     <p>
-                    Status: {formatString(props.status)}<br/>
-                    Reported by: {reporterName}<br/>
-                    ID: #{props.reportId}
+                      Status: {formatString(props.status)}<br />
+                      Reported by: {reporterName}<br />
+                      ID: #{props.reportId}
                     </p>
+                    <Button variant='contained' onClick={() => setReport(report)}>
+                      View Details
+                    </Button>
                   </div>
                 </div>
               </Popup>
@@ -441,6 +446,7 @@ interface MapClusterViewProps {
   initialZoom?: number | null;
   highlightLocation?: [number, number] | null;
   searchCoords?: [number, number] | null;
+  setReport?: (any | null);
 }
 
 function MapController({ center, zoom }: { center: [number, number]; zoom: number }) {
@@ -451,7 +457,7 @@ function MapController({ center, zoom }: { center: [number, number]; zoom: numbe
   return null;
 }
 
-const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, initialCenter, initialZoom, highlightLocation, searchCoords }) => {
+const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, initialCenter, initialZoom, highlightLocation, searchCoords, setReport }) => {
   const center = initialCenter || TURIN_COORDINATES;
   const zoom = initialZoom || 13;
 
@@ -477,7 +483,7 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
   return (
     <div style={{ height: 'calc(100vh - 64px)', width: '100%' }}>
       <MapContainer
-      className='map-container-box'
+        className='map-container-box'
         center={center}
         zoom={zoom}
         maxBounds={TURIN_BOUNDS}
@@ -504,7 +510,7 @@ const MapClusterView: React.FC<MapClusterViewProps> = ({ reports, selectedId, in
           />
         )}
         {initialCenter && initialZoom && <MapController center={initialCenter} zoom={initialZoom} />}
-        <ClusteringLayer reports={reports} selectedId={selectedId} searchCoords={searchCoords}/>
+        <ClusteringLayer reports={reports} selectedId={selectedId} searchCoords={searchCoords} setReport={setReport} />
         {highlightLocation && (
           <Marker position={highlightLocation} icon={createHighlightPinIcon()}>
             <Popup>

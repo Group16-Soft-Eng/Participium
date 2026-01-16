@@ -8,6 +8,7 @@ import { getRole, getToken, getUserFromToken } from '../services/auth';
 import SearchBar from '../components/SearchBar';
 import { followReport, getFollowedReports, unfollowReport } from '../API/API';
 import './MapPage.css';
+import ReportDetailDialog from '../components/ReportDetailDialog';
 
 const getCategoryColor = (cat: string): string => {
   switch (cat) {
@@ -40,6 +41,7 @@ const MapPage: React.FC = () => {
   const [search, setSearch] = useState<string | null>(null);
   const [searchCoords, setSearchCoords] = useState<[number, number] | null>(null);
   const [followedReports, setFollowedReports] = useState<Report[]>([]);
+  const [report, setReport] = useState<any>(null);
 
   const logged = getToken() !== null;
 
@@ -178,8 +180,12 @@ const MapPage: React.FC = () => {
     );
   }
 
+
   return (
     <Box sx={{ display: 'flex', gap: 0, alignItems: 'stretch', flexDirection: { xs: 'column', md: 'row' }, width: '100%', height: 'calc(100vh - 64px)' }} className="map-page-container">
+      {report != null &&
+          <ReportDetailDialog open={report!=null} report={report} onClose={() => setReport(null)} viewButton={false} />
+      }
       <Box sx={{ flex: { xs: '0 0 100%', md: '0 0 66.666%' }, minWidth: 0 }} className="map-box">
         <MapClusterView
           reports={filteredReports}
@@ -188,6 +194,7 @@ const MapPage: React.FC = () => {
           initialZoom={initialZoom}
           highlightLocation={highlightLocation}
           searchCoords={searchCoords}
+          setReport={setReport}
         />
       </Box>
 
@@ -264,7 +271,7 @@ const MapPage: React.FC = () => {
                         {` • ${new Date(r.createdAt).toLocaleDateString()}`}
                         {` • ID: #${r.id}`}
                       </Typography>
-                      
+
                       {(logged && r.author?.username != username && getRole()?.includes('citizen') && (
                         <>
                           {!followedReports.some(report => report.id == r.id) && <Button variant='contained' sx={{ marginLeft: 2 }} onClick={() => follow(r.id)}>Follow</Button>}

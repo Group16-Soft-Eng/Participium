@@ -1,15 +1,48 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, IconButton } from '@mui/material';
 import type { OfficerReport } from '../services/reportService';
+import { formatString } from '../utils/StringUtils';
 
 interface Props {
   open: boolean;
   report: OfficerReport | null;
   onClose: () => void;
+  viewButton: boolean;
 }
 
-const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
+const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose, viewButton }) => {
   const [openImageIndex, setOpenImageIndex] = useState<number | null>(null);
+
+  const [address, setAddress] = useState('');
+
+  useEffect(() => {
+    if (report?.location?.Coordinates) {
+      const { latitude, longitude } = report.location.Coordinates;
+      fetchAddress(latitude, longitude);
+    }
+  }, [report]);
+
+  const fetchAddress = async (lat: number, lng: number) => {
+    try {
+      setAddress('Loading address...');
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+      );
+      const data = await response.json();
+
+      if (data.address) {
+        const street = data.address.road || '';
+        const houseNumber = data.address.house_number || '';
+        const addressLine = houseNumber && street ? `${street}, ${houseNumber}` : street || data.display_name;
+        setAddress(addressLine);
+      } else {
+        setAddress(data.display_name || 'Address not found');
+      }
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      setAddress('Unable to fetch address');
+    }
+  };
 
   return (
     <>
@@ -18,18 +51,18 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <Box>
-              <strong>Category:</strong> {report?.category}
+              <strong>Category:</strong> {formatString(report?.category || '')}
             </Box>
             <Box>
               <strong>Reported by:</strong> {' '}
               {report?.anonymity
                 ? 'Anonymous'
                 : (() => {
-                    if (report?.author) {
-                        return `${report.author.firstName || ''} ${report.author.lastName || ''}`.trim();
-                    } else {
-                        return 'Unknown';
-                    }
+                  if (report?.author) {
+                    return `${report.author.firstName || ''} ${report.author.lastName || ''}`.trim();
+                  } else {
+                    return 'Unknown';
+                  }
                 })()}
             </Box>
             <Box>
@@ -82,14 +115,13 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
                 </Box>
               </Box>
             )}
-
             <Box>
-              <strong>Location:</strong> {report?.location?.Coordinates?.latitude}, {report?.location?.Coordinates?.longitude}
+              <strong>Location:</strong> {address}
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button
+          {viewButton && <Button
             onClick={() => {
               if (report?.location?.Coordinates) {
                 const { latitude, longitude } = report.location.Coordinates;
@@ -101,6 +133,7 @@ const ReportDetailDialog: React.FC<Props> = ({ open, report, onClose }) => {
           >
             View on Map
           </Button>
+          }
           <Button onClick={onClose}>Close</Button>
         </DialogActions>
       </Dialog>

@@ -520,7 +520,7 @@ describe('NotificationRepository', () => {
                 userId: 1,
                 reportId: 10,
                 type: 'STATUS_CHANGE',
-                message: 'Your report Test Report is now Assigned',
+                message: 'Your report Test Report has been ACCEPTED and assigned to an operator.',
                 createdAt: new Date(),
                 read: false
             };
@@ -534,7 +534,7 @@ describe('NotificationRepository', () => {
                 userId: 1,
                 reportId: 10,
                 type: 'STATUS_CHANGE',
-                message: 'Your report Test Report is now Assigned',
+                message: 'Your report Test Report has been ACCEPTED and assigned to an operator.',
                 read: false
             });
             expect(mockUserRepo.getUserById).toHaveBeenCalledWith(1);

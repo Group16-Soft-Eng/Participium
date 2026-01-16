@@ -289,7 +289,7 @@ const ExternalMaintainersPage: React.FC = () => {
         </Alert>
       </Snackbar>
 
-      <ReportDetailDialog open={selected !== null} report={selected} onClose={() => setSelected(null)} />
+      <ReportDetailDialog open={selected !== null} report={selected} onClose={() => setSelected(null)} viewButton={true} />
     </Box>
   );
 };
