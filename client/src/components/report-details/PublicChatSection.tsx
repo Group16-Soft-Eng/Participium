@@ -236,7 +236,7 @@ export function PublicChatSection({ reportId, anonReport }: Readonly<PublicChatS
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={isOfficer ? "Reply to the citizen..." : "Send a message to the operators..."}
             onKeyDown={handleKeyPress}
-            disabled={loading}
+            disabled={loading || (!isOfficer && messages[messages.length-1]?.senderType !== 'officer')}
           />
           <IconButton
             color="primary"
@@ -267,7 +267,7 @@ function EmptyState({ isOfficer }: Readonly<{ isOfficer: boolean }>) {
       <ChatBubbleOutlineIcon sx={{ fontSize: 64, mb: 2, opacity: 0.3 }} />
       <Typography variant="body2" fontWeight={500}>No messages yet</Typography>
       <Typography variant="caption">
-        {isOfficer ? 'Start the conversation with the citizen' : 'Start a conversation about your report'}
+        {isOfficer ? 'Start the conversation with the citizen' : 'Citizens can only answer messages from operators'}
       </Typography>
     </Box>
   );
