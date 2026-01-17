@@ -5,6 +5,7 @@ import { getMaintainerAssignedReports, updateReportStatusByMaintainer } from '..
 import type { OfficerReport } from '../services/reportService';
 import ChatIcon from '@mui/icons-material/Chat';
 import { useNavigate } from 'react-router-dom';
+import { formatStatus, formatString } from '../utils/StringUtils';
 
 // Category colors matching the map (kept small and consistent)
 const CATEGORY_COLORS: Record<string, string> = {
@@ -125,7 +126,7 @@ const ExternalMaintainersPage: React.FC = () => {
               // single category: show one chip and a single table
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Chip label={singleCategory} size="small" sx={{ backgroundColor: getCategoryColor(singleCategory), color: 'white', fontWeight: 'bold', textTransform: 'capitalize' }} />
+                  <Chip label={formatString(singleCategory)} size="small" sx={{ backgroundColor: getCategoryColor(singleCategory), color: 'white', fontWeight: 'bold', textTransform: 'capitalize' }} />
                   <Typography variant="body2" color="text.secondary">{reports.length} report{reports.length > 1 ? 's' : ''}</Typography>
                 </Box>
 
@@ -147,7 +148,7 @@ const ExternalMaintainersPage: React.FC = () => {
                           <TableCell>{r.title}</TableCell>
                           <TableCell>
                             <Chip
-                              label={r.state || 'ASSIGNED'}
+                              label={formatStatus(r.state ?? "unknown") || 'ASSIGNED'}
                               size="small"
                               color={getStatusColor(r.state)}
                             />
